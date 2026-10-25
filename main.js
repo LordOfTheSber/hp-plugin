@@ -34,7 +34,7 @@ __export(main_exports, {
   default: () => HpThemePlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian3 = require("obsidian");
+var import_obsidian4 = require("obsidian");
 var obsidian = __toESM(require("obsidian"), 1);
 
 // src/houses.ts
@@ -234,8 +234,10 @@ var en = {
   gesture_nox: "Lower the wand: a stroke downwards",
   gesture_wingardiumLeviosa: "Swish and flick! Lifts whatever the wand points at",
   gesture_accioSnitch: "A circle \u2014 the Snitch is round",
-  gesture_solemnlySwear: "The letter M, for Moony and friends",
+  gesture_solemnlySwear: "The letter M, for Moony and friends. Opens the map",
   gesture_mischiefManaged: "Wipe the map clean: back and forth",
+  settingMapTags: "Tags on the Marauder's Map",
+  settingMapTagsDesc: "Notes with a common tag are connected through it: on the map and in routes.",
   settingStatusBar: "House and points in the status bar",
   settingEasterEggs: "Magic",
   settingEasterEggsDesc: "Words have power\u2026",
@@ -341,7 +343,34 @@ var en = {
   eggMischief: "Mischief managed. The theme returns after a solemn oath \u2014 or a restart.",
   eggSnitch: "+{0} points to {1}! The Snitch is caught.",
   eggSnitchLabel: "The Golden Snitch \u2014 catch it!",
-  eggBirthday: "July 31st \u2014 happy birthday, Harry! Hagrid is bringing a (slightly squashed) cake."
+  eggBirthday: "July 31st \u2014 happy birthday, Harry! Hagrid is bringing a (slightly squashed) cake.",
+  mapTitle: "The Marauder's Map",
+  commandMapOpen: "Marauder's Map: where am I",
+  commandMapRoute: "Marauder's Map: find the way to a note\u2026",
+  commandMapNext: "Marauder's Map: next step",
+  mapEmpty: "Open a note, and the map will show where you are and where its links lead.",
+  mapHere: "you are here",
+  mapLonely: "No secret passage leads here: the note has neither links nor backlinks.",
+  mapHidden: "and {0} more",
+  mapLegendLink: "link",
+  mapLegendBacklink: "backlink",
+  mapLegendTag: "common tag",
+  mapTagHint: "tag, click to find all its notes",
+  mapRouteButton: "Find the way\u2026",
+  mapRoutePlaceholder: "Where to?",
+  mapRouteTitle: "The way to \u201C{0}\u201D",
+  mapRouteSteps: "Steps: {0}",
+  mapRerouted: "you left the path, here is a new one",
+  mapStepLink: "link in the text",
+  mapStepBacklink: "backlink: not in the text",
+  mapStepTag: "common tag {0}",
+  mapNext: "Next step",
+  mapClear: "Clear",
+  mapLost: "No secret passage leads from here to \u201C{0}\u201D.",
+  mapNoPath: "No secret passage leads to \u201C{0}\u201D: the notes are not connected by links.",
+  mapNoNote: "Open a note first: the map needs to know where you are.",
+  mapArrived: "You have arrived: \u201C{0}\u201D. Mischief managed!",
+  mapFootprints: "Your footprints"
 };
 var ru = {
   pluginName: "HP Theme",
@@ -377,8 +406,10 @@ var ru = {
   gesture_nox: "\u041E\u043F\u0443\u0441\u0442\u0438\u0442\u044C \u043F\u0430\u043B\u043E\u0447\u043A\u0443: \u0448\u0442\u0440\u0438\u0445 \u0432\u043D\u0438\u0437",
   gesture_wingardiumLeviosa: "\u0412\u0437\u043C\u0430\u0445 \u0438 \u0449\u0435\u043B\u0447\u043E\u043A! \u041F\u043E\u0434\u043D\u0438\u043C\u0430\u0435\u0442 \u0442\u043E, \u043D\u0430 \u0447\u0442\u043E \u0443\u043A\u0430\u0437\u0430\u043B\u0430 \u043F\u0430\u043B\u043E\u0447\u043A\u0430",
   gesture_accioSnitch: "\u041A\u0440\u0443\u0433 \u2014 \u0441\u043D\u0438\u0442\u0447 \u0432\u0435\u0434\u044C \u043A\u0440\u0443\u0433\u043B\u044B\u0439",
-  gesture_solemnlySwear: "\u0411\u0443\u043A\u0432\u0430 M \u2014 \u041C\u0430\u0440\u043E\u0434\u0451\u0440\u044B",
+  gesture_solemnlySwear: "\u0411\u0443\u043A\u0432\u0430 M \u2014 \u041C\u0430\u0440\u043E\u0434\u0451\u0440\u044B. \u041E\u0442\u043A\u0440\u044B\u0432\u0430\u0435\u0442 \u043A\u0430\u0440\u0442\u0443",
   gesture_mischiefManaged: "\u0421\u0442\u0435\u0440\u0435\u0442\u044C \u043A\u0430\u0440\u0442\u0443: \u0442\u0443\u0434\u0430-\u043E\u0431\u0440\u0430\u0442\u043D\u043E",
+  settingMapTags: "\u0422\u0435\u0433\u0438 \u043D\u0430 \u041A\u0430\u0440\u0442\u0435 \u041C\u0430\u0440\u043E\u0434\u0451\u0440\u043E\u0432",
+  settingMapTagsDesc: "\u0417\u0430\u043C\u0435\u0442\u043A\u0438 \u0441 \u043E\u0431\u0449\u0438\u043C \u0442\u0435\u0433\u043E\u043C \u0441\u0432\u044F\u0437\u0430\u043D\u044B \u0447\u0435\u0440\u0435\u0437 \u043D\u0435\u0433\u043E: \u043D\u0430 \u043A\u0430\u0440\u0442\u0435 \u0438 \u0432 \u043C\u0430\u0440\u0448\u0440\u0443\u0442\u0430\u0445.",
   settingStatusBar: "\u0424\u0430\u043A\u0443\u043B\u044C\u0442\u0435\u0442 \u0438 \u043E\u0447\u043A\u0438 \u0432 \u0441\u0442\u0430\u0442\u0443\u0441-\u0431\u0430\u0440\u0435",
   settingEasterEggs: "\u041C\u0430\u0433\u0438\u044F",
   settingEasterEggsDesc: "\u0421\u043B\u043E\u0432\u0430 \u0438\u043C\u0435\u044E\u0442 \u0441\u0438\u043B\u0443\u2026",
@@ -484,7 +515,34 @@ var ru = {
   eggMischief: "\u0428\u0430\u043B\u043E\u0441\u0442\u044C \u0443\u0434\u0430\u043B\u0430\u0441\u044C. \u0422\u0435\u043C\u0430 \u0432\u0435\u0440\u043D\u0451\u0442\u0441\u044F \u043F\u043E\u0441\u043B\u0435 \u043A\u043B\u044F\u0442\u0432\u044B \u2014 \u0438\u043B\u0438 \u043F\u0435\u0440\u0435\u0437\u0430\u043F\u0443\u0441\u043A\u0430.",
   eggSnitch: "+{0} \u043E\u0447\u043A\u043E\u0432 \u0444\u0430\u043A\u0443\u043B\u044C\u0442\u0435\u0442\u0443 {1}! \u0421\u043D\u0438\u0442\u0447 \u043F\u043E\u0439\u043C\u0430\u043D.",
   eggSnitchLabel: "\u0417\u043E\u043B\u043E\u0442\u043E\u0439 \u0441\u043D\u0438\u0442\u0447 \u2014 \u043F\u043E\u0439\u043C\u0430\u0439 \u0435\u0433\u043E!",
-  eggBirthday: "31 \u0438\u044E\u043B\u044F \u2014 \u0441 \u0434\u043D\u0451\u043C \u0440\u043E\u0436\u0434\u0435\u043D\u0438\u044F, \u0413\u0430\u0440\u0440\u0438! \u0425\u0430\u0433\u0440\u0438\u0434 \u0443\u0436\u0435 \u043D\u0435\u0441\u0451\u0442 \u0442\u043E\u0440\u0442 (\u0441\u043B\u0435\u0433\u043A\u0430 \u043F\u043E\u043C\u044F\u0442\u044B\u0439)."
+  eggBirthday: "31 \u0438\u044E\u043B\u044F \u2014 \u0441 \u0434\u043D\u0451\u043C \u0440\u043E\u0436\u0434\u0435\u043D\u0438\u044F, \u0413\u0430\u0440\u0440\u0438! \u0425\u0430\u0433\u0440\u0438\u0434 \u0443\u0436\u0435 \u043D\u0435\u0441\u0451\u0442 \u0442\u043E\u0440\u0442 (\u0441\u043B\u0435\u0433\u043A\u0430 \u043F\u043E\u043C\u044F\u0442\u044B\u0439).",
+  mapTitle: "\u041A\u0430\u0440\u0442\u0430 \u041C\u0430\u0440\u043E\u0434\u0451\u0440\u043E\u0432",
+  commandMapOpen: "\u041A\u0430\u0440\u0442\u0430 \u041C\u0430\u0440\u043E\u0434\u0451\u0440\u043E\u0432: \u0433\u0434\u0435 \u044F",
+  commandMapRoute: "\u041A\u0430\u0440\u0442\u0430 \u041C\u0430\u0440\u043E\u0434\u0451\u0440\u043E\u0432: \u043F\u0440\u043E\u043B\u043E\u0436\u0438\u0442\u044C \u043F\u0443\u0442\u044C \u043A \u0437\u0430\u043C\u0435\u0442\u043A\u0435\u2026",
+  commandMapNext: "\u041A\u0430\u0440\u0442\u0430 \u041C\u0430\u0440\u043E\u0434\u0451\u0440\u043E\u0432: \u0441\u043B\u0435\u0434\u0443\u044E\u0449\u0438\u0439 \u0448\u0430\u0433",
+  mapEmpty: "\u041E\u0442\u043A\u0440\u043E\u0439\u0442\u0435 \u0437\u0430\u043C\u0435\u0442\u043A\u0443 \u2014 \u0438 \u043A\u0430\u0440\u0442\u0430 \u043F\u043E\u043A\u0430\u0436\u0435\u0442, \u0433\u0434\u0435 \u0432\u044B \u0438 \u043A\u0443\u0434\u0430 \u0432\u0435\u0434\u0443\u0442 \u0441\u0441\u044B\u043B\u043A\u0438.",
+  mapHere: "\u0432\u044B \u0437\u0434\u0435\u0441\u044C",
+  mapLonely: "\u0421\u044E\u0434\u0430 \u043D\u0435 \u0432\u0435\u0434\u0451\u0442 \u043D\u0438 \u043E\u0434\u0438\u043D \u0442\u0430\u0439\u043D\u044B\u0439 \u0445\u043E\u0434: \u0443 \u0437\u0430\u043C\u0435\u0442\u043A\u0438 \u043D\u0435\u0442 \u043D\u0438 \u0441\u0441\u044B\u043B\u043E\u043A, \u043D\u0438 \u043E\u0431\u0440\u0430\u0442\u043D\u044B\u0445 \u0441\u0441\u044B\u043B\u043E\u043A.",
+  mapHidden: "\u0438 \u0435\u0449\u0451 {0}",
+  mapLegendLink: "\u0441\u0441\u044B\u043B\u043A\u0430",
+  mapLegendBacklink: "\u043E\u0431\u0440\u0430\u0442\u043D\u0430\u044F \u0441\u0441\u044B\u043B\u043A\u0430",
+  mapLegendTag: "\u043E\u0431\u0449\u0438\u0439 \u0442\u0435\u0433",
+  mapTagHint: "\u0442\u0435\u0433, \u043A\u043B\u0438\u043A \u2014 \u0432\u0441\u0435 \u0437\u0430\u043C\u0435\u0442\u043A\u0438 \u0441 \u043D\u0438\u043C",
+  mapRouteButton: "\u041F\u0440\u043E\u043B\u043E\u0436\u0438\u0442\u044C \u043F\u0443\u0442\u044C\u2026",
+  mapRoutePlaceholder: "\u041A\u0443\u0434\u0430 \u0438\u0434\u0451\u043C?",
+  mapRouteTitle: "\u041F\u0443\u0442\u044C \u043A \xAB{0}\xBB",
+  mapRouteSteps: "\u0428\u0430\u0433\u043E\u0432: {0}",
+  mapRerouted: "\u0432\u044B \u0441\u0432\u0435\u0440\u043D\u0443\u043B\u0438 \u0441 \u043F\u0443\u0442\u0438, \u0432\u043E\u0442 \u043D\u043E\u0432\u044B\u0439",
+  mapStepLink: "\u0441\u0441\u044B\u043B\u043A\u0430 \u0432 \u0442\u0435\u043A\u0441\u0442\u0435",
+  mapStepBacklink: "\u043E\u0431\u0440\u0430\u0442\u043D\u0430\u044F \u0441\u0441\u044B\u043B\u043A\u0430: \u0432 \u0442\u0435\u043A\u0441\u0442\u0435 \u0435\u0451 \u043D\u0435\u0442",
+  mapStepTag: "\u043E\u0431\u0449\u0438\u0439 \u0442\u0435\u0433 {0}",
+  mapNext: "\u0421\u043B\u0435\u0434\u0443\u044E\u0449\u0438\u0439 \u0448\u0430\u0433",
+  mapClear: "\u0421\u0431\u0440\u043E\u0441\u0438\u0442\u044C",
+  mapLost: "\u041E\u0442\u0441\u044E\u0434\u0430 \u043A \xAB{0}\xBB \u0442\u0430\u0439\u043D\u043E\u0433\u043E \u0445\u043E\u0434\u0430 \u043D\u0435\u0442.",
+  mapNoPath: "\u041A \xAB{0}\xBB \u0442\u0430\u0439\u043D\u043E\u0433\u043E \u0445\u043E\u0434\u0430 \u043D\u0435\u0442: \u0437\u0430\u043C\u0435\u0442\u043A\u0438 \u043D\u0435 \u0441\u0432\u044F\u0437\u0430\u043D\u044B \u0441\u0441\u044B\u043B\u043A\u0430\u043C\u0438.",
+  mapNoNote: "\u0421\u043D\u0430\u0447\u0430\u043B\u0430 \u043E\u0442\u043A\u0440\u043E\u0439\u0442\u0435 \u0437\u0430\u043C\u0435\u0442\u043A\u0443: \u043A\u0430\u0440\u0442\u0435 \u043D\u0443\u0436\u043D\u043E \u0437\u043D\u0430\u0442\u044C, \u0433\u0434\u0435 \u0432\u044B.",
+  mapArrived: "\u0412\u044B \u043D\u0430 \u043C\u0435\u0441\u0442\u0435: \xAB{0}\xBB. \u0428\u0430\u043B\u043E\u0441\u0442\u044C \u0443\u0434\u0430\u043B\u0430\u0441\u044C!",
+  mapFootprints: "\u0412\u0430\u0448\u0438 \u0441\u043B\u0435\u0434\u044B"
 };
 function createTranslator(language) {
   const dict = language.toLowerCase().startsWith("ru") ? ru : en;
@@ -1063,8 +1121,601 @@ var GestureInput = class {
   }
 };
 
-// src/modals.ts
+// src/marauders.ts
 var import_obsidian = require("obsidian");
+
+// src/map.ts
+var isNote = (path) => path.endsWith(".md");
+function isTag(id) {
+  return id.startsWith("#") && !isNote(id);
+}
+function noteName(path) {
+  if (isTag(path)) return path;
+  return path.slice(path.lastIndexOf("/") + 1).replace(/\.md$/, "");
+}
+function noteFolder(path) {
+  if (isTag(path)) return "";
+  const i = path.lastIndexOf("/");
+  return i < 0 ? "" : path.slice(0, i);
+}
+var collator = new Intl.Collator();
+var byName = (a, b) => collator.compare(noteName(a), noteName(b)) || collator.compare(a, b);
+var LinkGraph = class {
+  /**
+   * Вложения (картинки, PDF) в граф не попадают: через общую картинку заметки не связаны.
+   * Теги сравниваются без учёта регистра, как в Obsidian; на карте — написание из первой заметки.
+   */
+  constructor(links, tags = {}) {
+    this.out = /* @__PURE__ */ new Map();
+    this.in = /* @__PURE__ */ new Map();
+    /** Заметка → её теги и тег → его заметки. */
+    this.tagged = /* @__PURE__ */ new Map();
+    for (const [from, targets] of Object.entries(links)) {
+      if (!isNote(from)) continue;
+      for (const to of Object.keys(targets ?? {})) {
+        if (to === from || !isNote(to)) continue;
+        link(this.out, from, to);
+        link(this.in, to, from);
+      }
+    }
+    const ids = /* @__PURE__ */ new Map();
+    for (const [path, list] of Object.entries(tags)) {
+      if (!isNote(path)) continue;
+      for (const raw of list ?? []) {
+        const tag = raw.startsWith("#") ? raw : `#${raw}`;
+        if (tag.length < 2) continue;
+        const key = tag.toLowerCase();
+        if (!ids.has(key)) ids.set(key, tag);
+        link(this.tagged, path, ids.get(key));
+        link(this.tagged, ids.get(key), path);
+      }
+    }
+  }
+  passage(from, to) {
+    if (this.tagged.get(from)?.has(to)) return "tag";
+    const forward = this.out.get(from)?.has(to) ?? false;
+    const back = this.in.get(from)?.has(to) ?? false;
+    return forward && back ? "both" : forward ? "link" : back ? "backlink" : null;
+  }
+  /**
+   * Соседи: сначала куда ведут ссылки из текста, потом откуда ссылаются сюда, потом теги;
+   * внутри — по имени. У тега соседи — заметки с этим тегом.
+   */
+  neighbors(path) {
+    const out = [...this.out.get(path) ?? []].sort(byName);
+    const back = [...this.in.get(path) ?? []].filter((p) => !this.out.get(path)?.has(p)).sort(byName);
+    const tags = [...this.tagged.get(path) ?? []].sort(byName);
+    return [...out, ...back, ...tags].map((p) => ({ path: p, passage: this.passage(path, p) }));
+  }
+  degree(path) {
+    const out = this.out.get(path);
+    let n = (out?.size ?? 0) + (this.tagged.get(path)?.size ?? 0);
+    for (const p of this.in.get(path) ?? []) if (!out?.has(p)) n++;
+    return n;
+  }
+  /**
+   * Кратчайший путь по ссылкам в обе стороны и через теги: обратная ссылка и общий тег — тоже тайные ходы.
+   * При равной длине предпочитаются ссылки из текста — по ним проще идти.
+   * Возвращает узлы от from до to включительно (теги — как промежуточные) или null, если хода нет.
+   */
+  route(from, to) {
+    if (from === to) return [from];
+    const prev = /* @__PURE__ */ new Map([[from, ""]]);
+    let layer = [from];
+    while (layer.length) {
+      const next = [];
+      for (const node of layer) {
+        for (const { path } of this.neighbors(node)) {
+          if (prev.has(path)) continue;
+          prev.set(path, node);
+          if (path === to) {
+            const route = [to];
+            for (let p = node; p; p = prev.get(p)) route.unshift(p);
+            return route;
+          }
+          next.push(path);
+        }
+      }
+      layer = next;
+    }
+    return null;
+  }
+};
+function link(map, from, to) {
+  let set = map.get(from);
+  if (!set) map.set(from, set = /* @__PURE__ */ new Set());
+  set.add(to);
+}
+function nextNote(steps) {
+  return steps.slice(1).find((p) => !isTag(p)) ?? null;
+}
+function routeSteps(graph, steps) {
+  const out = [];
+  steps.forEach((path, i) => {
+    if (isTag(path)) return;
+    const prev = steps[i - 1];
+    if (prev === void 0) out.push({ path, passage: null, tag: null });
+    else if (isTag(prev)) out.push({ path, passage: "tag", tag: prev });
+    else out.push({ path, passage: graph.passage(prev, path), tag: null });
+  });
+  return out;
+}
+function followRoute(graph, route, current) {
+  if (current === route.target) return { route: null, status: "arrived" };
+  const i = route.steps?.indexOf(current) ?? -1;
+  if (i >= 0) return { route: { ...route, steps: route.steps.slice(i) }, status: "onRoute" };
+  const steps = graph.route(current, route.target);
+  return { route: { ...route, steps }, status: steps ? "rerouted" : "lost" };
+}
+var FOOTPRINTS_MAX = 12;
+function addFootprint(footprints, path, max = FOOTPRINTS_MAX) {
+  return [path, ...footprints.filter((p) => p !== path)].slice(0, max);
+}
+var MAP_RINGS = { ring1: { rx: 70, ry: 98 }, ring2: { rx: 122, ry: 150 } };
+var MAP_LIMITS = { ring1: 12, ring2: 16 };
+function layoutMap(graph, center, route = [], limits = MAP_LIMITS) {
+  const nodes = [{ path: center, x: 0, y: 0, ring: 0, parent: null, passage: null }];
+  const all = graph.neighbors(center);
+  const first = route[0] === center ? route[1] : void 0;
+  const isFirst = (n) => Number(n.path === first);
+  const tagFirst = (n) => Number(isTag(n.path));
+  const ordered = all.map((n, i) => ({ ...n, i, degree: graph.degree(n.path) })).sort((a, b) => isFirst(b) - isFirst(a) || tagFirst(b) - tagFirst(a) || b.degree - a.degree || a.i - b.i).slice(0, limits.ring1).sort((a, b) => isFirst(b) - isFirst(a) || a.i - b.i);
+  const taken = /* @__PURE__ */ new Set([center, ...ordered.map((n) => n.path)]);
+  const step = Math.PI * 2 / Math.max(ordered.length, 1);
+  const children = /* @__PURE__ */ new Map();
+  let budget = limits.ring2;
+  const perParent = Math.min(3, Math.max(1, Math.ceil(limits.ring2 / Math.max(ordered.length, 1))));
+  const second = first ? route[2] : void 0;
+  for (const n of ordered) {
+    const isSecond = (k) => Number(n.path === first && k.path === second);
+    const kids = graph.neighbors(n.path).filter((k) => !taken.has(k.path)).sort((a, b) => isSecond(b) - isSecond(a));
+    const pick = kids.slice(0, Math.min(perParent, budget));
+    for (const k of pick) taken.add(k.path);
+    budget -= pick.length;
+    children.set(n.path, pick);
+  }
+  ordered.forEach((n, i) => {
+    const angle = -Math.PI / 2 + i * step;
+    nodes.push({ path: n.path, ...ellipse(MAP_RINGS.ring1, angle), ring: 1, parent: center, passage: n.passage });
+    const kids = children.get(n.path) ?? [];
+    const spread = Math.min(step * 0.7, 0.8);
+    kids.forEach((k, j) => {
+      const a = kids.length > 1 ? angle - spread / 2 + spread * j / (kids.length - 1) : angle;
+      const inset = j % 2 ? 10 : 0;
+      const ring = { rx: MAP_RINGS.ring2.rx - inset, ry: MAP_RINGS.ring2.ry - inset };
+      nodes.push({ path: k.path, ...ellipse(ring, a), ring: 2, parent: n.path, passage: k.passage });
+    });
+  });
+  return { nodes, hidden: all.length - ordered.length };
+}
+function ellipse({ rx, ry }, angle) {
+  return { x: round(Math.cos(angle) * rx), y: round(Math.sin(angle) * ry) };
+}
+var round = (v) => Math.round(v * 10) / 10;
+function footsteps(a, b, spacing = 15, margin = 14) {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const len = Math.hypot(dx, dy);
+  const count = Math.floor((len - margin * 2) / spacing);
+  if (count < 1) return [];
+  const ux = dx / len;
+  const uy = dy / len;
+  const angle = round(Math.atan2(dy, dx) * 180 / Math.PI + 90);
+  const start = (len - (count - 1) * spacing) / 2;
+  return Array.from({ length: count }, (_, i) => {
+    const d = start + i * spacing;
+    const side = i % 2 ? 3.5 : -3.5;
+    return { x: round(a.x + ux * d - uy * side), y: round(a.y + uy * d + ux * side), angle };
+  });
+}
+
+// src/marauders.ts
+var MAP_VIEW = "hp-marauders-map";
+var SVG_NS2 = "http://www.w3.org/2000/svg";
+var RESTRICTED = /(^|\/)(Restricted Section|Запретная секция)\//;
+var LABEL_MAX = 14;
+var MaraudersMap = class {
+  constructor(plugin) {
+    this.plugin = plugin;
+    this.route = null;
+    /** Что случилось с маршрутом при последнем переходе: на карте пишется «путь перестроен». */
+    this.routeStatus = null;
+    this.footprints = [];
+    this.cachedGraph = null;
+    /** С тегами ли построен граф: настройка могла поменяться. */
+    this.graphTags = false;
+  }
+  get app() {
+    return this.plugin.app;
+  }
+  get t() {
+    return this.plugin.t;
+  }
+  load() {
+    const { plugin, app, t } = this;
+    plugin.registerView(MAP_VIEW, (leaf) => new MaraudersMapView(leaf, this));
+    plugin.registerHoverLinkSource(MAP_VIEW, { display: t("mapTitle"), defaultMod: true });
+    plugin.addRibbonIcon("footprints", t("mapTitle"), () => void this.reveal());
+    plugin.addCommand({ id: "marauders-map", name: t("commandMapOpen"), callback: () => void this.reveal() });
+    plugin.addCommand({ id: "marauders-route", name: t("commandMapRoute"), callback: () => this.planRoute() });
+    plugin.addCommand({
+      id: "marauders-next",
+      name: t("commandMapNext"),
+      checkCallback: (checking) => {
+        if (!this.nextStep) return false;
+        if (!checking) this.goNext();
+        return true;
+      }
+    });
+    plugin.registerEvent(app.workspace.on("file-open", (file) => this.onFileOpen(file)));
+    plugin.registerEvent(app.workspace.on("active-leaf-change", () => this.refresh()));
+    plugin.registerEvent(app.metadataCache.on("resolved", () => {
+      this.cachedGraph = null;
+      this.refresh();
+    }));
+    plugin.registerEvent(app.vault.on("rename", (file, oldPath) => this.onRename(file.path, oldPath)));
+    plugin.registerEvent(app.vault.on("delete", (file) => this.onDelete(file.path)));
+    app.workspace.onLayoutReady(() => {
+      const here = this.here();
+      if (here) this.footprints = addFootprint(this.footprints, here);
+      this.refresh();
+    });
+  }
+  get graph() {
+    const tags = this.plugin.settings.mapTags;
+    if (!this.cachedGraph || this.graphTags !== tags) {
+      this.graphTags = tags;
+      this.cachedGraph = new LinkGraph(this.app.metadataCache.resolvedLinks, tags ? this.tags() : {});
+    }
+    return this.cachedGraph;
+  }
+  /** Теги всех заметок: из текста и из свойств (frontmatter). */
+  tags() {
+    const { vault, metadataCache } = this.app;
+    const tags = {};
+    for (const file of vault.getMarkdownFiles()) {
+      const cache = metadataCache.getFileCache(file);
+      const list = cache ? (0, import_obsidian.getAllTags)(cache) : null;
+      if (list?.length) tags[file.path] = list;
+    }
+    return tags;
+  }
+  /** Включили или выключили связи по тегам: граф заново, маршрут — тоже. */
+  settingsChanged() {
+    if (this.plugin.settings.mapTags === this.graphTags) return;
+    const here = this.here();
+    if (this.route && here) {
+      const steps = this.graph.route(here, this.route.target);
+      this.route = { ...this.route, steps };
+      this.routeStatus = steps ? null : "lost";
+    }
+    this.refresh();
+  }
+  /** Открытая заметка (последняя, если сейчас в фокусе боковая панель). */
+  here() {
+    const file = this.app.workspace.getActiveFile();
+    return file && file.extension === "md" ? file.path : null;
+  }
+  get nextStep() {
+    const steps = this.route?.steps;
+    return steps && steps[0] === this.here() ? nextNote(steps) : null;
+  }
+  async reveal() {
+    const { workspace } = this.app;
+    let leaf = workspace.getLeavesOfType(MAP_VIEW)[0];
+    if (!leaf) {
+      const right = workspace.getRightLeaf(false);
+      if (!right) return;
+      await right.setViewState({ type: MAP_VIEW, active: true });
+      leaf = right;
+    }
+    await workspace.revealLeaf(leaf);
+  }
+  /** «Шалость удалась»: карта стирается. */
+  close() {
+    this.app.workspace.detachLeavesOfType(MAP_VIEW);
+  }
+  open(path, evt) {
+    if (isTag(path)) {
+      this.searchTag(path);
+      return;
+    }
+    const file = this.app.vault.getAbstractFileByPath(path);
+    if (!(file instanceof import_obsidian.TFile)) return;
+    void this.app.workspace.getLeaf(evt ? import_obsidian.Keymap.isModEvent(evt) : false).openFile(file);
+  }
+  /** Тег на карте: все заметки с ним — в поиске Obsidian. API поиска не публичное. */
+  searchTag(tag) {
+    const app = this.app;
+    app.internalPlugins?.getPluginById?.("global-search")?.instance?.openGlobalSearch?.(`tag:${tag}`);
+  }
+  planRoute() {
+    const here = this.here();
+    if (!here) {
+      new import_obsidian.Notice(this.t("mapNoNote"));
+      return;
+    }
+    new RouteModal(this.app, this.t, here, (file) => this.setRoute(here, file.path)).open();
+  }
+  setRoute(from, to) {
+    const steps = this.graph.route(from, to);
+    if (!steps) {
+      new import_obsidian.Notice(this.t("mapNoPath", noteName(to)));
+      return;
+    }
+    this.route = { target: to, steps };
+    this.routeStatus = null;
+    this.refresh();
+    void this.reveal();
+  }
+  clearRoute() {
+    this.route = null;
+    this.routeStatus = null;
+    this.refresh();
+  }
+  goNext() {
+    const next = this.nextStep;
+    if (next) this.open(next);
+  }
+  refresh() {
+    for (const leaf of this.app.workspace.getLeavesOfType(MAP_VIEW)) {
+      if (leaf.view instanceof MaraudersMapView) leaf.view.render();
+    }
+  }
+  onFileOpen(file) {
+    if (!file || file.extension !== "md") return;
+    this.footprints = addFootprint(this.footprints, file.path);
+    if (this.route) {
+      const { route, status } = followRoute(this.graph, this.route, file.path);
+      if (status === "arrived") new import_obsidian.Notice(this.t("mapArrived", noteName(this.route.target)));
+      this.route = route;
+      this.routeStatus = route ? status : null;
+    }
+    this.refresh();
+  }
+  onRename(path, oldPath) {
+    const rename = (p) => p === oldPath ? path : p;
+    this.footprints = this.footprints.map(rename);
+    if (this.route) this.route = { target: rename(this.route.target), steps: this.route.steps?.map(rename) ?? null };
+    this.refresh();
+  }
+  onDelete(path) {
+    this.footprints = this.footprints.filter((p) => p !== path);
+    if (this.route?.target === path) this.route = null;
+    this.refresh();
+  }
+};
+var MaraudersMapView = class extends import_obsidian.ItemView {
+  constructor(leaf, map) {
+    super(leaf);
+    this.map = map;
+    this.hoverPopover = null;
+    /** Что нарисовано сейчас: карта перерисовывается, только если что-то поменялось. */
+    this.drawn = "";
+  }
+  getViewType() {
+    return MAP_VIEW;
+  }
+  getDisplayText() {
+    return this.map.t("mapTitle");
+  }
+  getIcon() {
+    return "footprints";
+  }
+  async onOpen() {
+    this.contentEl.addClass("hp-marauders");
+    this.render();
+  }
+  async onClose() {
+    this.contentEl.empty();
+    this.drawn = "";
+  }
+  render() {
+    const { map, contentEl } = this;
+    const here = map.here();
+    const route = map.route;
+    const steps = here && route?.steps && route.steps[0] === here ? route.steps : [];
+    const layout = here ? layoutMap(map.graph, here, steps) : null;
+    const footprints = map.footprints.filter((p) => p !== here).slice(0, FOOTPRINTS_MAX - 4);
+    const state = JSON.stringify([here, layout, route, map.routeStatus, footprints]);
+    if (state === this.drawn) return;
+    this.drawn = state;
+    contentEl.empty();
+    const { t } = map;
+    const head = contentEl.createDiv({ cls: "hp-marauders-head" });
+    head.createDiv({ cls: "hp-marauders-title", text: t("mapTitle") });
+    head.createDiv({ cls: "hp-marauders-motto", text: t("eggMap1") });
+    if (!here || !layout) {
+      contentEl.createEl("p", { cls: "hp-marauders-empty", text: t("mapEmpty") });
+      this.renderFootprints(footprints);
+      return;
+    }
+    const parchment = contentEl.createDiv({ cls: "hp-marauders-parchment" });
+    this.renderMap(parchment, layout.nodes, steps, new Set(footprints), route?.target ?? null);
+    if (layout.hidden > 0) parchment.createDiv({ cls: "hp-marauders-hidden", text: t("mapHidden", layout.hidden) });
+    if (layout.nodes.length === 1) contentEl.createEl("p", { cls: "hp-marauders-empty", text: t("mapLonely") });
+    else {
+      const legend = contentEl.createDiv({ cls: "hp-marauders-legend" });
+      legend.createSpan({ cls: "hp-legend-link", text: t("mapLegendLink") });
+      legend.createSpan({ cls: "hp-legend-backlink", text: t("mapLegendBacklink") });
+      if (layout.nodes.some((n) => isTag(n.path))) legend.createSpan({ cls: "hp-legend-tag", text: t("mapLegendTag") });
+    }
+    this.renderRoute(here);
+    this.renderFootprints(footprints);
+  }
+  renderMap(parent, nodes, steps, visited, target) {
+    const svg = svgEl(parent, "svg", { viewBox: "-180 -176 360 352", class: "hp-marauders-svg", role: "group", "aria-label": this.map.t("mapTitle") });
+    const at = new Map(nodes.map((n) => [n.path, n]));
+    const edges = svgEl(svg, "g", { class: "hp-map-edges" });
+    const trail = svgEl(svg, "g", { class: "hp-map-steps", "aria-hidden": "true" });
+    const dots = svgEl(svg, "g", { class: "hp-map-nodes" });
+    const onRoute = (a, b) => steps.indexOf(b) === steps.indexOf(a) + 1 && steps.includes(a);
+    for (const node of nodes) {
+      const from = node.parent ? at.get(node.parent) : null;
+      if (!from) continue;
+      const mx = (from.x + node.x) / 2 - (node.y - from.y) * 0.08;
+      const my = (from.y + node.y) / 2 + (node.x - from.x) * 0.08;
+      svgEl(edges, "path", {
+        d: `M${from.x} ${from.y}Q${round2(mx)} ${round2(my)} ${node.x} ${node.y}`,
+        class: `hp-map-edge is-${node.passage}` + (onRoute(from.path, node.path) ? " is-route" : "")
+      });
+    }
+    let i = 0;
+    for (let s = 1; s < steps.length; s++) {
+      const a = at.get(steps[s - 1]);
+      const b = at.get(steps[s]);
+      if (!a || !b) break;
+      for (const f of footsteps(a, b)) {
+        const foot = svgEl(trail, "ellipse", { cx: f.x, cy: f.y, rx: 2.3, ry: 3.8, transform: `rotate(${f.angle} ${f.x} ${f.y})` });
+        foot.style.setProperty("--i", String(i++));
+      }
+    }
+    for (const node of nodes) this.renderNode(dots, node, steps, visited, target);
+  }
+  renderNode(parent, node, steps, visited, target) {
+    const { t } = this.map;
+    const name = noteName(node.path);
+    const tag = isTag(node.path);
+    const cls = ["hp-map-node", `ring-${node.ring}`];
+    if (node.ring === 0) cls.push("is-here");
+    if (tag) cls.push("is-tag");
+    if (nextNote(steps) === node.path) cls.push("is-next");
+    if (steps.includes(node.path) && node.ring > 0) cls.push("is-route");
+    if (node.path === target) cls.push("is-target");
+    if (visited.has(node.path)) cls.push("is-visited");
+    if (RESTRICTED.test(node.path)) cls.push("is-restricted");
+    const label = node.ring === 0 ? `${name} \u2014 ${t("mapHere")}` : tag ? `${name} \u2014 ${t("mapTagHint")}` : `${name}${passageHint(t, node.passage)}`;
+    const g = svgEl(parent, "g", {
+      class: cls.join(" "),
+      "data-path": node.path,
+      transform: `translate(${node.x} ${node.y})`,
+      tabindex: 0,
+      role: "link",
+      "aria-label": label
+    });
+    svgEl(g, "title").textContent = noteFolder(node.path) ? `${label}
+${noteFolder(node.path)}` : label;
+    svgEl(g, "circle", { class: "hp-map-hit", r: node.ring === 2 ? 9 : 13 });
+    const r = [9, 6.5, 4.5][node.ring];
+    if (tag) svgEl(g, "path", { class: "hp-map-dot", d: `M0 ${-r - 1.5}L${r + 1.5} 0L0 ${r + 1.5}L${-r - 1.5} 0Z` });
+    else svgEl(g, "circle", { class: "hp-map-dot", r });
+    const text = svgEl(g, "text", { class: "hp-map-label" });
+    text.textContent = name.length > LABEL_MAX ? name.slice(0, LABEL_MAX - 1) + "\u2026" : name;
+    placeLabel(text, node);
+    if (node.ring === 0) svgEl(g, "text", { class: "hp-map-here", y: 42, "text-anchor": "middle" }).textContent = t("mapHere");
+    const go = (e) => {
+      if (node.ring > 0) this.map.open(node.path, e);
+    };
+    g.addEventListener("click", go);
+    g.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      e.preventDefault();
+      go(e);
+    });
+    if (!tag) g.addEventListener("mouseover", (event) => {
+      this.app.workspace.trigger("hover-link", {
+        event,
+        source: MAP_VIEW,
+        hoverParent: this,
+        targetEl: g,
+        linktext: node.path,
+        sourcePath: this.map.here() ?? ""
+      });
+    });
+  }
+  renderRoute(here) {
+    const { map } = this;
+    const { t } = map;
+    const box = this.contentEl.createDiv({ cls: "hp-marauders-route" });
+    const route = map.route;
+    if (!route) {
+      box.createEl("button", { cls: "mod-cta hp-map-plan", text: t("mapRouteButton") }).addEventListener("click", () => map.planRoute());
+      return;
+    }
+    box.createDiv({ cls: "hp-marauders-heading", text: t("mapRouteTitle", noteName(route.target)) });
+    if (!route.steps) {
+      box.createEl("p", { cls: "hp-marauders-note", text: t("mapLost", noteName(route.target)) });
+    } else {
+      const steps = routeSteps(map.graph, route.steps);
+      const note = map.routeStatus === "rerouted" ? t("mapRerouted") : "";
+      box.createEl("p", { cls: "hp-marauders-note", text: [t("mapRouteSteps", steps.length - 1), note].filter(Boolean).join(" \xB7 ") });
+      const list = box.createEl("ol", { cls: "hp-marauders-steps" });
+      steps.forEach(({ path, passage, tag }, i) => {
+        const li = list.createEl("li", { cls: i === 0 ? "is-here" : i === 1 ? "is-next" : "" });
+        const btn = li.createEl("button", { cls: "hp-map-step", attr: { type: "button", "data-path": path } });
+        btn.createSpan({ cls: "hp-map-step-name", text: noteName(path) });
+        const hint = i === 0 ? t("mapHere") : tag ? t("mapStepTag", tag) : t(passage === "backlink" ? "mapStepBacklink" : "mapStepLink");
+        btn.createSpan({ cls: "hp-map-step-hint", text: hint });
+        if (i > 0) btn.addEventListener("click", (e) => map.open(path, e));
+        else btn.disabled = true;
+      });
+    }
+    const actions = box.createDiv({ cls: "hp-marauders-actions" });
+    if (route.steps && route.steps[0] === here && nextNote(route.steps)) {
+      actions.createEl("button", { cls: "mod-cta hp-map-next", text: t("mapNext") }).addEventListener("click", () => map.goNext());
+    }
+    actions.createEl("button", { cls: "hp-map-plan", text: t("mapRouteButton") }).addEventListener("click", () => map.planRoute());
+    actions.createEl("button", { cls: "hp-map-clear", text: t("mapClear") }).addEventListener("click", () => map.clearRoute());
+  }
+  renderFootprints(footprints) {
+    if (!footprints.length) return;
+    const box = this.contentEl.createDiv({ cls: "hp-marauders-footprints" });
+    box.createDiv({ cls: "hp-marauders-heading", text: this.map.t("mapFootprints") });
+    for (const path of footprints) {
+      const btn = box.createEl("button", { cls: "hp-map-footprint", text: noteName(path), attr: { type: "button", "data-path": path } });
+      btn.addEventListener("click", (e) => this.map.open(path, e));
+    }
+  }
+};
+var RouteModal = class extends import_obsidian.FuzzySuggestModal {
+  constructor(app, t, here, onChoose) {
+    super(app);
+    this.here = here;
+    this.onChoose = onChoose;
+    this.setPlaceholder(t("mapRoutePlaceholder"));
+  }
+  getItems() {
+    return this.app.vault.getMarkdownFiles().filter((f) => f.path !== this.here);
+  }
+  getItemText(file) {
+    return file.path.replace(/\.md$/, "");
+  }
+  onChooseItem(file) {
+    this.onChoose(file);
+  }
+};
+function passageHint(t, passage) {
+  return passage === "backlink" ? ` (${t("mapLegendBacklink")})` : "";
+}
+function placeLabel(text, node) {
+  if (node.ring === 0) {
+    text.setAttribute("y", "27");
+    text.setAttribute("text-anchor", "middle");
+    return;
+  }
+  const len = Math.hypot(node.x, node.y) || 1;
+  const cos = node.x / len;
+  const sin = node.y / len;
+  if (Math.abs(cos) < 0.3) {
+    text.setAttribute("y", String(sin < 0 ? -11 : 20));
+    text.setAttribute("text-anchor", "middle");
+    return;
+  }
+  const right = node.ring === 2 ? cos < 0 : cos > 0;
+  text.setAttribute("x", String(right ? 10 : -10));
+  text.setAttribute("y", "5");
+  text.setAttribute("text-anchor", right ? "start" : "end");
+}
+var round2 = (v) => Math.round(v * 10) / 10;
+function svgEl(parent, tag, attrs = {}) {
+  const el = document.createElementNS(SVG_NS2, tag);
+  for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, String(v));
+  parent.appendChild(el);
+  return el;
+}
+
+// src/modals.ts
+var import_obsidian2 = require("obsidian");
 
 // src/wands.ts
 var WOODS = {
@@ -1320,7 +1971,7 @@ function wandCursorCss(spec) {
 }
 
 // src/modals.ts
-var SortingHatModal = class extends import_obsidian.Modal {
+var SortingHatModal = class extends import_obsidian2.Modal {
   constructor(app, t, isDark, onSorted) {
     super(app);
     this.t = t;
@@ -1368,7 +2019,7 @@ function wandName(t, wand) {
   const preset = presetOf(wand);
   return preset ? t(`presetWand_${preset}`) : t("shopCustomWand");
 }
-var WandShopModal = class extends import_obsidian.Modal {
+var WandShopModal = class extends import_obsidian2.Modal {
   constructor(app, t, options) {
     super(app);
     this.t = t;
@@ -1393,7 +2044,7 @@ var WandShopModal = class extends import_obsidian.Modal {
       name: stage.createDiv({ cls: "hp-shop-name" }),
       desc: stage.createDiv({ cls: "hp-shop-desc" })
     };
-    new import_obsidian.Setting(contentEl).setName(t("settingWandCursor")).setDesc(t("settingWandCursorDesc")).addToggle((tg) => {
+    new import_obsidian2.Setting(contentEl).setName(t("settingWandCursor")).setDesc(t("settingWandCursorDesc")).addToggle((tg) => {
       this.cursorToggle = tg;
       tg.setValue(this.cursorOn).onChange((value) => this.setCursor(value));
     }).settingEl.addClass("hp-shop-cursor");
@@ -1412,13 +2063,13 @@ var WandShopModal = class extends import_obsidian.Modal {
     this.dropdown(form, "core", t("shopCore"), CORE_IDS.map((id) => [id, t(`core_${id}`)]));
     this.dropdown(form, "handle", t("shopHandle"), HANDLE_IDS.map((id) => [id, t(`handle_${id}`)]));
     this.dropdown(form, "flex", t("shopFlex"), FLEX_IDS.map((id) => [id, t(`flex_${id}`)]));
-    const length = new import_obsidian.Setting(form).setName(t("shopLength"));
+    const length = new import_obsidian2.Setting(form).setName(t("shopLength"));
     this.lengthLabel = length.nameEl.createSpan({ cls: "hp-shop-length" });
     length.addSlider((s) => {
       this.slider = s;
       s.setLimits(LENGTH_MIN, LENGTH_MAX, LENGTH_STEP).setValue(this.wand.length).onChange((value) => this.update({ length: value }));
     });
-    new import_obsidian.Setting(form).addButton((b) => b.setButtonText(t("shopRandom")).onClick(() => this.set(randomWand())));
+    new import_obsidian2.Setting(form).addButton((b) => b.setButtonText(t("shopRandom")).onClick(() => this.set(randomWand())));
     this.refresh();
   }
   onClose() {
@@ -1434,7 +2085,7 @@ var WandShopModal = class extends import_obsidian.Modal {
     this.options.onCursor(on);
   }
   dropdown(container, key, name, options) {
-    new import_obsidian.Setting(container).setName(name).addDropdown((d) => {
+    new import_obsidian2.Setting(container).setName(name).addDropdown((d) => {
       for (const [value, text] of options) d.addOption(value, text);
       d.setValue(this.wand[key]).onChange((value) => this.update({ [key]: value }));
       this.dropdowns.push({ key, control: d });
@@ -1469,7 +2120,7 @@ var WandShopModal = class extends import_obsidian.Modal {
     this.lengthLabel?.setText(` \xB7 ${formatLength(wand.length)}\u2033`);
   }
 };
-var WandModal = class extends import_obsidian.Modal {
+var WandModal = class extends import_obsidian2.Modal {
   constructor(app, t, gestures, onCast) {
     super(app);
     this.t = t;
@@ -1497,7 +2148,7 @@ var WandModal = class extends import_obsidian.Modal {
     this.contentEl.empty();
   }
 };
-var HouseSuggestModal = class extends import_obsidian.FuzzySuggestModal {
+var HouseSuggestModal = class extends import_obsidian2.FuzzySuggestModal {
   constructor(app, t, onChoose) {
     super(app);
     this.t = t;
@@ -1522,7 +2173,7 @@ var HouseSuggestModal = class extends import_obsidian.FuzzySuggestModal {
 };
 
 // src/settings.ts
-var import_obsidian2 = require("obsidian");
+var import_obsidian3 = require("obsidian");
 
 // src/settings-data.ts
 var DEFAULT_SETTINGS = {
@@ -1533,6 +2184,7 @@ var DEFAULT_SETTINGS = {
   wandCursor: true,
   wand: { ...DEFAULT_WAND },
   gestures: true,
+  mapTags: true,
   statusBar: true,
   easterEggs: true,
   points: { gryffindor: 0, slytherin: 0, ravenclaw: 0, hufflepuff: 0 },
@@ -1548,7 +2200,7 @@ function migrateSettings(data) {
 }
 
 // src/settings.ts
-var HpSettingTab = class extends import_obsidian2.PluginSettingTab {
+var HpSettingTab = class extends import_obsidian3.PluginSettingTab {
   constructor(app, plugin) {
     super(app, plugin);
     this.plugin = plugin;
@@ -1590,10 +2242,11 @@ var HpSettingTab = class extends import_obsidian2.PluginSettingTab {
     this.toggle("readableFont", t("settingReadableFont"), t("settingReadableFontDesc"));
     this.toggle("headingFont", t("settingHeadingFont"), t("settingHeadingFontDesc"));
     this.toggle("ornaments", t("settingOrnaments"), t("settingOrnamentsDesc"));
-    const wand = new import_obsidian2.Setting(containerEl).setName(t("settingWand")).setDesc(`${wandName(t, settings.wand)}: ${describeWand(t, settings.wand).toLowerCase()}`).addButton((b) => b.setButtonText(t("buttonWandShop")).onClick(() => this.plugin.openWandShop(() => this.display())));
+    const wand = new import_obsidian3.Setting(containerEl).setName(t("settingWand")).setDesc(`${wandName(t, settings.wand)}: ${describeWand(t, settings.wand).toLowerCase()}`).addButton((b) => b.setButtonText(t("buttonWandShop")).onClick(() => this.plugin.openWandShop(() => this.display())));
     wand.settingEl.addClass("hp-wand-setting");
     wand.infoEl.createDiv({ cls: "hp-wand-current" }).appendChild(svgElement(wandSideSvg(settings.wand, 260, "hp-settings-wand")));
     this.toggle("wandCursor", t("settingWandCursor"), t("settingWandCursorDesc"));
+    this.toggle("mapTags", t("settingMapTags"), t("settingMapTagsDesc"));
     this.toggle("statusBar", t("settingStatusBar"));
     this.toggle("easterEggs", t("settingEasterEggs"), t("settingEasterEggsDesc"));
     this.toggle("gestures", t("settingGestures"), t("settingGesturesDesc"));
@@ -1607,10 +2260,10 @@ var HpSettingTab = class extends import_obsidian2.PluginSettingTab {
       text.createDiv({ cls: "hp-spellbook-name", text: t(`spell_${spell}`) });
       text.createDiv({ cls: "setting-item-description", text: t(`gesture_${spell}`) });
     }
-    new import_obsidian2.Setting(containerEl).setName(t("settingSortingHat")).setDesc(t("settingPoints", t(`house_${settings.house}`), settings.points[settings.house] ?? 0)).addButton((b) => b.setButtonText(t("buttonSortingHat")).setCta().onClick(() => this.plugin.openSortingHat(() => this.display())));
+    new import_obsidian3.Setting(containerEl).setName(t("settingSortingHat")).setDesc(t("settingPoints", t(`house_${settings.house}`), settings.points[settings.house] ?? 0)).addButton((b) => b.setButtonText(t("buttonSortingHat")).setCta().onClick(() => this.plugin.openSortingHat(() => this.display())));
   }
   toggle(key, name, desc) {
-    const setting = new import_obsidian2.Setting(this.containerEl).setName(name);
+    const setting = new import_obsidian3.Setting(this.containerEl).setName(name);
     if (desc) setting.setDesc(desc);
     setting.addToggle((tg) => tg.setValue(this.plugin.settings[key]).onChange(async (value) => {
       this.plugin.settings[key] = value;
@@ -1628,7 +2281,7 @@ function detectLanguage() {
   if (typeof getLanguage2 === "function") return getLanguage2();
   return window.localStorage.getItem("language") || "en";
 }
-var HpThemePlugin = class extends import_obsidian3.Plugin {
+var HpThemePlugin = class extends import_obsidian4.Plugin {
   constructor() {
     super(...arguments);
     this.settings = { ...DEFAULT_SETTINGS };
@@ -1660,6 +2313,8 @@ var HpThemePlugin = class extends import_obsidian3.Plugin {
     }));
     this.addSettingTab(new HpSettingTab(this.app, this));
     this.addRibbonIcon("wand", this.t("ribbonTitle"), (evt) => this.openHouseMenu(evt));
+    this.map = new MaraudersMap(this);
+    this.map.load();
     this.statusEl = this.addStatusBarItem();
     this.statusEl.addClass("hp-status", "mod-clickable");
     this.registerDomEvent(this.statusEl, "click", (evt) => this.openHouseMenu(evt));
@@ -1710,6 +2365,7 @@ var HpThemePlugin = class extends import_obsidian3.Plugin {
   async saveSettings() {
     await this.saveData(this.settings);
     this.applyTheme();
+    this.map?.settingsChanged();
   }
   /** Палочка меняется сразу, а сохраняется с задержкой: в лавке её крутят ползунком. */
   setWand(wand) {
@@ -1773,7 +2429,7 @@ var HpThemePlugin = class extends import_obsidian3.Plugin {
   }
   // ---------- Меню, Шляпа, палочка ----------
   openHouseMenu(evt) {
-    const menu = new import_obsidian3.Menu();
+    const menu = new import_obsidian4.Menu();
     for (const id of HOUSE_IDS) {
       menu.addItem((item) => {
         item.setTitle(this.t(`house_${id}`)).setIcon("shield").setChecked(id === this.settings.house).onClick(() => void this.setHouse(id));
@@ -1786,6 +2442,7 @@ var HpThemePlugin = class extends import_obsidian3.Plugin {
     }
     menu.addSeparator();
     menu.addItem((item) => item.setTitle(this.t("shopTitle")).setIcon("wand").onClick(() => this.openWandShop()));
+    menu.addItem((item) => item.setTitle(this.t("mapTitle")).setIcon("footprints").onClick(() => void this.map.reveal()));
     menu.addItem((item) => item.setTitle(this.t("commandSortingHat")).setIcon("graduation-cap").onClick(() => this.openSortingHat()));
     menu.addItem((item) => item.setTitle(this.t("menuSettings")).setIcon("settings").onClick(() => this.openSettings()));
     menu.showAtMouseEvent(evt);
@@ -1810,12 +2467,12 @@ var HpThemePlugin = class extends import_obsidian3.Plugin {
   openWand() {
     new WandModal(this.app, this.t, this.settings.gestures, (phrase) => {
       if (!this.settings.easterEggs) {
-        new import_obsidian3.Notice(this.t("wandOff"));
+        new import_obsidian4.Notice(this.t("wandOff"));
         return;
       }
       const spell = parseIncantation(phrase);
       if (spell) this.cast(spell);
-      else new import_obsidian3.Notice(this.t("wandFail"));
+      else new import_obsidian4.Notice(this.t("wandFail"));
     }).open();
   }
   openSettings() {
@@ -1838,18 +2495,18 @@ var HpThemePlugin = class extends import_obsidian3.Plugin {
       case "wingardiumLeviosa": {
         const p = at ?? this.effects.pointerPosition;
         this.effects.levitate(p.x, p.y);
-        new import_obsidian3.Notice(this.t("eggLeviosa"));
+        new import_obsidian4.Notice(this.t("eggLeviosa"));
         break;
       }
       case "lumos":
         this.effects.lumos();
         this.setBaseTheme(LIGHT_THEME);
-        new import_obsidian3.Notice(this.t("eggLumos"));
+        new import_obsidian4.Notice(this.t("eggLumos"));
         break;
       case "nox":
         this.effects.nox();
         this.effects.later(() => this.setBaseTheme(DARK_THEME), this.effects.noxSwitchDelay);
-        new import_obsidian3.Notice(this.t("eggNox"));
+        new import_obsidian4.Notice(this.t("eggNox"));
         break;
       case "solemnlySwear":
         if (this.paused) {
@@ -1857,10 +2514,12 @@ var HpThemePlugin = class extends import_obsidian3.Plugin {
           this.applyTheme();
         }
         this.effects.marauders([this.t("eggMap1"), this.t("eggMap2"), this.t("eggMapTitle")]);
+        this.effects.later(() => void this.map.reveal(), 1200);
         break;
       case "mischiefManaged":
         this.effects.inkFade();
-        new import_obsidian3.Notice(this.t("eggMischief"));
+        this.map.close();
+        new import_obsidian4.Notice(this.t("eggMischief"));
         this.effects.later(() => {
           this.paused = true;
           this.applyTheme();
@@ -1876,7 +2535,7 @@ var HpThemePlugin = class extends import_obsidian3.Plugin {
     this.settings.points[house] = (this.settings.points[house] ?? 0) + SNITCH_POINTS;
     this.settings.snitches += 1;
     await this.saveSettings();
-    new import_obsidian3.Notice(this.t("eggSnitch", SNITCH_POINTS, this.t(`house_${house}`)));
+    new import_obsidian4.Notice(this.t("eggSnitch", SNITCH_POINTS, this.t(`house_${house}`)));
   }
   async birthday() {
     const now = /* @__PURE__ */ new Date();
@@ -1885,6 +2544,6 @@ var HpThemePlugin = class extends import_obsidian3.Plugin {
     if (this.settings.birthdayShown === year) return;
     this.settings.birthdayShown = year;
     await this.saveData(this.settings);
-    new import_obsidian3.Notice(this.t("eggBirthday"), 1e4);
+    new import_obsidian4.Notice(this.t("eggBirthday"), 1e4);
   }
 };

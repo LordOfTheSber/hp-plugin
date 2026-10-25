@@ -610,6 +610,344 @@ body.theme-light .hp-trail-core {
   box-shadow: 0 0 8px #ffd54a;
 }
 
+/* ---------- Карта Мародёров (боковая панель) ----------
+   Сама карта — всегда пергамент с чернилами, в любой теме: так выглядит настоящая.
+   Списки под ней — в цветах факультета. */
+
+.hp-marauders {
+  --hp-map-paper: #efe0bc;
+  --hp-map-ink: #4a2e14;
+  --hp-map-ink-soft: #6e4d2a;
+  --hp-map-red: #8e1b12;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: var(--font-ui-small, 13px);
+}
+
+.hp-marauders-head {
+  text-align: center;
+}
+
+.hp-marauders-title {
+  font-family: 'HP Forum', 'HP Literata', Georgia, serif;
+  font-size: 1.45em;
+  color: var(--text-normal);
+}
+
+.hp-marauders-motto {
+  font-family: 'HP Literata', Georgia, serif;
+  font-style: italic;
+  color: var(--text-muted);
+}
+
+.hp-marauders-parchment {
+  position: relative;
+  border-radius: 6px;
+  background-color: var(--hp-map-paper);
+  background-image: radial-gradient(circle at 30% 20%, #f7ecd0, #e9d6a9);
+  box-shadow: inset 0 0 30px rgba(120, 80, 30, 0.28), 0 1px 3px rgba(60, 35, 10, 0.25);
+  color: var(--hp-map-ink);
+}
+
+.hp-marauders-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  font-family: 'HP Literata', Georgia, serif;
+}
+
+.hp-marauders-hidden {
+  position: absolute;
+  right: 8px;
+  bottom: 6px;
+  font-style: italic;
+  color: var(--hp-map-ink-soft);
+}
+
+.hp-map-edge {
+  fill: none;
+  stroke: var(--hp-map-ink);
+  stroke-width: 1.2;
+  stroke-linecap: round;
+  opacity: 0.55;
+}
+
+.hp-map-edge.is-backlink {
+  stroke-dasharray: 3 4;
+}
+
+.hp-map-edge.is-both {
+  stroke-width: 1.8;
+}
+
+/* Через общий тег — точками, как тропинка */
+.hp-map-edge.is-tag {
+  stroke-dasharray: 0.5 4;
+  stroke-width: 2;
+}
+
+.hp-map-edge.is-route {
+  stroke: var(--hp-map-red);
+  opacity: 0.35;
+}
+
+.hp-map-steps ellipse {
+  fill: var(--hp-map-red);
+  animation: hp-map-step 2.6s ease-in-out infinite;
+  animation-delay: calc(var(--i, 0) * 0.16s);
+}
+
+@keyframes hp-map-step {
+  0%, 100% { opacity: 0.25; }
+  30% { opacity: 1; }
+}
+
+.hp-map-node {
+  cursor: var(--cursor, pointer);
+  outline: none;
+}
+
+.hp-map-hit {
+  fill: transparent;
+}
+
+.hp-map-dot {
+  fill: var(--hp-map-paper);
+  stroke: var(--hp-map-ink);
+  stroke-width: 1.5;
+  transition: r 0.15s;
+}
+
+.hp-map-node.is-tag .hp-map-dot {
+  fill: #e6c97a;
+}
+
+.hp-map-node.is-visited .hp-map-dot {
+  fill: var(--hp-map-ink-soft);
+}
+
+.hp-map-node.is-here .hp-map-dot {
+  fill: var(--hp-map-ink);
+  stroke-width: 3;
+  stroke: var(--hp-map-paper);
+  filter: drop-shadow(0 0 2px var(--hp-map-ink));
+}
+
+.hp-map-node.is-route .hp-map-dot,
+.hp-map-node.is-target .hp-map-dot {
+  stroke: var(--hp-map-red);
+  stroke-width: 2;
+}
+
+.hp-map-node.is-next .hp-map-dot {
+  fill: var(--hp-map-red);
+}
+
+.hp-map-node:is(:hover, :focus-visible) .hp-map-dot {
+  stroke: var(--hp-map-red);
+  stroke-width: 2.5;
+}
+
+.hp-map-node.ring-1:is(:hover, :focus-visible) .hp-map-dot { r: 8.5px; }
+.hp-map-node.ring-2:is(:hover, :focus-visible) .hp-map-dot { r: 6px; }
+
+/* Подписи — чернилами с ореолом пергамента, чтобы читались поверх коридоров.
+   По подписи тоже можно кликнуть: клик всплывает к заметке. */
+.hp-map-label,
+.hp-map-here {
+  fill: var(--hp-map-ink);
+  font-size: 14px;
+  font-style: italic;
+  paint-order: stroke;
+  stroke: var(--hp-map-paper);
+  stroke-width: 3.5px;
+  stroke-linejoin: round;
+}
+
+.hp-map-node.is-here .hp-map-label {
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.hp-map-here {
+  font-size: 12px;
+  fill: var(--hp-map-red);
+  letter-spacing: 0.04em;
+}
+
+.hp-map-node:is(.is-route, .is-target) .hp-map-label {
+  fill: var(--hp-map-red);
+}
+
+/* Дальний круг подписывается при наведении — иначе на карте тесно */
+.hp-map-node.ring-2 .hp-map-label {
+  font-size: 13px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.hp-map-node.ring-2:is(:hover, :focus-visible, .is-route, .is-target) .hp-map-label {
+  opacity: 1;
+}
+
+/* Запретная секция и на карте — в тумане */
+.hp-map-node.is-restricted:not(.is-here, .is-target, :hover, :focus-visible) {
+  filter: blur(1.5px);
+  opacity: 0.7;
+}
+
+.hp-marauders-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 16px;
+  color: var(--text-muted);
+}
+
+.hp-marauders-legend > span::before {
+  content: '';
+  display: inline-block;
+  width: 22px;
+  margin-right: 6px;
+  vertical-align: middle;
+  border-top: 2px solid currentColor;
+}
+
+.hp-marauders-legend > .hp-legend-backlink::before {
+  border-top-style: dashed;
+}
+
+.hp-marauders-legend > .hp-legend-tag::before {
+  border-top-style: dotted;
+}
+
+.hp-marauders-empty,
+.hp-marauders-note {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.hp-marauders-heading {
+  margin-bottom: 4px;
+  font-weight: 600;
+  color: var(--text-normal);
+}
+
+.hp-marauders-route,
+.hp-marauders-footprints {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hp-marauders-steps {
+  margin: 4px 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: hp-step;
+}
+
+.hp-marauders-steps > li {
+  position: relative;
+  padding-left: 22px;
+  counter-increment: hp-step;
+}
+
+/* Номер шага, а между шагами — пунктир следов */
+.hp-marauders-steps > li::before {
+  content: counter(hp-step);
+  position: absolute;
+  left: 0;
+  top: 6px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  font-size: 10px;
+  line-height: 16px;
+  text-align: center;
+  background: var(--background-modifier-border);
+  color: var(--text-normal);
+}
+
+.hp-marauders-steps > li:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 7px;
+  top: 24px;
+  bottom: -4px;
+  border-left: 2px dotted var(--text-faint);
+}
+
+.hp-marauders-steps > li.is-here::before {
+  content: '★';
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+
+.hp-marauders-steps > li.is-next::before {
+  outline: 2px solid var(--interactive-accent);
+}
+
+.hp-marauders .hp-map-step,
+.hp-marauders .hp-map-footprint {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  height: auto;
+  padding: 4px 8px;
+  border: 0;
+  border-radius: 5px;
+  background: none;
+  box-shadow: none;
+  color: var(--text-normal);
+  text-align: left;
+  font-size: inherit;
+}
+
+.hp-marauders .hp-map-step:not(:disabled):hover,
+.hp-marauders .hp-map-footprint:hover {
+  background: var(--background-modifier-hover);
+}
+
+.hp-marauders .hp-map-step:disabled {
+  opacity: 1;
+  cursor: default;
+}
+
+.hp-map-step-hint {
+  font-size: 0.92em;
+  color: var(--text-muted);
+}
+
+.hp-marauders-steps > li.is-next .hp-map-step-name {
+  font-weight: 600;
+}
+
+.hp-marauders-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.hp-marauders .hp-map-footprint {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.hp-marauders .hp-map-footprint::before {
+  content: '';
+  flex: none;
+  width: 7px;
+  height: 11px;
+  border-radius: 50% 50% 45% 45%;
+  background: var(--text-faint);
+  transform: rotate(14deg);
+}
+
 /* ---------- Секретные коллауты ---------- */
 
 body.hp-theme .callout:is([data-callout="howler"], [data-callout="громовещатель"]) {
@@ -697,6 +1035,7 @@ body.hp-theme .tree-item:has(> .tree-item-self:is([data-path$="Restricted Sectio
   .hp-hat-img,
   .hp-hat-img .hp-hat-mouth,
   .hp-hat-text.hp-verdict,
+  .hp-map-steps ellipse,
   body.hp-theme .callout[data-callout] {
     animation: none;
   }

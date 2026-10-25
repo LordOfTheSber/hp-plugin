@@ -61,6 +61,8 @@ const store: Record<string, unknown> = JSON.parse(localStorage.getItem('hp-harne
 
 export class Plugin extends Component {
   settingTab: PluginSettingTab | null = null;
+  registerView(type: string, creator: (leaf: WorkspaceLeaf) => ItemView) { this.app.workspace.viewCreators.set(type, creator); }
+  registerHoverLinkSource(_id: string, _info: unknown) {}
   commands: Record<string, { id: string; name: string; callback: () => void }> = {};
   constructor(public app: any, public manifest: any) { super(); }
   async loadData() { return store[this.manifest.id] ?? null; }
@@ -71,12 +73,75 @@ export class Plugin extends Component {
   addSettingTab(tab: PluginSettingTab) { this.settingTab = tab; }
   addRibbonIcon(icon: string, title: string, cb: (e: MouseEvent) => void) {
     const el = document.querySelector('.side-dock-actions')!.createDiv({ cls: 'clickable-icon side-dock-ribbon-action', attr: { 'aria-label': title, 'data-icon': icon } });
-    el.textContent = '✨';
+    el.textContent = ({ wand: '✨', footprints: '👣' } as Record<string, string>)[icon] ?? '•';
     el.addEventListener('click', cb);
     return el;
   }
   addStatusBarItem() { return document.querySelector('.status-bar')!.createDiv({ cls: 'status-bar-item' }); }
-  addCommand(cmd: { id: string; name: string; callback: () => void }) { this.commands[cmd.id] = cmd; return cmd; }
+  addCommand(cmd: { id: string; name: string; callback?: () => void; checkCallback?: (checking: boolean) => boolean | void }) {
+    const run = cmd.callback ?? (() => cmd.checkCallback?.(false));
+    this.commands[cmd.id] = { ...cmd, callback: run };
+    return cmd;
+  }
+}
+
+// ---------- Файлы, панели ----------
+
+export class TFile {
+  basename: string;
+  extension: string;
+  name: string;
+  constructor(public path: string) {
+    this.name = path.slice(path.lastIndexOf('/') + 1);
+    this.extension = this.name.slice(this.name.lastIndexOf('.') + 1);
+    this.basename = this.name.slice(0, -this.extension.length - 1);
+  }
+}
+
+export class Keymap {
+  static isModEvent(e?: MouseEvent | KeyboardEvent | null) { return !!e && (e.ctrlKey || e.metaKey) ? 'tab' : false; }
+}
+
+export class ItemView extends Component {
+  app: any;
+  containerEl: HTMLElement;
+  contentEl: HTMLElement;
+  constructor(public leaf: WorkspaceLeaf) {
+    super();
+    this.app = leaf.app;
+    this.containerEl = document.createElement('div');
+    this.containerEl.className = 'workspace-leaf-content';
+    this.contentEl = (this.containerEl as any).createDiv({ cls: 'view-content' });
+  }
+  getViewType() { return ''; }
+  getDisplayText() { return ''; }
+  getIcon() { return ''; }
+  async onOpen() {}
+  async onClose() {}
+}
+
+/** Панель: в главной области открывает файлы, в правой боковой — показывает вид плагина. */
+export class WorkspaceLeaf {
+  view: ItemView | null = null;
+  constructor(public app: any) {}
+  async setViewState(state: { type: string }) {
+    const creator = this.app.workspace.viewCreators.get(state.type);
+    this.view = creator(this);
+    this.view!.containerEl.dataset.type = state.type;
+    const host = document.querySelector('.mod-right-split') as HTMLElement;
+    host.appendChild(this.view!.containerEl);
+    host.style.display = '';
+    this.app.workspace.leaves.push(this);
+    await this.view!.onOpen();
+  }
+  async openFile(file: TFile) { this.app.workspace.setActiveFile(file); }
+  detach() {
+    const ws = this.app.workspace;
+    ws.leaves = ws.leaves.filter((l: WorkspaceLeaf) => l !== this);
+    void this.view?.onClose();
+    this.view?.containerEl.remove();
+    if (!ws.leaves.length) (document.querySelector('.mod-right-split') as HTMLElement).style.display = 'none';
+  }
 }
 
 export class PluginSettingTab {
@@ -175,7 +240,7 @@ export class FuzzySuggestModal<T> extends Modal {
   setPlaceholder(_p: string) {}
   getItems(): T[] { return []; }
   getItemText(_i: T): string { return ''; }
-  renderSuggestion(_m: { item: T }, _el: HTMLElement) {}
+  renderSuggestion(m: { item: T }, el: HTMLElement) { el.textContent = this.getItemText(m.item); }
   onChooseItem(_i: T) {}
   onOpen() {
     for (const item of this.getItems()) {
@@ -229,21 +294,83 @@ export class Menu {
 }
 
 export function setIcon(_el: HTMLElement, _icon: string) {}
+export function getAllTags(cache: { tags?: { tag: string }[] }) { return cache.tags?.map((t) => t.tag) ?? null; }
 export function getLanguage() { return new URLSearchParams(location.search).get('lang') || 'en'; }
 
 // ---------- app ----------
 
+/** Хранилище стенда: заметки и ссылки между ними (как metadataCache.resolvedLinks). */
+const VAULT: Record<string, string[]> = {
+  'Хогвартс/Зельеварение.md': ['Люди/Северус Снегг.md', 'Хогвартс/Расписание.md', 'Ингредиенты/Безоар.md'],
+  'Хогвартс/Расписание.md': ['Хогвартс/Квиддич.md', 'Хогвартс/Зельеварение.md', 'Хогвартс/Трансфигурация.md'],
+  'Хогвартс/Квиддич.md': ['Хогвартс/Расписание.md', 'Люди/Гарри Поттер.md'],
+  'Хогвартс/Трансфигурация.md': [],
+  'Хогвартс/Библиотека.md': ['Запретная секция/Тайны крестражей.md'],
+  'Люди/Северус Снегг.md': ['Люди/Лили Поттер.md'],
+  'Люди/Гарри Поттер.md': ['Люди/Рон Уизли.md', 'Люди/Гермиона Грейнджер.md', 'Люди/Лили Поттер.md'],
+  'Люди/Рон Уизли.md': ['Хогвартс/Квиддич.md'],
+  'Люди/Гермиона Грейнджер.md': ['Хогвартс/Библиотека.md', 'Ингредиенты/Безоар.md'],
+  'Люди/Лили Поттер.md': [],
+  'Ингредиенты/Безоар.md': [],
+  'Запретная секция/Тайны крестражей.md': [],
+  'Дневник/31 июля.md': ['Люди/Гарри Поттер.md'],
+  'Дневник/Заметки на полях.md': [],
+  'Дневник/Сны.md': []
+};
+
+/** Теги заметок стенда (как getAllTags). */
+const TAGS: Record<string, string[]> = {
+  'Хогвартс/Зельеварение.md': ['#домашка', '#зелья'],
+  'Хогвартс/Трансфигурация.md': ['#домашка'],
+  'Ингредиенты/Безоар.md': ['#Зелья'],
+  'Дневник/Сны.md': ['#домашка']
+};
+
 export function createApp() {
-  const workspace = new Events() as Events & { onLayoutReady(cb: () => void): void };
-  workspace.onLayoutReady = (cb) => setTimeout(cb, 0);
-  return {
+  const files = new Map(Object.keys(VAULT).map((p) => [p, new TFile(p)]));
+  const workspace = new Events() as any;
+  workspace.onLayoutReady = (cb: () => void) => setTimeout(cb, 0);
+  workspace.viewCreators = new Map();
+  workspace.leaves = [] as WorkspaceLeaf[];
+  workspace.activeFile = files.get('Хогвартс/Зельеварение.md');
+  workspace.getActiveFile = () => workspace.activeFile;
+  workspace.setActiveFile = (file: TFile) => {
+    workspace.activeFile = file;
+    for (const el of document.querySelectorAll('#inline-title, .mod-root .workspace-tabs:first-child .workspace-tab-header.is-active .workspace-tab-header-inner')) {
+      el.textContent = file.basename;
+    }
+    workspace.trigger('file-open', file);
+  };
+  workspace.getLeavesOfType = (type: string) => workspace.leaves.filter((l: WorkspaceLeaf) => l.view?.getViewType() === type);
+  workspace.getRightLeaf = () => new WorkspaceLeaf(app);
+  workspace.getLeaf = () => new WorkspaceLeaf(app);
+  workspace.revealLeaf = async () => {};
+  workspace.detachLeavesOfType = (type: string) => { for (const l of workspace.getLeavesOfType(type)) l.detach(); };
+  const vault = new Events() as any;
+  Object.assign(vault, {
+    config: {} as Record<string, string>,
+    setConfig(k: string, v: string) { this.config[k] = v; },
+    getMarkdownFiles: () => [...files.values()],
+    getAbstractFileByPath: (p: string) => files.get(p) ?? null
+  });
+  const metadataCache = new Events() as any;
+  metadataCache.getFileCache = (file: TFile) => ({ tags: (TAGS[file.path] ?? []).map((tag) => ({ tag })) });
+  metadataCache.resolvedLinks = Object.fromEntries(Object.entries(VAULT).map(([from, to]) => [from, Object.fromEntries(to.map((p) => [p, 1]))]));
+  const app = {
     workspace,
-    vault: { config: {} as Record<string, string>, setConfig(k: string, v: string) { this.config[k] = v; } },
+    vault,
+    metadataCache,
     setTheme(theme: string) {
       document.body.classList.toggle('theme-dark', theme === 'obsidian');
       document.body.classList.toggle('theme-light', theme === 'moonstone');
       workspace.trigger('css-change');
     },
-    setting: { open() { (window as any).harness.openSettings(); }, openTabById() {} }
+    setting: { open() { (window as any).harness.openSettings(); }, openTabById() {} },
+    /** Поиск Obsidian: стенд только запоминает запрос. */
+    lastSearch: '',
+    internalPlugins: {
+      getPluginById: (id: string) => id === 'global-search' ? { instance: { openGlobalSearch: (q: string) => { app.lastSearch = q; } } } : null
+    }
   };
+  return app;
 }
