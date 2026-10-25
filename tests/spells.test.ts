@@ -47,6 +47,7 @@ test('модалка «Взмахнуть палочкой» понимает ц
   assert.equal(parseIncantation('Акцио, снитч!'), 'accioSnitch');
   assert.equal(parseIncantation('I solemnly swear that I am up to no good.'), 'solemnlySwear');
   assert.equal(parseIncantation('Шалость удалась'), 'mischiefManaged');
+  assert.equal(parseIncantation('Вингардиум Левиоса!'), 'wingardiumLeviosa');
   assert.equal(parseIncantation('Авада Кедавра'), null);
   assert.equal(parseIncantation('lumos maxima'), null);
 });

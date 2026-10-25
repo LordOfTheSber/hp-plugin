@@ -4,7 +4,27 @@
  */
 import { FOOT_SVG, SNITCH_SVG, svgElement } from './crest.ts';
 
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
 const rand = (min: number, max: number) => min + Math.random() * (max - min);
+
+export interface TrailColors {
+  /** Цвет свечения в тёмной теме и цвет «чернил» в светлой. */
+  glow: string;
+  ink: string;
+}
+
+/** След палочки, пока рисуется жест. */
+export interface Trail {
+  add(x: number, y: number): void;
+  /** Жест закончен: успех — вспышка искр, неудача — след гаснет дымком. */
+  finish(success: boolean): void;
+  cancel(): void;
+}
+
+// Что можно поднять «Вингардиум Левиосой»: блоки текста, файлы, вкладки, коллауты…
+const LEVITATE_TARGETS = '.nav-file-title, .nav-folder-title, .tree-item-self, .workspace-tab-header, .side-dock-ribbon-action, ' +
+  '.status-bar-item, .callout, .cm-line, .inline-title, p, li, h1, h2, h3, h4, h5, h6, blockquote, pre, img, table, .setting-item';
 
 export interface SnitchCallbacks {
   label: string;
@@ -18,6 +38,10 @@ export class Effects {
   private pointer = { x: window.innerWidth / 2, y: window.innerHeight / 3 };
 
   constructor(private readonly reducedMotion: () => boolean) {}
+
+  get pointerPosition(): { x: number; y: number } {
+    return { ...this.pointer };
+  }
 
   trackPointer(e: PointerEvent): void {
     this.pointer = { x: e.clientX, y: e.clientY };
@@ -62,6 +86,59 @@ export class Effects {
   /** Момент, когда экран темнее всего — в этот момент удобно переключить тему. */
   get noxSwitchDelay(): number {
     return this.reducedMotion() ? 200 : 600;
+  }
+
+  // ---------- След палочки и Вингардиум Левиоса ----------
+
+  trail(colors: TrailColors, x: number, y: number): Trail {
+    const svg = document.createElementNS(SVG_NS, 'svg');
+    svg.setAttribute('class', 'hp-trail');
+    svg.style.setProperty('--hp-trail-glow', colors.glow);
+    svg.style.setProperty('--hp-trail-ink', colors.ink);
+    const lines = ['hp-trail-glow', 'hp-trail-core'].map((cls) => {
+      const line = svg.appendChild(document.createElementNS(SVG_NS, 'polyline'));
+      line.setAttribute('class', cls);
+      return line;
+    });
+    this.getLayer().appendChild(svg);
+    let points = `${x},${y}`;
+    let last = { x, y };
+    const draw = () => lines.forEach((l) => l.setAttribute('points', points));
+    draw();
+    return {
+      add: (px, py) => {
+        last = { x: px, y: py };
+        points += ` ${Math.round(px)},${Math.round(py)}`;
+        draw();
+      },
+      finish: (success) => {
+        if (success) this.sparkle(last.x, last.y, colors);
+        else svg.classList.add('is-fizzled');
+        this.removeAfter(svg.animate([{ opacity: 1 }, { opacity: 0 }],
+          { duration: this.reducedMotion() ? 200 : success ? 700 : 450, easing: 'ease-out', fill: 'forwards' }), svg);
+      },
+      cancel: () => svg.remove()
+    };
+  }
+
+  levitate(x: number, y: number): void {
+    const hit = document.elementFromPoint(x, y);
+    const target = hit?.closest<HTMLElement>(LEVITATE_TARGETS)
+      ?? document.querySelector<HTMLElement>('.workspace-leaf.mod-active .view-content')
+      ?? document.querySelector<HTMLElement>('.workspace');
+    if (!target) return;
+    const lift = this.reducedMotion() ? -4 : -16;
+    const frames = this.reducedMotion()
+      ? [{ transform: 'translateY(0)' }, { transform: `translateY(${lift}px)`, offset: 0.3 }, { transform: `translateY(${lift}px)`, offset: 0.7 }, { transform: 'translateY(0)' }]
+      : [
+        { transform: 'translateY(0) rotate(0)' },
+        { transform: `translateY(${lift}px) rotate(-1deg)`, offset: 0.2 },
+        { transform: `translateY(${lift + 6}px) rotate(1deg)`, offset: 0.4 },
+        { transform: `translateY(${lift}px) rotate(-1deg)`, offset: 0.6 },
+        { transform: `translateY(${lift + 6}px) rotate(.5deg)`, offset: 0.8 },
+        { transform: 'translateY(0) rotate(0)' }
+      ];
+    target.animate(frames, { duration: this.reducedMotion() ? 1200 : 3200, easing: 'ease-in-out', composite: 'add' });
   }
 
   // ---------- Карта Мародёров ----------
@@ -181,14 +258,21 @@ export class Effects {
     fly();
   }
 
-  private sparkle(x: number, y: number): void {
+  private sparkle(x: number, y: number, colors?: TrailColors): void {
+    const dark = document.body.classList.contains('theme-dark');
     for (let i = 0; i < 14; i++) {
       const a = (i / 14) * Math.PI * 2;
       const r = rand(40, 80);
       const dot = this.add('div', 'hp-spark');
       dot.style.left = `${x - 3}px`;
       dot.style.top = `${y - 3}px`;
-      if (i % 2) dot.style.background = 'var(--hp-accent, #c9a227)';
+      if (colors) {
+        const c = i % 2 && !dark ? colors.ink : colors.glow;
+        dot.style.background = c;
+        dot.style.boxShadow = `0 0 8px ${c}`;
+      } else if (i % 2) {
+        dot.style.background = 'var(--hp-accent, #c9a227)';
+      }
       this.removeAfter(dot.animate([
         { transform: 'translate(0,0) scale(1)', opacity: 1 },
         { transform: `translate(${Math.cos(a) * r}px, ${Math.sin(a) * r}px) scale(.2)`, opacity: 0 }

@@ -3,13 +3,14 @@
  * Чистая логика без DOM: на вход — KeyboardEvent.key, на выход — id заклинания.
  */
 
-export type SpellId = 'lumos' | 'nox' | 'solemnlySwear' | 'mischiefManaged' | 'accioSnitch';
+export type SpellId = 'lumos' | 'nox' | 'solemnlySwear' | 'mischiefManaged' | 'accioSnitch' | 'wingardiumLeviosa';
 
 // Порядок важен: длинные фразы проверяются раньше.
 export const SPELLS: { id: SpellId; words: string[] }[] = [
   { id: 'solemnlySwear', words: ['i solemnly swear that i am up to no good', 'solemnly swear', 'клянусь что замышляю только шалость'] },
   { id: 'mischiefManaged', words: ['mischief managed', 'шалость удалась'] },
   { id: 'accioSnitch', words: ['accio snitch', 'акцио снитч'] },
+  { id: 'wingardiumLeviosa', words: ['wingardium leviosa', 'вингардиум левиоса'] },
   { id: 'lumos', words: ['lumos', 'люмос'] },
   { id: 'nox', words: ['nox', 'нокс'] }
 ];

@@ -1,6 +1,8 @@
 // Настройки плагина: значения по умолчанию и чтение сохранённых данных (без зависимости от obsidian).
 import { HOUSE_IDS } from './houses.ts';
 import type { HouseId } from './houses.ts';
+import { DEFAULT_WAND, sanitizeWand } from './wands.ts';
+import type { WandSpec } from './wands.ts';
 
 export interface HpSettings {
   house: HouseId;
@@ -8,6 +10,8 @@ export interface HpSettings {
   headingFont: boolean;
   ornaments: boolean;
   wandCursor: boolean;
+  wand: WandSpec;
+  gestures: boolean;
   statusBar: boolean;
   easterEggs: boolean;
   points: Record<HouseId, number>;
@@ -21,6 +25,8 @@ export const DEFAULT_SETTINGS: HpSettings = {
   headingFont: true,
   ornaments: true,
   wandCursor: false,
+  wand: { ...DEFAULT_WAND },
+  gestures: true,
   statusBar: true,
   easterEggs: true,
   points: { gryffindor: 0, slytherin: 0, ravenclaw: 0, hufflepuff: 0 },
@@ -33,5 +39,6 @@ export function migrateSettings(data: unknown): HpSettings {
   const raw = (data && typeof data === 'object' ? data : {}) as Partial<HpSettings>;
   const settings: HpSettings = { ...DEFAULT_SETTINGS, ...raw, points: { ...DEFAULT_SETTINGS.points, ...(raw.points ?? {}) } };
   if (!HOUSE_IDS.includes(settings.house)) settings.house = DEFAULT_SETTINGS.house;
+  settings.wand = sanitizeWand(raw.wand);
   return settings;
 }

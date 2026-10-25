@@ -149,3 +149,5 @@ button.mod-cta { background: var(--interactive-accent); color: var(--text-on-acc
 .notice { max-width: 320px; padding: 10px 14px; border-radius: 8px; background: var(--background-secondary-alt, var(--background-secondary)); color: var(--text-normal); border: 1px solid var(--background-modifier-border); box-shadow: 0 6px 18px rgba(0,0,0,.2); font-size: 13px; }
 .hp-harness-settings-wrap { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; background: rgba(0,0,0,.45); }
 .hp-harness-settings { width: min(720px, 94vw); max-height: 90vh; overflow: auto; padding: 22px 28px; border-radius: 12px; background: var(--background-primary); border: 1px solid var(--background-modifier-border); }
+select.dropdown { font: inherit; padding: 5px 10px; border-radius: 7px; border: 1px solid var(--background-modifier-border); background: var(--interactive-normal); color: var(--text-normal); }
+input.slider { accent-color: var(--interactive-accent); width: 180px; }

@@ -130,10 +130,81 @@ test('плагин на стенде Obsidian', { skip: !playwright && 'Playwrig
       await page.press('.hp-wand-input', 'Enter');
       await page.waitForFunction(() => document.body.classList.contains('theme-dark'));
       await page.evaluate(() => harness.runCommand('wave-wand'));
-      await page.fill('.hp-wand-input', 'Вингардиум Левиоса');
+      await page.fill('.hp-wand-input', 'Алохомора');
       await page.press('.hp-wand-input', 'Enter');
       await page.waitForSelector('.notice:has-text("Ничего не произошло")');
       await setMode('parchment');
+    });
+
+    // Правая кнопка мыши зажата, фигура рисуется, кнопка отпускается
+    const drawGesture = async (points) => {
+      await page.mouse.move(...points[0]);
+      await page.mouse.down({ button: 'right' });
+      for (const p of points.slice(1)) await page.mouse.move(...p, { steps: 8 });
+      await page.mouse.up({ button: 'right' });
+    };
+
+    await t.test('жесты палочкой: Нокс и Люмос штрихами, меню при этом не открывается', async () => {
+      await page.evaluate(() => {
+        window.hpMenus = 0;
+        document.addEventListener('contextmenu', () => window.hpMenus++);
+      });
+      await drawGesture([[150, 260], [150, 520]]);
+      await page.waitForFunction(() => document.body.classList.contains('theme-dark'));
+      assert.ok(await page.isVisible('.hp-trail'), 'виден след палочки');
+      await drawGesture([[150, 520], [152, 260]]);
+      await page.waitForFunction(() => document.body.classList.contains('theme-light'));
+      assert.equal(await page.evaluate(() => window.hpMenus), 0);
+    });
+
+    await t.test('обычный правый клик по-прежнему открывает контекстное меню', async () => {
+      await page.mouse.click(150, 300, { button: 'right' });
+      assert.equal(await page.evaluate(() => window.hpMenus), 1);
+    });
+
+    await t.test('непонятная фигура гаснет без заклинания', async () => {
+      await drawGesture([[120, 300], [200, 330], [130, 380], [210, 420], [140, 300]]);
+      await page.waitForSelector('.hp-trail.is-fizzled', { state: 'attached' });
+      assert.ok(await bodyHas('theme-light'));
+    });
+
+    await t.test('«взмах и щелчок» поднимает абзац, на который указала палочка', async () => {
+      const box = await page.locator('#para').boundingBox();
+      const x = box.x + 40;
+      const y = box.y + 10;
+      await drawGesture([[x, y], [x + 70, y + 90], [x + 160, y], [x + 140, y + 45]]);
+      await page.waitForFunction(() => document.getElementById('para').getAnimations().length > 0);
+      await page.waitForSelector('.notice:has-text("Левиоса")');
+    });
+
+    await t.test('жесты отключаются в настройках', async () => {
+      await page.evaluate(() => harness.plugin.settings.gestures = false);
+      await drawGesture([[150, 260], [150, 520]]);
+      await page.waitForTimeout(700);
+      assert.ok(await bodyHas('theme-light'));
+      assert.equal(await page.evaluate(() => window.hpMenus), 2, 'правая кнопка снова работает как обычно');
+      await page.evaluate(() => harness.plugin.settings.gestures = true);
+    });
+
+    await t.test('лавка Олливандера: знаменитая палочка, своя палочка, курсор', async () => {
+      await page.evaluate(() => harness.runCommand('wand-shop'));
+      assert.equal(await page.locator('.hp-shop-preset').count(), 12);
+      assert.equal(await page.getAttribute('.hp-shop-preset[data-preset="harry"]', 'aria-pressed'), 'true');
+      await page.click('.hp-shop-preset[data-preset="hermione"]');
+      assert.match(await page.textContent('.hp-shop-name'), /Гермионы/);
+      assert.match(await page.textContent('.hp-shop-desc'), /Виноградная лоза, сердечная жила дракона, 10¾ дюйма/);
+      assert.equal(await page.inputValue('.hp-shop-form select >> nth=0'), 'vine');
+      await page.selectOption('.hp-shop-form select >> nth=0', 'ebony');
+      assert.equal(await page.textContent('.hp-shop-name'), 'Ваша собственная палочка');
+      assert.equal(await page.locator('.hp-shop-preset.is-selected').count(), 0);
+      await page.evaluate(() => document.querySelector('.modal-bg').click());
+      await page.waitForFunction(() => JSON.parse(localStorage.getItem('hp-harness-data'))['hp-theme'].wand?.wood === 'ebony');
+
+      await page.evaluate(() => { harness.plugin.settings.wandCursor = true; harness.plugin.applyTheme(); });
+      assert.match(await style('.nav-header', 'cursor'), /^image-set\(url\("data:image\/svg\+xml/, 'курсор-палочка применился');
+      assert.equal(await style('#editor', 'cursor'), 'auto', 'в тексте — обычный курсор');
+      await page.evaluate(() => { harness.plugin.settings.wandCursor = false; harness.plugin.applyTheme(); });
+      assert.equal(await style('.nav-header', 'cursor'), 'auto');
     });
 
     await t.test('Konami → снитч → +150 очков', async () => {
@@ -181,6 +252,9 @@ test('плагин на стенде Obsidian', { skip: !playwright && 'Playwrig
       await page.waitForFunction(() => !document.body.classList.contains('hp-ornaments'));
       await ornaments.click();
       await page.waitForFunction(() => document.body.classList.contains('hp-ornaments'));
+      assert.ok(await page.isVisible('.hp-wand-current svg'), 'в настройках видна палочка');
+      await page.click('.hp-spellbook summary');
+      assert.equal(await page.locator('.hp-spellbook-item').count(), 6);
       await page.click('.hp-crest', { clickCount: 3 });
       await page.waitForSelector('.hp-motto', { state: 'visible' });
       await page.evaluate(() => harness.closeSettings());
@@ -189,7 +263,7 @@ test('плагин на стенде Obsidian', { skip: !playwright && 'Playwrig
     await t.test('меню факультетов из ленты', async () => {
       await page.click('.side-dock-ribbon-action');
       await page.waitForSelector('.menu');
-      assert.equal(await page.locator('.menu .menu-item').count(), 6);
+      assert.equal(await page.locator('.menu .menu-item').count(), 7);
       await page.click('.menu-item:has-text("Пуффендуй")');
       assert.ok(await bodyHas('hp-house-hufflepuff'));
     });
