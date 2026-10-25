@@ -24,7 +24,7 @@ export const DEFAULT_SETTINGS: HpSettings = {
   readableFont: true,
   headingFont: true,
   ornaments: true,
-  wandCursor: false,
+  wandCursor: true,
   wand: { ...DEFAULT_WAND },
   gestures: true,
   statusBar: true,

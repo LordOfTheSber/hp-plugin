@@ -218,7 +218,7 @@ var en = {
   settingOrnaments: "Ornaments",
   settingOrnamentsDesc: "Golden thread under the note title, \u2726 dividers, accents on the active tab and file.",
   settingWandCursor: "Magic wand cursor",
-  settingWandCursorDesc: "Outside the note text, which keeps the usual text cursor.",
+  settingWandCursorDesc: "Your wand instead of the mouse pointer, over notes too. Text fields keep the text cursor, links keep the hand.",
   settingWand: "Wand",
   buttonWandShop: "Visit Ollivanders",
   settingGestures: "Spells by wand movement",
@@ -361,7 +361,7 @@ var ru = {
   settingOrnaments: "\u041E\u0440\u043D\u0430\u043C\u0435\u043D\u0442\u044B",
   settingOrnamentsDesc: "\u0417\u043E\u043B\u043E\u0442\u0430\u044F \u043D\u0438\u0442\u044C \u043F\u043E\u0434 \u043D\u0430\u0437\u0432\u0430\u043D\u0438\u0435\u043C \u0437\u0430\u043C\u0435\u0442\u043A\u0438, \u0440\u0430\u0437\u0434\u0435\u043B\u0438\u0442\u0435\u043B\u0438 \u2726, \u0430\u043A\u0446\u0435\u043D\u0442\u044B \u0430\u043A\u0442\u0438\u0432\u043D\u043E\u0439 \u0432\u043A\u043B\u0430\u0434\u043A\u0438 \u0438 \u0444\u0430\u0439\u043B\u0430.",
   settingWandCursor: "\u041A\u0443\u0440\u0441\u043E\u0440 \u2014 \u0432\u043E\u043B\u0448\u0435\u0431\u043D\u0430\u044F \u043F\u0430\u043B\u043E\u0447\u043A\u0430",
-  settingWandCursorDesc: "\u0412\u043D\u0435 \u0442\u0435\u043A\u0441\u0442\u0430 \u0437\u0430\u043C\u0435\u0442\u043A\u0438: \u0442\u0430\u043C \u043E\u0441\u0442\u0430\u0451\u0442\u0441\u044F \u043E\u0431\u044B\u0447\u043D\u044B\u0439 \u0442\u0435\u043A\u0441\u0442\u043E\u0432\u044B\u0439 \u043A\u0443\u0440\u0441\u043E\u0440.",
+  settingWandCursorDesc: "\u0412\u0430\u0448\u0430 \u043F\u0430\u043B\u043E\u0447\u043A\u0430 \u0432\u043C\u0435\u0441\u0442\u043E \u0443\u043A\u0430\u0437\u0430\u0442\u0435\u043B\u044F \u043C\u044B\u0448\u0438, \u0432 \u0442\u043E\u043C \u0447\u0438\u0441\u043B\u0435 \u043D\u0430\u0434 \u0437\u0430\u043C\u0435\u0442\u043A\u0430\u043C\u0438. \u0412 \u043F\u043E\u043B\u044F\u0445 \u0432\u0432\u043E\u0434\u0430 \u043E\u0441\u0442\u0430\u0451\u0442\u0441\u044F \u0442\u0435\u043A\u0441\u0442\u043E\u0432\u044B\u0439 \u043A\u0443\u0440\u0441\u043E\u0440, \u043D\u0430\u0434 \u0441\u0441\u044B\u043B\u043A\u0430\u043C\u0438 \u2014 \xAB\u0440\u0443\u043A\u0430\xBB.",
   settingWand: "\u041F\u0430\u043B\u043E\u0447\u043A\u0430",
   buttonWandShop: "\u0412 \u043B\u0430\u0432\u043A\u0443 \u041E\u043B\u043B\u0438\u0432\u0430\u043D\u0434\u0435\u0440\u0430",
   settingGestures: "\u0417\u0430\u043A\u043B\u0438\u043D\u0430\u043D\u0438\u044F \u0434\u0432\u0438\u0436\u0435\u043D\u0438\u044F\u043C\u0438 \u043F\u0430\u043B\u043E\u0447\u043A\u0438",
@@ -1377,7 +1377,9 @@ var WandShopModal = class extends import_obsidian.Modal {
     this.dropdowns = [];
     this.slider = null;
     this.lengthLabel = null;
+    this.cursorToggle = null;
     this.wand = { ...options.wand };
+    this.cursorOn = options.cursor;
   }
   onOpen() {
     const { t, contentEl } = this;
@@ -1391,7 +1393,10 @@ var WandShopModal = class extends import_obsidian.Modal {
       name: stage.createDiv({ cls: "hp-shop-name" }),
       desc: stage.createDiv({ cls: "hp-shop-desc" })
     };
-    new import_obsidian.Setting(contentEl).setName(t("settingWandCursor")).setDesc(t("settingWandCursorDesc")).addToggle((tg) => tg.setValue(this.options.cursor).onChange((value) => this.options.onCursor(value))).settingEl.addClass("hp-shop-cursor");
+    new import_obsidian.Setting(contentEl).setName(t("settingWandCursor")).setDesc(t("settingWandCursorDesc")).addToggle((tg) => {
+      this.cursorToggle = tg;
+      tg.setValue(this.cursorOn).onChange((value) => this.setCursor(value));
+    }).settingEl.addClass("hp-shop-cursor");
     contentEl.createDiv({ cls: "hp-shop-heading", text: t("shopCanon") });
     const grid = contentEl.createDiv({ cls: "hp-shop-presets" });
     for (const preset of WAND_PRESETS) {
@@ -1422,6 +1427,12 @@ var WandShopModal = class extends import_obsidian.Modal {
     this.dropdowns = [];
     this.options.onClosed?.();
   }
+  setCursor(on) {
+    if (on === this.cursorOn) return;
+    this.cursorOn = on;
+    this.cursorToggle?.setValue(on);
+    this.options.onCursor(on);
+  }
   dropdown(container, key, name, options) {
     new import_obsidian.Setting(container).setName(name).addDropdown((d) => {
       for (const [value, text] of options) d.addOption(value, text);
@@ -1436,11 +1447,13 @@ var WandShopModal = class extends import_obsidian.Modal {
     this.slider?.setValue(this.wand.length);
     this.refresh();
     this.options.onChange({ ...this.wand });
+    this.setCursor(true);
   }
   update(patch) {
     this.wand = { ...this.wand, ...patch };
     this.refresh();
     this.options.onChange({ ...this.wand });
+    this.setCursor(true);
   }
   refresh() {
     const { t, wand, stage } = this;
@@ -1517,7 +1530,7 @@ var DEFAULT_SETTINGS = {
   readableFont: true,
   headingFont: true,
   ornaments: true,
-  wandCursor: false,
+  wandCursor: true,
   wand: { ...DEFAULT_WAND },
   gestures: true,
   statusBar: true,

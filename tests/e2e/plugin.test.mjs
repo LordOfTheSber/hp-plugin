@@ -61,7 +61,7 @@ test('плагин на стенде Obsidian', { skip: !playwright && 'Playwrig
       for (const cls of ['hp-theme', 'hp-house-gryffindor', 'hp-font-text', 'hp-font-headings', 'hp-ornaments']) {
         assert.ok(await bodyHas(cls), cls);
       }
-      assert.ok(!(await bodyHas('hp-wand')), 'курсор-палочка по умолчанию выключен');
+      assert.ok(await bodyHas('hp-wand'), 'курсор-палочка по умолчанию включён');
     });
 
     for (const house of HOUSE_IDS) {
@@ -187,33 +187,43 @@ test('плагин на стенде Obsidian', { skip: !playwright && 'Playwrig
     });
 
     await t.test('лавка Олливандера: знаменитая палочка, своя палочка, курсор', async () => {
+      // Курсор выключен — выбор палочки в лавке его включает
+      await page.evaluate(() => { harness.plugin.settings.wandCursor = false; harness.plugin.applyTheme(); });
+      assert.equal(await style('.nav-file-title', 'cursor'), 'default');
       await page.evaluate(() => harness.runCommand('wand-shop'));
       assert.equal(await page.locator('.hp-shop-preset').count(), 12);
       assert.equal(await page.getAttribute('.hp-shop-preset[data-preset="harry"]', 'aria-pressed'), 'true');
+      assert.ok(!(await page.locator('.hp-shop-cursor .checkbox-container').evaluate((el) => el.classList.contains('is-enabled'))));
       await page.click('.hp-shop-preset[data-preset="hermione"]');
       assert.match(await page.textContent('.hp-shop-name'), /Гермионы/);
       assert.match(await page.textContent('.hp-shop-desc'), /Виноградная лоза, сердечная жила дракона, 10¾ дюйма/);
+      assert.ok(await page.evaluate(() => harness.plugin.settings.wandCursor), 'выбор палочки включил курсор');
+      assert.ok(await page.locator('.hp-shop-cursor .checkbox-container').evaluate((el) => el.classList.contains('is-enabled')));
       assert.equal(await page.inputValue('.hp-shop-form select >> nth=0'), 'vine');
       await page.selectOption('.hp-shop-form select >> nth=0', 'ebony');
       assert.equal(await page.textContent('.hp-shop-name'), 'Ваша собственная палочка');
       assert.equal(await page.locator('.hp-shop-preset.is-selected').count(), 0);
-      // Курсор включается прямо в лавке
-      assert.equal(await style('.nav-file-title', 'cursor'), 'default');
-      await page.click('.hp-shop-cursor .checkbox-container');
       await page.evaluate(() => document.querySelector('.modal-bg').click());
       await page.waitForFunction(() => JSON.parse(localStorage.getItem('hp-harness-data'))['hp-theme'].wand?.wood === 'ebony');
-      assert.ok(await page.evaluate(() => harness.plugin.settings.wandCursor));
 
       const wandCursor = /^image-set\(url\("data:image\/svg\+xml/;
-      // Пустое место, а также файлы, вкладки, кнопки ленты и статус-бар (у них курсор из --cursor, как в Obsidian)
-      for (const sel of ['.nav-header', '.nav-file-title', '.workspace-tab-header', '.side-dock-ribbon-action', '.hp-status']) {
+      // Везде: пустое место, файлы, вкладки, кнопки (у них курсор из --cursor, как в Obsidian) и сама заметка
+      for (const sel of ['.nav-header', '.nav-file-title', '.workspace-tab-header', '.side-dock-ribbon-action', '.hp-status',
+        '#para', '#h2', '#inline-title', '#editor', '.cm-line']) {
         assert.match(await style(sel, 'cursor'), wandCursor, sel);
       }
       assert.ok((await style('.nav-file-title', 'cursor')).includes(encodeURIComponent('#110c0a')), 'в курсоре выбранная палочка (эбен)');
-      assert.equal(await style('#editor', 'cursor'), 'auto', 'в тексте — обычный курсор');
       assert.equal(await style('#link', 'cursor'), 'pointer', 'на ссылках — рука');
-      await page.evaluate(() => { harness.plugin.settings.wandCursor = false; harness.plugin.applyTheme(); });
+      await page.evaluate(() => document.body.appendChild(Object.assign(document.createElement('input'), { type: 'text', id: 'hp-test-input' })));
+      assert.equal(await style('#hp-test-input', 'cursor'), 'auto', 'в полях ввода — текстовый курсор');
+      await page.evaluate(() => document.getElementById('hp-test-input').remove());
+
+      // Выключить можно прямо в лавке
+      await page.evaluate(() => harness.runCommand('wand-shop'));
+      await page.click('.hp-shop-cursor .checkbox-container');
+      await page.evaluate(() => document.querySelector('.modal-bg').click());
       assert.equal(await style('.nav-file-title', 'cursor'), 'default');
+      assert.equal(await page.evaluate(() => harness.plugin.settings.wandCursor), false);
     });
 
     await t.test('Konami → снитч → +150 очков', async () => {

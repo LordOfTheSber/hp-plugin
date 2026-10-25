@@ -1,5 +1,5 @@
 import { FuzzySuggestModal, Modal, Setting } from 'obsidian';
-import type { App, DropdownComponent, SliderComponent } from 'obsidian';
+import type { App, DropdownComponent, SliderComponent, ToggleComponent } from 'obsidian';
 import { HOUSE_IDS, palette } from './houses.ts';
 import type { HouseId } from './houses.ts';
 import { HAT_SVG, crestSvg, svgElement } from './crest.ts';
@@ -73,7 +73,7 @@ export function wandName(t: Translate, wand: WandSpec): string {
 
 export interface WandShopOptions {
   wand: WandSpec;
-  /** Включён ли курсор-палочка: переключатель есть прямо в лавке. */
+  /** Включён ли курсор-палочка: переключатель есть прямо в лавке, а выбор палочки его включает. */
   cursor: boolean;
   onChange(wand: WandSpec): void;
   onCursor(enabled: boolean): void;
@@ -88,10 +88,13 @@ export class WandShopModal extends Modal {
   private dropdowns: { key: 'wood' | 'core' | 'handle' | 'flex'; control: DropdownComponent }[] = [];
   private slider: SliderComponent | null = null;
   private lengthLabel: HTMLElement | null = null;
+  private cursorToggle: ToggleComponent | null = null;
+  private cursorOn: boolean;
 
   constructor(app: App, private readonly t: Translate, private readonly options: WandShopOptions) {
     super(app);
     this.wand = { ...options.wand };
+    this.cursorOn = options.cursor;
   }
 
   onOpen(): void {
@@ -110,7 +113,10 @@ export class WandShopModal extends Modal {
     new Setting(contentEl)
       .setName(t('settingWandCursor'))
       .setDesc(t('settingWandCursorDesc'))
-      .addToggle((tg) => tg.setValue(this.options.cursor).onChange((value) => this.options.onCursor(value)))
+      .addToggle((tg) => {
+        this.cursorToggle = tg;
+        tg.setValue(this.cursorOn).onChange((value) => this.setCursor(value));
+      })
       .settingEl.addClass('hp-shop-cursor');
 
     contentEl.createDiv({ cls: 'hp-shop-heading', text: t('shopCanon') });
@@ -151,6 +157,13 @@ export class WandShopModal extends Modal {
     this.options.onClosed?.();
   }
 
+  private setCursor(on: boolean): void {
+    if (on === this.cursorOn) return;
+    this.cursorOn = on;
+    this.cursorToggle?.setValue(on);
+    this.options.onCursor(on);
+  }
+
   private dropdown(container: HTMLElement, key: 'wood' | 'core' | 'handle' | 'flex', name: string, options: [string, string][]): void {
     new Setting(container).setName(name).addDropdown((d) => {
       for (const [value, text] of options) d.addOption(value, text);
@@ -166,12 +179,16 @@ export class WandShopModal extends Modal {
     this.slider?.setValue(this.wand.length);
     this.refresh();
     this.options.onChange({ ...this.wand });
+    // Выбрали палочку — значит, хотят её видеть
+    this.setCursor(true);
   }
 
   private update(patch: Partial<WandSpec>): void {
     this.wand = { ...this.wand, ...patch };
     this.refresh();
     this.options.onChange({ ...this.wand });
+    // Выбрали палочку — значит, хотят её видеть
+    this.setCursor(true);
   }
 
   private refresh(): void {

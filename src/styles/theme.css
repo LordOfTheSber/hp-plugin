@@ -173,9 +173,15 @@ body.hp-theme.hp-wand {
   cursor: var(--hp-wand-cursor, auto);
 }
 
-/* В тексте и полях ввода — обычный курсор */
-body.hp-theme.hp-wand :is(.markdown-source-view, .markdown-reading-view, .cm-editor, .inline-title,
-  input, textarea, [contenteditable="true"], .canvas-node-content) {
+/* Палочка и над заметкой: редактор, режим чтения и холст иначе показывают текстовый курсор.
+   Выделять текст палочкой удобно — точка курсора на её кончике. */
+body.hp-theme.hp-wand :is(.markdown-source-view, .markdown-reading-view, .markdown-preview-view, .cm-editor,
+  .cm-scroller, .cm-content, .cm-line, .inline-title, .canvas-node-content) {
+  cursor: var(--hp-wand-cursor, auto);
+}
+
+/* В полях ввода (поиск, настройки, модалки) — обычный текстовый курсор */
+body.hp-theme.hp-wand :is(input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="button"], [type="submit"]), textarea) {
   cursor: auto;
 }
 
