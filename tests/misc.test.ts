@@ -2,7 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { STRINGS, createTranslator } from '../src/i18n.ts';
-import { DEFAULT_SETTINGS, migrateSettings } from '../src/settings-data.ts';
+import { DEFAULT_SETTINGS, migrateSettings, parseFolderList } from '../src/settings-data.ts';
+import { restrictedCss } from '../src/css.ts';
+import { crestSvg } from '../src/crest.ts';
 
 test('русские и английские строки совпадают по ключам и подстановкам', () => {
   const placeholders = (s: string) => (s.match(/\{\d+\}/g) ?? []).sort().join();
@@ -30,6 +32,45 @@ test('настройки: значения по умолчанию и защит
   assert.equal(migrateSettings({ wand: { wood: 'ebony', handle: 'laser' } }).wand.wood, 'ebony');
   assert.equal(migrateSettings({ wand: { wood: 'ebony', handle: 'laser' } }).wand.handle, DEFAULT_SETTINGS.wand.handle);
   assert.equal(migrateSettings({}).gestures, true, 'жесты включены по умолчанию');
+});
+
+test('настройки: значения не того типа заменяются умолчаниями', () => {
+  const s = migrateSettings({
+    ornaments: 'yes', gestures: 0, mode: 'twilight', mapDepth: 3, snitches: -4, birthdayShown: 2026,
+    points: { gryffindor: 'много', ravenclaw: 12.7 }, mapExclude: ['Шаблоны', 5], footprints: 'a.md',
+    route: { target: 'b.md', steps: 'a.md' }
+  });
+  assert.equal(s.ornaments, true);
+  assert.equal(s.gestures, true);
+  assert.equal(s.mode, 'auto');
+  assert.equal(s.mapDepth, 2);
+  assert.equal(s.snitches, 0);
+  assert.equal(s.birthdayShown, '');
+  assert.deepEqual(s.points, { gryffindor: 0, slytherin: 0, ravenclaw: 12, hufflepuff: 0 });
+  assert.deepEqual(s.mapExclude, []);
+  assert.deepEqual(s.footprints, []);
+  assert.deepEqual(s.route, { target: 'b.md', steps: null });
+  const ok = migrateSettings({ mode: 'common', mapDepth: 1, footprints: ['a.md'], route: { target: 'b.md', steps: ['a.md', 'b.md'] } });
+  assert.equal(ok.mode, 'common');
+  assert.equal(ok.mapDepth, 1);
+  assert.deepEqual(ok.route?.steps, ['a.md', 'b.md']);
+});
+
+test('список папок: по строкам и через запятую, без «/» и повторов', () => {
+  assert.deepEqual(parseFolderList(' Шаблоны/ ,\nАрхив\n/Личное/Тайное/\n\nАрхив'), ['Шаблоны', 'Архив', 'Личное/Тайное']);
+});
+
+test('свои Запретные секции: CSS только для своих названий, кавычки экранированы', () => {
+  assert.equal(restrictedCss([]), '');
+  const css = restrictedCss(['Секреты', 'Он "сам"']);
+  assert.match(css, /\[data-path="Секреты"\], \[data-path\$="\/Секреты"\]/);
+  assert.match(css, /\[data-path="Он \\"сам\\""\]/);
+  assert.match(css, /:hover > \.nav-folder-children/);
+});
+
+test('гербы: у каждого своя маска, даже у одинаковых', () => {
+  const id = (svg: string) => svg.match(/clipPath id="([^"]+)"/)?.[1];
+  assert.notEqual(id(crestSvg('slytherin', 20)), id(crestSvg('slytherin', 20)));
 });
 
 test('манифест плагина корректен', () => {

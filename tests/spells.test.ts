@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createSpellbook, parseIncantation, KONAMI } from '../src/spells.ts';
+import { createSpellbook, parseIncantation, KONAMI, SPELL_TIMEOUT } from '../src/spells.ts';
 
 function type(text: string) {
   const book = createSpellbook();
@@ -50,4 +50,17 @@ test('модалка «Взмахнуть палочкой» понимает ц
   assert.equal(parseIncantation('Вингардиум Левиоса!'), 'wingardiumLeviosa');
   assert.equal(parseIncantation('Авада Кедавра'), null);
   assert.equal(parseIncantation('lumos maxima'), null);
+});
+
+test('набранное забывается после паузы: «lu» сейчас и «mos» потом — не Lumos', () => {
+  const book = createSpellbook();
+  let t = 1000;
+  for (const ch of 'lu') book.push(ch, (t += 100));
+  t += SPELL_TIMEOUT + 1;
+  let last = null;
+  for (const ch of 'mos') last = book.push(ch, (t += 100)) ?? last;
+  assert.equal(last, null);
+  // Без паузы — сработало бы
+  for (const ch of ' lumos') last = book.push(ch, (t += 100)) ?? last;
+  assert.equal(last, 'lumos');
 });

@@ -3,10 +3,13 @@ import type { HouseId } from './houses.ts';
 
 const SHIELD = 'M50 4L92 16V52C92 78 72 94 50 100C28 94 8 78 8 52V16Z';
 
+/** Счётчик для id маски: одинаковые гербы в одном документе не должны делить один clipPath. */
+let crestSeq = 0;
+
 /** Герб факультета: щит, перевязь и кайма в цвете металла, инициал. */
 export function crestSvg(id: HouseId, size = 40): string {
   const c = HOUSES[id].crest;
-  const clip = `hp-clip-${id}-${size}`;
+  const clip = `hp-clip-${id}-${++crestSeq}`;
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${Math.round(size * 1.04)}" viewBox="0 0 100 104" aria-hidden="true">` +
     `<defs><clipPath id="${clip}"><path d="${SHIELD}"/></clipPath></defs>` +
     `<path d="${SHIELD}" fill="${c.field}"/>` +

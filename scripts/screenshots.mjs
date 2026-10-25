@@ -43,6 +43,10 @@ await setMode('parchment');
 await page.evaluate(() => harness.openSettings());
 await page.waitForTimeout(100);
 await shot('settings');
+await page.evaluate(() => { harness.plugin.settings.points = { gryffindor: 310, slytherin: 420, ravenclaw: 280, hufflepuff: 190 }; harness.openSettings(); });
+await page.locator('.hp-cup').scrollIntoViewIfNeeded();
+await page.waitForTimeout(100);
+await shot('house-cup');
 await page.evaluate(() => harness.closeSettings());
 
 await page.evaluate(() => harness.plugin.setHouse('slytherin'));
@@ -55,8 +59,11 @@ await page.click('.nav-header');
 await setMode('common');
 await page.evaluate(() => harness.plugin.setHouse('hufflepuff'));
 await page.evaluate(() => harness.runCommand('sorting-hat'));
-await page.waitForTimeout(1500);
+await page.click('.hp-hat-quiz');
+await page.click('.hp-hat-answer[data-house="hufflepuff"]');
+await page.waitForTimeout(300);
 await shot('sorting-hat');
+for (let i = 1; i < 6; i++) await page.click('.hp-hat-answer[data-house="hufflepuff"]');
 await page.waitForSelector('.hp-hat-modal', { state: 'detached', timeout: 10000 });
 
 await page.evaluate(() => harness.plugin.setHouse('gryffindor'));

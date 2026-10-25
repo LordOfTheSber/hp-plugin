@@ -9,10 +9,17 @@ import {
   formatLength, presetOf, randomWand, wandSideSvg
 } from './wands.ts';
 import type { PresetId, WandSpec } from './wands.ts';
+import { QUIZ_QUESTIONS, shuffled, sortByAnswers } from './sorting.ts';
 
-/** Распределяющая шляпа: три фразы «в раздумьях», затем вердикт. */
+/**
+ * Распределяющая шляпа: испытание из нескольких вопросов или «довериться шляпе» (случайный факультет).
+ * Потом шляпа раздумывает вслух и объявляет вердикт.
+ */
 export class SortingHatModal extends Modal {
   private cancelled = false;
+  private text!: HTMLElement;
+  private progress!: HTMLElement;
+  private choices!: HTMLElement;
 
   constructor(
     app: App,
@@ -27,9 +34,11 @@ export class SortingHatModal extends Modal {
     this.modalEl.addClass('hp-hat-modal');
     const hat = this.contentEl.appendChild(svgElement(HAT_SVG));
     hat.classList.add('hp-hat-img');
-    const text = this.contentEl.createEl('p', { cls: 'hp-hat-text' });
-    text.setAttribute('aria-live', 'assertive');
-    void this.run(text);
+    this.progress = this.contentEl.createDiv({ cls: 'hp-hat-progress' });
+    this.text = this.contentEl.createEl('p', { cls: 'hp-hat-text' });
+    this.text.setAttribute('aria-live', 'assertive');
+    this.choices = this.contentEl.createDiv({ cls: 'hp-hat-choices' });
+    this.intro();
   }
 
   onClose(): void {
@@ -37,19 +46,57 @@ export class SortingHatModal extends Modal {
     this.contentEl.empty();
   }
 
+  private intro(): void {
+    const { t } = this;
+    this.text.setText(t('hatIntro'));
+    this.choices.empty();
+    const quiz = this.choices.createEl('button', { cls: 'mod-cta hp-hat-quiz', text: t('hatQuiz'), attr: { type: 'button' } });
+    quiz.addEventListener('click', () => this.ask(0, []));
+    this.choices.createEl('button', { cls: 'hp-hat-trust', text: t('hatTrust'), attr: { type: 'button' } })
+      .addEventListener('click', () => void this.verdict(null));
+    window.setTimeout(() => quiz.focus(), 0);
+  }
+
+  private ask(index: number, answers: HouseId[]): void {
+    const { t } = this;
+    if (index === QUIZ_QUESTIONS.length) {
+      void this.verdict(sortByAnswers(answers));
+      return;
+    }
+    const question = QUIZ_QUESTIONS[index];
+    this.progress.setText(t('hatProgress', index + 1, QUIZ_QUESTIONS.length));
+    this.text.setText(t(`quiz_${question}`));
+    this.choices.empty();
+    this.choices.addClass('is-quiz');
+    const buttons = shuffled(HOUSE_IDS).map((house) => {
+      const btn = this.choices.createEl('button', {
+        cls: 'hp-hat-answer', text: t(`quiz_${question}_${house}`), attr: { type: 'button', 'data-house': house }
+      });
+      btn.addEventListener('click', () => this.ask(index + 1, [...answers, house]));
+      return btn;
+    });
+    window.setTimeout(() => buttons[0]?.focus(), 0);
+  }
+
   // При «уменьшении движения» анимации отключает CSS, а паузы остаются: фразы нужно успеть прочитать.
   private sleep(ms: number): Promise<void> {
     return new Promise((r) => window.setTimeout(r, ms));
   }
 
-  private async run(text: HTMLElement): Promise<void> {
-    const phrases = (['hat1', 'hat2', 'hat3', 'hat4'] as const).slice().sort(() => Math.random() - 0.5).slice(0, 3);
+  /** house — итог испытания; null — шляпа решает сама. */
+  private async verdict(chosen: HouseId | null): Promise<void> {
+    const { text } = this;
+    this.choices.empty();
+    this.choices.removeClass('is-quiz');
+    this.progress.setText('');
+    // После испытания шляпа раздумывает недолго: она уже многое узнала
+    const phrases = shuffled(['hat1', 'hat2', 'hat3', 'hat4'] as const).slice(0, chosen ? 2 : 3);
     for (const key of phrases) {
       text.setText(this.t(key));
       await this.sleep(1100);
       if (this.cancelled) return;
     }
-    const house = HOUSE_IDS[Math.floor(Math.random() * HOUSE_IDS.length)];
+    const house = chosen ?? HOUSE_IDS[Math.floor(Math.random() * HOUSE_IDS.length)];
     text.addClass('hp-verdict');
     text.style.setProperty('--hp-verdict-color', palette(house, this.isDark ? 'common' : 'parchment').primary);
     text.setText(this.t(`houseShout_${house}`));
@@ -264,5 +311,48 @@ export class HouseSuggestModal extends FuzzySuggestModal<HouseId> {
 
   onChooseItem(house: HouseId): void {
     this.onChoose(house);
+  }
+}
+
+/** Выбор одной из нескольких заметок (Маховик времени: в тот день их было несколько). */
+export class NoteSuggestModal extends FuzzySuggestModal<string> {
+  constructor(app: App, placeholder: string, private readonly paths: string[], private readonly onChoose: (path: string) => void) {
+    super(app);
+    this.setPlaceholder(placeholder);
+  }
+
+  getItems(): string[] {
+    return this.paths;
+  }
+
+  getItemText(path: string): string {
+    return path.replace(/\.md$/, '');
+  }
+
+  onChooseItem(path: string): void {
+    this.onChoose(path);
+  }
+}
+
+/** «Точно?» перед тем, что не отменить (сброс очков). */
+export class ConfirmModal extends Modal {
+  constructor(app: App, private readonly options: { title: string; text: string; confirm: string; cancel: string; onConfirm(): void }) {
+    super(app);
+  }
+
+  onOpen(): void {
+    const { title, text, confirm, cancel, onConfirm } = this.options;
+    this.titleEl.setText(title);
+    this.contentEl.createEl('p', { text });
+    new Setting(this.contentEl)
+      .addButton((b) => b.setButtonText(cancel).onClick(() => this.close()))
+      .addButton((b) => b.setButtonText(confirm).setWarning().onClick(() => {
+        this.close();
+        onConfirm();
+      }));
+  }
+
+  onClose(): void {
+    this.contentEl.empty();
   }
 }

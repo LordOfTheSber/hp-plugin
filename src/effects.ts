@@ -7,6 +7,7 @@ import { FOOT_SVG, SNITCH_SVG, svgElement } from './crest.ts';
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
 const rand = (min: number, max: number) => min + Math.random() * (max - min);
+const viewOf = (doc: Document): Window => doc.defaultView ?? window;
 
 export interface TrailColors {
   /** Цвет свечения в тёмной теме и цвет «чернил» в светлой. */
@@ -31,27 +32,42 @@ export interface SnitchCallbacks {
   onCatch(): void;
 }
 
+/**
+ * Эффекты рисуются в документе того окна, где произнесено заклинание: у Obsidian бывают
+ * отдельные окна (popout), и у каждого свой document со своим слоем эффектов.
+ */
 export class Effects {
-  private layer: HTMLElement | null = null;
+  private layers = new Map<Document, HTMLElement>();
   private snitch: HTMLElement | null = null;
   private timers = new Set<number>();
-  private pointer = { x: window.innerWidth / 2, y: window.innerHeight / 3 };
+  private pointer: { x: number; y: number; doc: Document | null } = { x: 0, y: 0, doc: null };
 
   constructor(private readonly reducedMotion: () => boolean) {}
 
-  get pointerPosition(): { x: number; y: number } {
-    return { ...this.pointer };
+  /** Где курсор в этом документе; если он в другом окне — середина окна, чуть выше центра. */
+  pointerIn(doc: Document): { x: number; y: number } {
+    if (this.pointer.doc === doc) return { x: this.pointer.x, y: this.pointer.y };
+    const view = viewOf(doc);
+    return { x: view.innerWidth / 2, y: view.innerHeight / 3 };
   }
 
   trackPointer(e: PointerEvent): void {
-    this.pointer = { x: e.clientX, y: e.clientY };
+    this.pointer = { x: e.clientX, y: e.clientY, doc: e.view?.document ?? (e.target as Node | null)?.ownerDocument ?? null };
+  }
+
+  /** Окно закрыли: его слой больше не нужен. */
+  forget(doc: Document): void {
+    this.layers.get(doc)?.remove();
+    this.layers.delete(doc);
+    if (this.pointer.doc === doc) this.pointer.doc = null;
+    if (this.snitch?.ownerDocument === doc) this.snitch = null;
   }
 
   destroy(): void {
     for (const id of this.timers) window.clearTimeout(id);
     this.timers.clear();
-    this.layer?.remove();
-    this.layer = null;
+    for (const layer of this.layers.values()) layer.remove();
+    this.layers.clear();
     this.snitch = null;
   }
 
@@ -61,12 +77,14 @@ export class Effects {
 
   // ---------- Lumos / Nox ----------
 
-  lumos(): void {
+  lumos(doc: Document): void {
     const size = 80;
-    const glow = this.add('div', 'hp-glow');
-    glow.style.left = `${this.pointer.x - size / 2}px`;
-    glow.style.top = `${this.pointer.y - size / 2}px`;
-    const scale = (Math.hypot(window.innerWidth, window.innerHeight) / size) * 2.2;
+    const at = this.pointerIn(doc);
+    const view = viewOf(doc);
+    const glow = this.add(doc, 'div', 'hp-glow');
+    glow.style.left = `${at.x - size / 2}px`;
+    glow.style.top = `${at.y - size / 2}px`;
+    const scale = (Math.hypot(view.innerWidth, view.innerHeight) / size) * 2.2;
     this.removeAfter(glow.animate([
       { transform: 'scale(.2)', opacity: 1 },
       { transform: `scale(${scale})`, opacity: 0.85, offset: 0.55 },
@@ -74,10 +92,11 @@ export class Effects {
     ], { duration: this.reducedMotion() ? 400 : 1100, easing: 'ease-out' }), glow);
   }
 
-  nox(): void {
-    const shade = this.add('div', 'hp-shade');
+  nox(doc: Document): void {
+    const at = this.pointerIn(doc);
+    const shade = this.add(doc, 'div', 'hp-shade');
     shade.style.background =
-      `radial-gradient(circle at ${this.pointer.x}px ${this.pointer.y}px, rgba(0,0,0,0) 0, rgba(0,0,0,.92) 220px)`;
+      `radial-gradient(circle at ${at.x}px ${at.y}px, rgba(0,0,0,0) 0, rgba(0,0,0,.92) 220px)`;
     this.removeAfter(shade.animate([
       { opacity: 0 }, { opacity: 1, offset: 0.45 }, { opacity: 1, offset: 0.6 }, { opacity: 0 }
     ], { duration: this.reducedMotion() ? 500 : 1400, easing: 'ease-in-out' }), shade);
@@ -90,17 +109,17 @@ export class Effects {
 
   // ---------- След палочки и Вингардиум Левиоса ----------
 
-  trail(colors: TrailColors, x: number, y: number): Trail {
-    const svg = document.createElementNS(SVG_NS, 'svg');
+  trail(doc: Document, colors: TrailColors, x: number, y: number): Trail {
+    const svg = doc.createElementNS(SVG_NS, 'svg');
     svg.setAttribute('class', 'hp-trail');
     svg.style.setProperty('--hp-trail-glow', colors.glow);
     svg.style.setProperty('--hp-trail-ink', colors.ink);
     const lines = ['hp-trail-glow', 'hp-trail-core'].map((cls) => {
-      const line = svg.appendChild(document.createElementNS(SVG_NS, 'polyline'));
+      const line = svg.appendChild(doc.createElementNS(SVG_NS, 'polyline'));
       line.setAttribute('class', cls);
       return line;
     });
-    this.getLayer().appendChild(svg);
+    this.getLayer(doc).appendChild(svg);
     let points = `${x},${y}`;
     let last = { x, y };
     const draw = () => lines.forEach((l) => l.setAttribute('points', points));
@@ -112,7 +131,7 @@ export class Effects {
         draw();
       },
       finish: (success) => {
-        if (success) this.sparkle(last.x, last.y, colors);
+        if (success) this.sparkle(doc, last.x, last.y, colors);
         else svg.classList.add('is-fizzled');
         this.removeAfter(svg.animate([{ opacity: 1 }, { opacity: 0 }],
           { duration: this.reducedMotion() ? 200 : success ? 700 : 450, easing: 'ease-out', fill: 'forwards' }), svg);
@@ -121,11 +140,11 @@ export class Effects {
     };
   }
 
-  levitate(x: number, y: number): void {
-    const hit = document.elementFromPoint(x, y);
+  levitate(doc: Document, x: number, y: number): void {
+    const hit = doc.elementFromPoint(x, y);
     const target = hit?.closest<HTMLElement>(LEVITATE_TARGETS)
-      ?? document.querySelector<HTMLElement>('.workspace-leaf.mod-active .view-content')
-      ?? document.querySelector<HTMLElement>('.workspace');
+      ?? doc.querySelector<HTMLElement>('.workspace-leaf.mod-active .view-content')
+      ?? doc.querySelector<HTMLElement>('.workspace');
     if (!target) return;
     const lift = this.reducedMotion() ? -4 : -16;
     const frames = this.reducedMotion()
@@ -143,10 +162,10 @@ export class Effects {
 
   // ---------- Карта Мародёров ----------
 
-  marauders(lines: [string, string, string]): void {
-    const card = this.add('div', 'hp-map-card');
-    for (const line of lines.slice(0, 2)) card.appendChild(document.createElement('div')).textContent = line;
-    const title = card.appendChild(document.createElement('div'));
+  marauders(doc: Document, lines: [string, string, string]): void {
+    const card = this.add(doc, 'div', 'hp-map-card');
+    for (const line of lines.slice(0, 2)) card.appendChild(doc.createElement('div')).textContent = line;
+    const title = card.appendChild(doc.createElement('div'));
     title.className = 'hp-map-title';
     title.textContent = lines[2];
     this.removeAfter(card.animate([
@@ -159,8 +178,8 @@ export class Effects {
     if (this.reducedMotion()) return;
 
     // Следы идут по кривой Безье от одного края окна к другому
-    const w = window.innerWidth;
-    const h = window.innerHeight;
+    const w = viewOf(doc).innerWidth;
+    const h = viewOf(doc).innerHeight;
     const fromLeft = Math.random() < 0.5;
     const p0 = { x: fromLeft ? -20 : w + 20, y: rand(h * 0.55, h * 0.95) };
     const p1 = { x: rand(w * 0.2, w * 0.8), y: rand(0, h) };
@@ -174,7 +193,7 @@ export class Effects {
       const dy = 2 * (1 - s) * (p1.y - p0.y) + 2 * s * (p2.y - p1.y);
       const len = Math.hypot(dx, dy) || 1;
       const side = i % 2 ? 9 : -9;
-      const foot = this.add('div', 'hp-footprint');
+      const foot = this.add(doc, 'div', 'hp-footprint');
       foot.appendChild(svgElement(FOOT_SVG));
       foot.style.left = `${x - (dy / len) * side - 8}px`;
       foot.style.top = `${y + (dx / len) * side - 13}px`;
@@ -186,17 +205,18 @@ export class Effects {
   }
 
   /** Лёгкое «чернильное» затемнение для «Шалость удалась». */
-  inkFade(): void {
-    const ink = this.add('div', 'hp-shade');
+  inkFade(doc: Document): void {
+    const ink = this.add(doc, 'div', 'hp-shade');
     ink.style.background = 'radial-gradient(circle, rgba(74,46,20,0) 30%, rgba(74,46,20,.35))';
     this.removeAfter(ink.animate([{ opacity: 0 }, { opacity: 1, offset: 0.5 }, { opacity: 0 }], { duration: 1200 }), ink);
   }
 
   // ---------- Золотой снитч ----------
 
-  releaseSnitch({ label, onCatch }: SnitchCallbacks): void {
-    if (this.snitch) return;
-    const btn = this.add('button', 'hp-snitch');
+  releaseSnitch(doc: Document, { label, onCatch }: SnitchCallbacks): void {
+    if (this.snitch?.isConnected) return;
+    const view = viewOf(doc);
+    const btn = this.add(doc, 'button', 'hp-snitch');
     btn.setAttribute('type', 'button');
     btn.setAttribute('aria-label', label);
     btn.dataset.hpSnitch = '';
@@ -211,7 +231,7 @@ export class Effects {
       }
     }
 
-    let pos = { x: -70, y: rand(40, window.innerHeight - 80) };
+    let pos = { x: -70, y: rand(40, view.innerHeight - 80) };
     let current: Animation | null = null;
     let caught = false;
     const deadline = Date.now() + 25000;
@@ -220,8 +240,8 @@ export class Effects {
       if (caught || !btn.isConnected) return;
       const leaving = Date.now() > deadline;
       const next = leaving
-        ? { x: window.innerWidth + 90, y: rand(-60, window.innerHeight / 2) }
-        : { x: rand(10, window.innerWidth - 80), y: rand(40, window.innerHeight - 60) };
+        ? { x: view.innerWidth + 90, y: rand(-60, view.innerHeight / 2) }
+        : { x: rand(10, view.innerWidth - 80), y: rand(40, view.innerHeight - 60) };
       // Иногда снитч зависает на месте — шанс его поймать
       const hover = !leaving && Math.random() < 0.3 ? rand(350, 900) : 0;
       current = btn.animate([
@@ -248,7 +268,7 @@ export class Effects {
       caught = true;
       current?.pause();
       const box = btn.getBoundingClientRect();
-      this.sparkle(box.left + box.width / 2, box.top + box.height / 2);
+      this.sparkle(doc, box.left + box.width / 2, box.top + box.height / 2);
       this.removeAfter(btn.animate([{ opacity: 1 }, { opacity: 0, transform: `translate(${box.left}px, ${box.top}px) scale(.3)` }],
         { duration: 400, fill: 'forwards' }), btn);
       this.snitch = null;
@@ -258,12 +278,30 @@ export class Effects {
     fly();
   }
 
-  private sparkle(x: number, y: number, colors?: TrailColors): void {
-    const dark = document.body.classList.contains('theme-dark');
+  // ---------- Очки факультету ----------
+
+  /** «+10» всплывает над элементом (счётчиком очков в статус-баре) и тает. */
+  floatText(anchor: HTMLElement, text: string): void {
+    const doc = anchor.ownerDocument;
+    const box = anchor.getBoundingClientRect();
+    const el = this.add(doc, 'div', 'hp-float-points');
+    el.textContent = text;
+    el.style.left = `${box.left + box.width / 2}px`;
+    el.style.top = `${box.top}px`;
+    const rise = this.reducedMotion() ? 0 : -28;
+    this.removeAfter(el.animate([
+      { transform: 'translate(-50%, 0)', opacity: 0 },
+      { transform: `translate(-50%, ${rise / 3}px)`, opacity: 1, offset: 0.2 },
+      { transform: `translate(-50%, ${rise}px)`, opacity: 0 }
+    ], { duration: 1400, easing: 'ease-out' }), el);
+  }
+
+  private sparkle(doc: Document, x: number, y: number, colors?: TrailColors): void {
+    const dark = doc.body.classList.contains('theme-dark');
     for (let i = 0; i < 14; i++) {
       const a = (i / 14) * Math.PI * 2;
       const r = rand(40, 80);
-      const dot = this.add('div', 'hp-spark');
+      const dot = this.add(doc, 'div', 'hp-spark');
       dot.style.left = `${x - 3}px`;
       dot.style.top = `${y - 3}px`;
       if (colors) {
@@ -282,18 +320,20 @@ export class Effects {
 
   // ---------- Служебное ----------
 
-  private getLayer(): HTMLElement {
-    if (this.layer?.isConnected) return this.layer;
-    this.layer = document.createElement('div');
-    this.layer.className = 'hp-overlay';
-    document.body.appendChild(this.layer);
-    return this.layer;
+  private getLayer(doc: Document): HTMLElement {
+    let layer = this.layers.get(doc);
+    if (layer?.isConnected) return layer;
+    layer = doc.createElement('div');
+    layer.className = 'hp-overlay';
+    doc.body.appendChild(layer);
+    this.layers.set(doc, layer);
+    return layer;
   }
 
-  private add<K extends keyof HTMLElementTagNameMap>(tag: K, cls: string): HTMLElementTagNameMap[K] {
-    const el = document.createElement(tag);
+  private add<K extends keyof HTMLElementTagNameMap>(doc: Document, tag: K, cls: string): HTMLElementTagNameMap[K] {
+    const el = doc.createElement(tag);
     el.className = cls;
-    this.getLayer().appendChild(el);
+    this.getLayer(doc).appendChild(el);
     return el;
   }
 

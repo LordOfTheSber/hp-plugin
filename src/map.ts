@@ -23,7 +23,19 @@ export interface Neighbor {
   passage: Passage;
 }
 
-const isNote = (path: string) => path.endsWith('.md');
+/** Неизведанная комната: ссылка на заметку, которой ещё нет. «?» в именах файлов Obsidian запрещён. */
+const GHOST = '?';
+
+/** Узел — неизведанная комната: «?Новая заметка». */
+export function isGhost(id: string): boolean {
+  return id.startsWith(GHOST);
+}
+
+export const ghostId = (linktext: string) => GHOST + linktext;
+/** Текст ссылки неизведанной комнаты: по нему Obsidian и создаёт заметку. */
+export const ghostLink = (id: string) => id.slice(GHOST.length);
+
+const isNote = (path: string) => path.endsWith('.md') && !isGhost(path);
 
 /** Узел-тег: «#домашка». Пути заметок кончаются на .md, а точек в тегах не бывает. */
 export function isTag(id: string): boolean {
@@ -33,50 +45,102 @@ export function isTag(id: string): boolean {
 /** «Люди/Гарри Поттер.md» → «Гарри Поттер», тег остаётся тегом: «#хогвартс/зелья». */
 export function noteName(path: string): string {
   if (isTag(path)) return path;
-  return path.slice(path.lastIndexOf('/') + 1).replace(/\.md$/, '');
+  const name = isGhost(path) ? ghostLink(path) : path;
+  return name.slice(name.lastIndexOf('/') + 1).replace(/\.md$/, '');
 }
 
-/** «Люди/Гарри Поттер.md» → «Люди», заметка в корне или тег → «». */
+/** «Люди/Гарри Поттер.md» → «Люди», заметка в корне, тег или неизведанная комната → «». */
 export function noteFolder(path: string): string {
-  if (isTag(path)) return '';
+  if (isTag(path) || isGhost(path)) return '';
   const i = path.lastIndexOf('/');
   return i < 0 ? '' : path.slice(0, i);
 }
 
+/** Лежит ли заметка в одной из папок (на любой глубине вложенности для имён без «/»: «Архив» — и «Работа/Архив»). */
+export function inFolder(path: string, folders: string[], anyDepth = false): boolean {
+  const p = '/' + path;
+  return folders.some((f) => path.startsWith(f + '/') || (anyDepth && p.includes('/' + f + '/')));
+}
+
 const collator = new Intl.Collator();
 const byName = (a: string, b: string) => collator.compare(noteName(a), noteName(b)) || collator.compare(a, b);
+
+export interface GraphOptions {
+  /** metadataCache.unresolvedLinks: ссылки на заметки, которых ещё нет, — неизведанные комнаты. */
+  unresolved?: LinkTable;
+  /** Папки, которых нет на карте и в маршрутах. */
+  exclude?: string[];
+}
 
 export class LinkGraph {
   private out = new Map<string, Set<string>>();
   private in = new Map<string, Set<string>>();
   /** Заметка → её теги и тег → его заметки. */
   private tagged = new Map<string, Set<string>>();
+  /** Заметка → неизведанные комнаты, на которые она ссылается. */
+  private ghostsOf = new Map<string, Set<string>>();
+  /** Тег без учёта регистра → написание на карте. */
+  private tagIds = new Map<string, string>();
+  /** Отсортированные соседи: поиск пути спрашивает их много раз. */
+  private sorted = new Map<string, Neighbor[]>();
+  private readonly exclude: string[];
 
   /**
    * Вложения (картинки, PDF) в граф не попадают: через общую картинку заметки не связаны.
    * Теги сравниваются без учёта регистра, как в Obsidian; на карте — написание из первой заметки.
    */
-  constructor(links: LinkTable, tags: TagTable = {}) {
-    for (const [from, targets] of Object.entries(links)) {
-      if (!isNote(from)) continue;
-      for (const to of Object.keys(targets ?? {})) {
-        if (to === from || !isNote(to)) continue;
-        link(this.out, from, to);
-        link(this.in, to, from);
+  constructor(links: LinkTable, tags: TagTable = {}, options: GraphOptions = {}) {
+    this.exclude = options.exclude ?? [];
+    const unresolved = options.unresolved ?? {};
+    const paths = new Set([...Object.keys(links), ...Object.keys(tags), ...Object.keys(unresolved)]);
+    for (const path of paths) this.addNote(path, links[path], tags[path], unresolved[path]);
+  }
+
+  /** Заметку поправили: её ссылки, теги и неизведанные комнаты — заново, остальной граф не трогаем. */
+  setNote(path: string, links?: Record<string, number>, tags?: string[], unresolved?: Record<string, number>): void {
+    this.removeNote(path);
+    this.addNote(path, links, tags, unresolved);
+    this.sorted.clear();
+  }
+
+  private excluded(path: string): boolean {
+    return inFolder(path, this.exclude);
+  }
+
+  private addNote(path: string, links?: Record<string, number>, tags?: string[], unresolved?: Record<string, number>): void {
+    if (!isNote(path) || this.excluded(path)) return;
+    for (const to of Object.keys(links ?? {})) {
+      if (to === path || !isNote(to) || this.excluded(to)) continue;
+      link(this.out, path, to);
+      link(this.in, to, path);
+    }
+    for (const raw of tags ?? []) {
+      const tag = raw.startsWith('#') ? raw : `#${raw}`;
+      if (tag.length < 2) continue;
+      const key = tag.toLowerCase();
+      if (!this.tagIds.has(key)) this.tagIds.set(key, tag);
+      const id = this.tagIds.get(key)!;
+      link(this.tagged, path, id);
+      link(this.tagged, id, path);
+    }
+    for (const text of Object.keys(unresolved ?? {})) {
+      if (text) link(this.ghostsOf, path, ghostId(text));
+    }
+  }
+
+  private removeNote(path: string): void {
+    for (const to of this.out.get(path) ?? []) this.in.get(to)?.delete(path);
+    this.out.delete(path);
+    for (const tag of this.tagged.get(path) ?? []) {
+      const notes = this.tagged.get(tag);
+      notes?.delete(path);
+      if (notes && !notes.size) {
+        this.tagged.delete(tag);
+        this.tagIds.delete(tag.toLowerCase());
       }
     }
-    const ids = new Map<string, string>();
-    for (const [path, list] of Object.entries(tags)) {
-      if (!isNote(path)) continue;
-      for (const raw of list ?? []) {
-        const tag = raw.startsWith('#') ? raw : `#${raw}`;
-        if (tag.length < 2) continue;
-        const key = tag.toLowerCase();
-        if (!ids.has(key)) ids.set(key, tag);
-        link(this.tagged, path, ids.get(key)!);
-        link(this.tagged, ids.get(key)!, path);
-      }
-    }
+    this.tagged.delete(path);
+    this.ghostsOf.delete(path);
   }
 
   passage(from: string, to: string): Passage | null {
@@ -88,13 +152,23 @@ export class LinkGraph {
 
   /**
    * Соседи: сначала куда ведут ссылки из текста, потом откуда ссылаются сюда, потом теги;
-   * внутри — по имени. У тега соседи — заметки с этим тегом.
+   * внутри — по имени. У тега соседи — заметки с этим тегом. Список общий, менять его нельзя.
    */
-  neighbors(path: string): Neighbor[] {
-    const out = [...(this.out.get(path) ?? [])].sort(byName);
-    const back = [...(this.in.get(path) ?? [])].filter((p) => !this.out.get(path)?.has(p)).sort(byName);
-    const tags = [...(this.tagged.get(path) ?? [])].sort(byName);
-    return [...out, ...back, ...tags].map((p) => ({ path: p, passage: this.passage(path, p)! }));
+  neighbors(path: string): readonly Neighbor[] {
+    let list = this.sorted.get(path);
+    if (!list) {
+      const out = [...(this.out.get(path) ?? [])].sort(byName);
+      const back = [...(this.in.get(path) ?? [])].filter((p) => !this.out.get(path)?.has(p)).sort(byName);
+      const tags = [...(this.tagged.get(path) ?? [])].sort(byName);
+      list = [...out, ...back, ...tags].map((p) => ({ path: p, passage: this.passage(path, p)! }));
+      this.sorted.set(path, list);
+    }
+    return list;
+  }
+
+  /** Неизведанные комнаты: ссылки из заметки на заметки, которых ещё нет. По имени. */
+  ghosts(path: string): string[] {
+    return [...(this.ghostsOf.get(path) ?? [])].sort(byName);
   }
 
   degree(path: string): number {
@@ -148,7 +222,8 @@ export interface Route {
   steps: string[] | null;
 }
 
-export type RouteStatus = 'arrived' | 'onRoute' | 'rerouted' | 'lost';
+/** rerouted — свернули с пути, changed — поменялись ссылки, и путь пришлось проложить заново. */
+export type RouteStatus = 'arrived' | 'onRoute' | 'rerouted' | 'changed' | 'lost';
 
 /** Следующая заметка маршрута: тег — не остановка, через него проходят. */
 export function nextNote(steps: string[]): string | null {
@@ -188,6 +263,23 @@ export function followRoute(graph: LinkGraph, route: Route, current: string): { 
   return { route: { ...route, steps }, status: steps ? 'rerouted' : 'lost' };
 }
 
+/**
+ * Граф поменялся (ссылку убрали, заметку удалили, папку исключили): по маршруту ещё можно пройти?
+ * Если нет — новый путь от current (или от начала маршрута). status null — ничего не изменилось.
+ * Если раньше хода не было, а теперь появился, маршрут просто находится.
+ */
+export function revalidateRoute(graph: LinkGraph, route: Route, current: string | null): { route: Route; status: RouteStatus | null } {
+  const steps = route.steps;
+  const start = current ?? steps?.[0];
+  if (steps && steps.every((p, i) => i === 0 || graph.passage(steps[i - 1], p) !== null) && (!current || steps[0] === current)) {
+    return { route, status: null };
+  }
+  if (!start) return { route, status: null };
+  const fresh = graph.route(start, route.target);
+  if (!steps) return fresh ? { route: { ...route, steps: fresh }, status: null } : { route, status: null };
+  return { route: { ...route, steps: fresh }, status: fresh ? 'changed' : 'lost' };
+}
+
 // ---------- Следы ----------
 
 export const FOOTPRINTS_MAX = 12;
@@ -195,6 +287,13 @@ export const FOOTPRINTS_MAX = 12;
 /** Недавние заметки, свежие первыми, без повторов. */
 export function addFootprint(footprints: string[], path: string, max = FOOTPRINTS_MAX): string[] {
   return [path, ...footprints.filter((p) => p !== path)].slice(0, max);
+}
+
+/** «Запретная секция» — папка с одним из этих названий на любой глубине или путь к ней («Личное/Тайное»). */
+export const RESTRICTED_FOLDERS = ['Restricted Section', 'Запретная секция'];
+
+export function isRestricted(path: string, extra: string[] = []): boolean {
+  return inFolder(path, [...RESTRICTED_FOLDERS, ...extra], true);
 }
 
 // ---------- Раскладка карты ----------
@@ -222,12 +321,13 @@ export const MAP_RINGS = { ring1: { rx: 70, ry: 98 }, ring2: { rx: 122, ry: 150 
 export const MAP_LIMITS = { ring1: 12, ring2: 16 };
 
 /**
- * Окрестности заметки: в центре — вы, по первому кругу — соседи, по второму — их соседи.
- * Следующие шаги маршрута всегда попадают на карту, первый из них — наверху.
+ * Окрестности заметки: в центре — вы, по первому кругу — соседи и неизведанные комнаты, по второму — соседи соседей.
+ * Следующие шаги маршрута всегда попадают на карту, первый из них — наверху. limits.ring2 = 0 — карта в один круг.
  */
 export function layoutMap(graph: LinkGraph, center: string, route: string[] = [], limits = MAP_LIMITS): MapLayout {
   const nodes: MapNode[] = [{ path: center, x: 0, y: 0, ring: 0, parent: null, passage: null }];
-  const all = graph.neighbors(center);
+  // Неизведанные комнаты — в конце: у них нет связей, и при нехватке места они уступают заметкам
+  const all: Neighbor[] = [...graph.neighbors(center), ...graph.ghosts(center).map((path) => ({ path, passage: 'link' as const }))];
   const first = route[0] === center ? route[1] : undefined;
   // Не всё помещается: остаются шаг маршрута, теги (их у заметки немного, а объединяют они многое)
   // и самые связанные заметки

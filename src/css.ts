@@ -71,3 +71,22 @@ export function generateHouseCss(): string {
   }
   return blocks.join('\n\n');
 }
+
+/**
+ * Свои названия «Запретной секции»: те же правила, что для встроенных в theme.css,
+ * но селекторы зависят от настроек, поэтому CSS собирается на лету.
+ */
+export function restrictedCss(names: string[]): string {
+  if (!names.length) return '';
+  const quote = (s: string) => `"${s.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, ' ')}"`;
+  const match = names.map((n) => `[data-path=${quote(n)}], [data-path$=${quote('/' + n)}]`).join(', ');
+  const title = `body.hp-theme :is(.nav-folder-title, .tree-item-self):is(${match})`;
+  const folder = (hover: string) => `body.hp-theme .nav-folder:has(> .nav-folder-title:is(${match}))${hover} > .nav-folder-children, ` +
+    `body.hp-theme .tree-item:has(> .tree-item-self:is(${match}))${hover} > .tree-item-children`;
+  return [
+    `${title} { font-style: italic; color: var(--text-faint); }`,
+    `${title} :is(.nav-folder-title-content, .tree-item-inner)::after { content: ' 🔒'; font-style: normal; }`,
+    `${folder('')} { filter: blur(2.5px); opacity: 0.7; transition: filter 0.3s, opacity 0.3s; }`,
+    `${folder(':hover')} { filter: none; opacity: 1; }`
+  ].join('\n');
+}

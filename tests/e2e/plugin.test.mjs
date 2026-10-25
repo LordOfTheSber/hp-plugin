@@ -80,6 +80,7 @@ test('плагин на стенде Obsidian', { skip: !playwright && 'Playwrig
           const ratios = await page.evaluate(contrastInPage, [
             '#para', '#link', '#h2', '#inline-title', '#tag', '#code', '#active-file', '#editor',
             '#howler .callout-title', '[data-callout="prophecy"] .callout-title', '[data-callout="marauders"] .callout-content',
+            '#spell .callout-title', '#potion .callout-title', '#owl .callout-title', '#cloak .callout-title',
             '.status-bar .hp-status'
           ]);
           for (const [sel, r] of Object.entries(ratios)) assert.ok(r >= 4.5, `${sel}: ${r?.toFixed(2)}`);
@@ -115,6 +116,7 @@ test('плагин на стенде Obsidian', { skip: !playwright && 'Playwrig
       await page.waitForFunction(() => document.body.classList.contains('theme-dark'));
       await typeOutsideEditor(' lumos');
       await page.waitForFunction(() => document.body.classList.contains('theme-light'));
+      assert.equal(await page.evaluate(() => harness.app.vault.config.theme), undefined, 'настройка темы Obsidian не тронута');
     });
 
     await t.test('в редакторе заклинания не срабатывают', async () => {
@@ -184,6 +186,35 @@ test('плагин на стенде Obsidian', { skip: !playwright && 'Playwrig
       assert.ok(await bodyHas('theme-light'));
       assert.equal(await page.evaluate(() => window.hpMenus), 2, 'правая кнопка снова работает как обычно');
       await page.evaluate(() => harness.plugin.settings.gestures = true);
+    });
+
+    await t.test('Alt + правая кнопка: жест и в тексте заметки', async () => {
+      // Уведомления в углу закрывают редактор
+      await page.evaluate(() => document.querySelectorAll('.notice').forEach((n) => n.remove()));
+      const box = await page.locator('#editor').boundingBox();
+      const x = box.x + 120;
+      const menus = () => page.evaluate(() => window.hpMenus);
+      // Как на macOS и Linux: контекстное меню приходит сразу при нажатии кнопки
+      const drawLinux = async (alt) => {
+        if (alt) await page.keyboard.down('Alt');
+        await page.mouse.move(x, box.y + 20);
+        await page.mouse.down({ button: 'right' });
+        await page.evaluate(([cx, cy, altKey]) => document.elementFromPoint(cx, cy).dispatchEvent(new MouseEvent('contextmenu',
+          { bubbles: true, cancelable: true, clientX: cx, clientY: cy, button: 2, buttons: 2, altKey })), [x, box.y + 20, alt]);
+        await page.mouse.move(x, box.y + 150, { steps: 8 });
+        await page.mouse.up({ button: 'right' });
+        if (alt) await page.keyboard.up('Alt');
+      };
+      const before = await menus();
+      await drawLinux(false);
+      await page.waitForTimeout(700);
+      assert.ok(await bodyHas('theme-light'), 'без Alt жеста в тексте нет');
+      assert.ok(await menus() > before, 'меню с орфографией открылось сразу');
+      const withAlt = await menus();
+      await drawLinux(true);
+      await page.waitForFunction(() => document.body.classList.contains('theme-dark'));
+      assert.equal(await menus(), withAlt, 'с Alt меню не мешает');
+      await setMode('parchment');
     });
 
     await t.test('лавка Олливандера: знаменитая палочка, своя палочка, курсор', async () => {
@@ -357,6 +388,174 @@ test('плагин на стенде Obsidian', { skip: !playwright && 'Playwrig
       await page.waitForSelector('.hp-map-node.is-here[data-path="Хогвартс/Зельеварение.md"]');
     });
 
+    const openNote = (p) => page.evaluate((path) => harness.app.workspace.setActiveFile(harness.app.vault.getAbstractFileByPath(path)), p);
+    const saved = () => page.evaluate(() => JSON.parse(localStorage.getItem('hp-harness-data'))['hp-theme']);
+
+    await t.test('Карта Мародёров: неизведанные комнаты', async () => {
+      await openNote('Хогвартс/Квиддич.md');
+      const ghost = '.hp-map-node.is-ghost[data-path="?Метла Нимбус"]';
+      await page.waitForSelector(ghost);
+      assert.ok(await page.isVisible('.hp-legend-ghost'));
+      assert.match(await page.getAttribute(ghost, 'aria-label'), /неизведанная комната/);
+      await page.click(ghost);
+      await page.waitForFunction(() => harness.app.workspace.getActiveFile().path === 'Метла Нимбус.md');
+      assert.ok(await page.evaluate(() => !!harness.app.vault.getAbstractFileByPath('Метла Нимбус.md')), 'заметка создана');
+      await openNote('Хогвартс/Квиддич.md');
+      await page.waitForFunction(() => !document.querySelector('.hp-map-node.is-ghost'));
+    });
+
+    await t.test('Карта Мародёров: ссылки изменились — маршрут перестраивается', async () => {
+      await clearNotices();
+      const steps = () => page.$$eval('.hp-marauders-steps .hp-map-step-name', (els) => els.map((el) => el.textContent));
+      await openNote('Хогвартс/Зельеварение.md');
+      await page.evaluate(() => harness.plugin.map.setRoute('Хогвартс/Зельеварение.md', 'Люди/Лили Поттер.md'));
+      await page.waitForSelector('.hp-marauders-steps');
+      assert.deepEqual(await steps(), ['Зельеварение', 'Северус Снегг', 'Лили Поттер']);
+      // Снегг больше не ссылается на Лили: старый путь не пройти
+      await page.evaluate(() => harness.app.metadataCache.edit('Люди/Северус Снегг.md', { links: [] }));
+      await page.waitForSelector('.hp-marauders-note:has-text("ссылки изменились")');
+      const fresh = await steps();
+      assert.equal(fresh.at(-1), 'Лили Поттер');
+      assert.ok(!fresh.includes('Северус Снегг'), fresh.join(' → '));
+      const hints = await page.$$eval('.hp-marauders-steps .hp-map-step-hint', (els) => els.map((el) => el.textContent));
+      assert.ok(hints.slice(1).every((h) => /ссылка|тег/.test(h)), hints.join(', '));
+      await page.evaluate(() => harness.app.metadataCache.edit('Люди/Северус Снегг.md', { links: ['Люди/Лили Поттер.md'] }));
+
+      // Следы и маршрут переживают перезапуск
+      await page.waitForFunction(() => JSON.parse(localStorage.getItem('hp-harness-data'))['hp-theme'].route?.target === 'Люди/Лили Поттер.md');
+      const data = await saved();
+      assert.ok(data.footprints.includes('Хогвартс/Квиддич.md'), 'следы сохранены');
+      assert.equal(data.route.steps[0], 'Хогвартс/Зельеварение.md');
+      await page.evaluate(() => harness.plugin.map.clearRoute());
+    });
+
+    await t.test('Карта Мародёров: один круг, папки не на карте', async () => {
+      await openNote('Хогвартс/Зельеварение.md');
+      await page.waitForSelector('.hp-map-node.ring-2');
+      await page.evaluate(() => harness.openSettings());
+      await page.selectOption('.hp-map-depth-setting select', '1');
+      await page.waitForFunction(() => !document.querySelector('.hp-map-node.ring-2'));
+      await page.selectOption('.hp-map-depth-setting select', '2');
+      await page.waitForSelector('.hp-map-node.ring-2');
+
+      const exclude = page.locator('.hp-folders-mapExclude textarea');
+      await exclude.fill('Ингредиенты/');
+      await exclude.dispatchEvent('change');
+      await page.waitForFunction(() => !document.querySelector('.hp-map-node[data-path="Ингредиенты/Безоар.md"]'));
+      assert.deepEqual((await saved()).mapExclude, ['Ингредиенты']);
+      await exclude.fill('');
+      await exclude.dispatchEvent('change');
+      await page.waitForSelector('.hp-map-node[data-path="Ингредиенты/Безоар.md"]');
+
+      // Своя «Запретная секция»: и в проводнике, и на карте
+      const restricted = page.locator('.hp-folders-restrictedFolders input');
+      await restricted.fill('Дневник');
+      await restricted.dispatchEvent('change');
+      await page.evaluate(() => harness.closeSettings());
+      assert.equal(await style('.nav-folder-title[data-path="Дневник"]', 'fontStyle'), 'italic');
+      await openNote('Люди/Гарри Поттер.md');
+      await page.waitForSelector('.hp-map-node.is-restricted[data-path="Дневник/31 июля.md"]');
+      await page.evaluate(() => harness.openSettings());
+      await restricted.fill('');
+      await restricted.dispatchEvent('change');
+      await page.evaluate(() => harness.closeSettings());
+      assert.equal(await style('.nav-folder-title[data-path="Дневник"]', 'fontStyle'), 'normal');
+      await openNote('Хогвартс/Зельеварение.md');
+    });
+
+    await t.test('Карта Мародёров: удалили заметку с пути — хода нет', async () => {
+      await page.evaluate(() => harness.plugin.map.setRoute('Хогвартс/Зельеварение.md', 'Запретная секция/Тайны крестражей.md'));
+      await page.waitForSelector('.hp-marauders-steps li:has-text("Библиотека")');
+      await page.evaluate(() => harness.app.vault.remove('Хогвартс/Библиотека.md'));
+      await page.waitForSelector('.hp-marauders-note:has-text("тайного хода нет")');
+      assert.ok(!(await page.evaluate(() => harness.plugin.settings.footprints)).includes('Хогвартс/Библиотека.md'), 'удалённая заметка — не след');
+      await page.evaluate(() => harness.plugin.map.clearRoute());
+    });
+
+    await t.test('очки за работу: закрытые задачи и ежедневная заметка', async () => {
+      await clearNotices();
+      const points = () => page.evaluate(() => harness.plugin.settings.points[harness.plugin.settings.house]);
+      const before = await points();
+      await page.evaluate(() => harness.app.metadataCache.edit('Хогвартс/Зельеварение.md', { done: 3 }));
+      assert.equal(await points(), before + 20, 'две новые задачи — +20');
+      assert.ok(await page.locator('.hp-float-points').count(), '«+20» над статус-баром');
+      // Сняли галочку и поставили снова — не новые очки; чужая заметка (синхронизация) — тоже
+      await page.evaluate(() => harness.app.metadataCache.edit('Хогвартс/Зельеварение.md', { done: 2 }));
+      await page.evaluate(() => harness.app.metadataCache.edit('Хогвартс/Зельеварение.md', { done: 3 }));
+      await page.evaluate(() => harness.app.metadataCache.edit('Хогвартс/Квиддич.md', { done: 5 }));
+      assert.equal(await points(), before + 20);
+
+      const today = await page.evaluate(() => {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      });
+      await page.evaluate((name) => harness.app.workspace.openLinkText(name, ''), today);
+      await page.evaluate((path) => harness.app.metadataCache.edit(path, { done: 0 }), `${today}.md`);
+      await page.waitForSelector('.notice:has-text("за запись в дневнике")');
+      assert.equal(await points(), before + 40);
+      await page.evaluate((path) => harness.app.metadataCache.edit(path, { done: 0 }), `${today}.md`);
+      assert.equal(await points(), before + 40, 'за день — один раз');
+      await page.waitForFunction((p) => JSON.parse(localStorage.getItem('hp-harness-data'))['hp-theme'].points.gryffindor >= p, before + 40);
+      await openNote('Хогвартс/Зельеварение.md');
+    });
+
+    await t.test('Омут памяти и Маховик времени', async () => {
+      await clearNotices();
+      await page.evaluate(() => harness.runCommand('pensieve'));
+      await page.waitForFunction(() => harness.app.workspace.getActiveFile().path === 'Дневник/Сны.md');
+      await page.waitForSelector('.notice:has-text("Омута памяти: «Сны»")');
+      await page.evaluate(() => harness.runCommand('time-turner'));
+      await page.waitForFunction(() => harness.app.workspace.getActiveFile().path === 'Дневник/Заметки на полях.md');
+      await page.waitForSelector('.notice:has-text("Маховика времени")');
+      await openNote('Хогвартс/Зельеварение.md');
+    });
+
+    await t.test('Мантия-невидимка и новые коллауты', async () => {
+      await page.evaluate(() => Object.assign(harness.app.workspace.activeEditor.editor, { selection: 'пароль' }));
+      await page.evaluate(() => harness.runCommand('cloak'));
+      assert.equal(await page.evaluate(() => harness.app.workspace.activeEditor.editor.inserted), '<span class="hp-cloak">пароль</span>');
+      await page.evaluate(() => harness.runCommand('cloak'));
+      assert.match(await page.evaluate(() => harness.app.workspace.activeEditor.editor.inserted), /^> \[!cloak\] Мантия-невидимка/);
+
+      await page.mouse.move(5, 5);
+      assert.match(await style('#cloak-content', 'filter'), /blur/);
+      assert.match(await style('#cloak-span', 'filter'), /blur/);
+      assert.equal(await style('#cloak .callout-title', 'filter'), 'none', 'заголовок мантии виден');
+      await page.hover('#cloak-span');
+      await page.waitForFunction(() => getComputedStyle(document.getElementById('cloak-span')).filter === 'none');
+      for (const id of ['spell', 'potion', 'owl']) assert.notEqual(await style(`#${id}`, 'backgroundColor'), 'rgba(8, 109, 221, 0.1)', id);
+    });
+
+    await t.test('отдельное окно: тема, заклинания и эффекты — в нём', async () => {
+      await page.evaluate(() => {
+        const frame = document.createElement('iframe');
+        frame.id = 'popout';
+        frame.style.cssText = 'position:fixed;right:0;bottom:30px;width:360px;height:240px;z-index:9999;border:0';
+        document.body.appendChild(frame);
+        const doc = frame.contentDocument;
+        doc.body.className = document.body.className.replace(/\bhp-\S+/g, '');
+        doc.body.innerHTML = '<div class="nav-header" id="pop-nav" style="height:200px">Отдельное окно</div>';
+        harness.app.workspace.trigger('window-open', { win: frame.contentWindow, doc }, frame.contentWindow);
+      });
+      const frame = page.frameLocator('#popout');
+      assert.ok(await frame.locator('body.hp-theme.hp-house-gryffindor').count(), 'классы темы в новом окне');
+      await frame.locator('#pop-nav').click();
+      for (const k of ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a']) {
+        await page.keyboard.press(k);
+      }
+      await frame.locator('[data-hp-snitch]').waitFor({ state: 'attached' });
+      assert.equal(await page.locator('[data-hp-snitch]').count(), 0, 'снитч прилетел в своё окно, а не в главное');
+      await page.keyboard.type('nox');
+      await page.waitForFunction(() => document.getElementById('popout').contentDocument.body.classList.contains('theme-dark'));
+      assert.ok(await bodyHas('theme-dark'), 'и главное окно в гостиной');
+      await page.evaluate(() => {
+        const frame = document.getElementById('popout');
+        harness.app.workspace.trigger('window-close', { win: frame.contentWindow, doc: frame.contentDocument }, frame.contentWindow);
+        frame.remove();
+      });
+      await setMode('parchment');
+    });
+
     await t.test('mischief managed выключает тему, клятва возвращает', async () => {
       await typeOutsideEditor('mischief managed');
       await page.waitForFunction(() => !document.body.classList.contains('hp-theme'));
@@ -368,9 +567,24 @@ test('плагин на стенде Obsidian', { skip: !playwright && 'Playwrig
       await page.waitForSelector('.hp-marauders .hp-marauders-svg', { timeout: 4000 });
     });
 
-    await t.test('Распределяющая шляпа', async () => {
+    await t.test('Распределяющая шляпа: испытание', async () => {
       await page.evaluate(() => harness.runCommand('sorting-hat'));
-      await page.waitForSelector('.hp-hat-text:not(:empty)');
+      await page.click('.hp-hat-quiz');
+      // Почти всё — за Когтевран, один ответ — за Слизерин
+      for (let i = 0; i < 6; i++) {
+        await page.waitForSelector(`.hp-hat-progress:has-text("Вопрос ${i + 1} из 6")`);
+        assert.equal(await page.locator('.hp-hat-answer').count(), 4);
+        await page.click(`.hp-hat-answer[data-house="${i === 2 ? 'slytherin' : 'ravenclaw'}"]`);
+      }
+      const verdict = await page.waitForSelector('.hp-hat-text.hp-verdict', { timeout: 8000 });
+      assert.equal(await verdict.textContent(), 'КОГТЕВРАН!');
+      await page.waitForSelector('.hp-hat-modal', { state: 'detached', timeout: 8000 });
+      assert.ok(await bodyHas('hp-house-ravenclaw'));
+    });
+
+    await t.test('Распределяющая шляпа: довериться ей', async () => {
+      await page.evaluate(() => harness.runCommand('sorting-hat'));
+      await page.click('.hp-hat-trust');
       const verdict = await page.waitForSelector('.hp-hat-text.hp-verdict', { timeout: 8000 });
       const shout = await verdict.textContent();
       await page.waitForSelector('.hp-hat-modal', { state: 'detached', timeout: 8000 });
@@ -395,13 +609,38 @@ test('плагин на стенде Obsidian', { skip: !playwright && 'Playwrig
       assert.equal(await page.locator('.hp-spellbook-item').count(), 6);
       await page.click('.hp-crest', { clickCount: 3 });
       await page.waitForSelector('.hp-motto', { state: 'visible' });
+
+      // Разделы
+      assert.deepEqual(await page.$$eval('.setting-item-heading .setting-item-name', (els) => els.map((el) => el.textContent)),
+        ['Оформление', 'Палочка', 'Карта Мародёров', 'Заклинания', 'Кубок школы']);
+
+      // Всегда гостиная — без изменения настройки Obsidian
+      await page.selectOption('.hp-mode-setting select', 'common');
+      await page.waitForFunction(() => document.body.classList.contains('theme-dark'));
+      assert.equal(await page.evaluate(() => harness.app.vault.config.theme), undefined);
+      await page.selectOption('.hp-mode-setting select', 'auto');
+      await page.waitForFunction(() => document.body.classList.contains('theme-light'));
+
+      // Без магии жесты недоступны
+      await page.locator('.setting-item', { hasText: 'Слова имеют силу' }).locator('.checkbox-container').click();
+      await page.waitForSelector('.setting-item.is-disabled:has-text("Заклинания движениями палочки")');
+      await page.locator('.setting-item', { hasText: 'Слова имеют силу' }).locator('.checkbox-container').click();
+      await page.waitForSelector('.setting-item:not(.is-disabled):has-text("Заклинания движениями палочки")');
+
+      // Кубок школы и сброс очков
+      assert.equal(await page.locator('.hp-cup-row').count(), 4);
+      assert.match(await page.textContent('.hp-cup-row[data-house="gryffindor"] .hp-cup-points'), /Очков: [1-9]/);
+      await page.click('.hp-cup-actions button.mod-warning');
+      await page.click('.modal button.mod-warning');
+      await page.waitForFunction(() => Object.values(harness.plugin.settings.points).every((p) => p === 0));
+      assert.equal(await page.textContent('.hp-cup-row[data-house="gryffindor"] .hp-cup-points'), 'Очков: 0');
       await page.evaluate(() => harness.closeSettings());
     });
 
     await t.test('меню факультетов из ленты', async () => {
       await page.click('.side-dock-ribbon-action');
       await page.waitForSelector('.menu');
-      assert.equal(await page.locator('.menu .menu-item').count(), 8);
+      assert.equal(await page.locator('.menu .menu-item').count(), 10);
       await page.click('.menu-item:has-text("Пуффендуй")');
       assert.ok(await bodyHas('hp-house-hufflepuff'));
     });

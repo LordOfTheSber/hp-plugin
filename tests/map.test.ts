@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  LinkGraph, MAP_RINGS, addFootprint, followRoute, footsteps, isTag, layoutMap, nextNote, noteFolder, noteName, routeSteps
+  LinkGraph, MAP_LIMITS, MAP_RINGS, addFootprint, followRoute, footsteps, ghostId, ghostLink, inFolder, isGhost, isRestricted, isTag,
+  layoutMap, nextNote, noteFolder, noteName, revalidateRoute, routeSteps
 } from '../src/map.ts';
 import type { LinkTable } from '../src/map.ts';
 
@@ -174,4 +175,81 @@ test('карта: теги на первом круге, их заметки —
   }
   const ring1 = layoutMap(new LinkGraph(many, { 'hub.md': ['#важное'] }), 'hub.md').nodes.filter((n) => n.ring === 1);
   assert.ok(ring1.some((n) => n.path === '#важное'));
+});
+
+test('граф обновляется по одной заметке так же, как строится заново', () => {
+  const g = new LinkGraph(links, tags);
+  const neighborsBefore = g.neighbors('Гарри.md');
+  assert.equal(g.neighbors('Гарри.md'), neighborsBefore, 'соседи считаются один раз');
+  // Гарри больше не ссылается на Рона и теряет тег #квиддич
+  const edited = { ...links, 'Гарри.md': { 'Гермиона.md': 1 } };
+  const editedTags = { ...tags, 'Гарри.md': ['#Гриффиндор'] };
+  g.setNote('Гарри.md', edited['Гарри.md'], editedTags['Гарри.md']);
+  const fresh = new LinkGraph(edited, editedTags);
+  // Написание тега — из первой заметки, где его встретили, поэтому сравниваем без учёта регистра
+  const lower = (list: readonly { path: string; passage: string }[]) => list.map((n) => ({ ...n, path: n.path.toLowerCase() }));
+  for (const p of ['Гарри.md', 'Рон.md', 'Гермиона.md', 'Квиддич.md', '#Гриффиндор']) {
+    assert.deepEqual(lower(g.neighbors(p)), lower(fresh.neighbors(p)), p);
+  }
+  assert.equal(g.route('Квиддич.md', 'Гарри.md'), null, 'общего тега у Гарри и Квиддича больше нет');
+  // У последней заметки с тегом его убрали — тега на карте нет
+  g.setNote('Квиддич.md', links['Квиддич.md'], []);
+  assert.deepEqual(g.neighbors('#квиддич'), []);
+  g.setNote('Квиддич.md', links['Квиддич.md'], ['#Квиддич']);
+  assert.deepEqual(g.neighbors('Квиддич.md'), [{ path: '#Квиддич', passage: 'tag' }], 'тег вернулся в новом написании');
+});
+
+test('неизведанные комнаты: на карте у заметки, но не в маршрутах', () => {
+  const g = new LinkGraph(links, {}, { unresolved: { 'Гарри.md': { 'Метла Нимбус': 1 }, 'Рон.md': { 'Метла Нимбус': 1 } } });
+  const ghost = ghostId('Метла Нимбус');
+  assert.ok(isGhost(ghost));
+  assert.equal(isTag(ghost), false);
+  assert.equal(noteName(ghostId('Мётлы/Нимбус 2000')), 'Нимбус 2000');
+  assert.equal(ghostLink(ghost), 'Метла Нимбус');
+  assert.deepEqual(g.ghosts('Гарри.md'), [ghost]);
+  assert.ok(!g.neighbors('Гарри.md').some((n) => n.path === ghost), 'через несуществующую заметку не пройти');
+  assert.equal(g.route('Рон.md', ghost), null);
+  const ring1 = layoutMap(g, 'Гарри.md').nodes.filter((n) => n.ring === 1);
+  assert.equal(ring1.at(-1)?.path, ghost, 'комната — на первом круге, после заметок');
+});
+
+test('папки не на карте: ни заметок, ни ходов через них', () => {
+  const g = new LinkGraph(links, {}, { exclude: ['Запретная секция'] });
+  assert.equal(g.route('Гарри.md', 'Запретная секция/Крестражи.md'), null);
+  assert.deepEqual(g.neighbors('Библиотека.md'), [{ path: 'Гермиона.md', passage: 'backlink' }]);
+  assert.ok(inFolder('Архив/2020/a.md', ['Архив']));
+  assert.ok(!inFolder('Архивариус/a.md', ['Архив']));
+});
+
+test('Запретная секция: встроенные и свои названия, на любой глубине', () => {
+  assert.ok(isRestricted('Запретная секция/Крестражи.md'));
+  assert.ok(isRestricted('Школа/Restricted Section/a.md'));
+  assert.ok(!isRestricted('Гарри.md'));
+  assert.ok(isRestricted('Личное/Тайное/a.md', ['Личное/Тайное']));
+  assert.ok(isRestricted('Работа/Секреты/a.md', ['Секреты']));
+  assert.ok(!isRestricted('Секретысписок/a.md', ['Секреты']));
+});
+
+test('маршрут проверяется, когда меняются ссылки', () => {
+  const route = { target: 'Запретная секция/Крестражи.md', steps: graph.route('Рон.md', 'Запретная секция/Крестражи.md') };
+  assert.deepEqual(revalidateRoute(graph, route, 'Рон.md'), { route, status: null }, 'ничего не поменялось');
+  // Гермиона больше не ссылается на Библиотеку: к Крестражам хода нет
+  const cut = new LinkGraph({ ...links, 'Гермиона.md': {} });
+  const lost = revalidateRoute(cut, route, 'Рон.md');
+  assert.equal(lost.status, 'lost');
+  assert.equal(lost.route.steps, null);
+  assert.equal(lost.route.target, route.target);
+  // Ход появился снова — маршрут просто находится
+  assert.deepEqual(revalidateRoute(graph, lost.route, 'Рон.md'), { route: { ...route }, status: null });
+  // Гарри теперь ссылается на Библиотеку напрямую, а не на Гермиону: путь другой
+  const detour = new LinkGraph({ ...links, 'Гарри.md': { 'Рон.md': 1, 'Библиотека.md': 1 } });
+  const changed = revalidateRoute(detour, route, 'Рон.md');
+  assert.equal(changed.status, 'changed');
+  assert.deepEqual(changed.route.steps, ['Рон.md', 'Гарри.md', 'Библиотека.md', 'Запретная секция/Крестражи.md']);
+});
+
+test('карта в один круг', () => {
+  const { nodes } = layoutMap(graph, 'Гарри.md', [], { ...MAP_LIMITS, ring2: 0 });
+  assert.ok(nodes.length > 1);
+  assert.ok(nodes.every((n) => n.ring < 2));
 });

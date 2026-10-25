@@ -186,9 +186,10 @@ function palette(house, mode) {
 
 // src/crest.ts
 var SHIELD = "M50 4L92 16V52C92 78 72 94 50 100C28 94 8 78 8 52V16Z";
+var crestSeq = 0;
 function crestSvg(id, size = 40) {
   const c = HOUSES[id].crest;
-  const clip = `hp-clip-${id}-${size}`;
+  const clip = `hp-clip-${id}-${++crestSeq}`;
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${Math.round(size * 1.04)}" viewBox="0 0 100 104" aria-hidden="true"><defs><clipPath id="${clip}"><path d="${SHIELD}"/></clipPath></defs><path d="${SHIELD}" fill="${c.field}"/><path d="M8 22L92 92" stroke="${c.metal}" stroke-width="12" opacity=".45" clip-path="url(#${clip})"/><path d="${SHIELD}" fill="none" stroke="${c.metal}" stroke-width="6"/><text x="50" y="67" text-anchor="middle" font-family="'HP Forum', Georgia, serif" font-size="48" fill="${c.ink}">${c.letter}</text></svg>`;
 }
 function svgElement(markup) {
@@ -198,6 +199,21 @@ function svgElement(markup) {
 var HAT_SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="120" height="110" viewBox="0 0 90 82" aria-hidden="true"><path d="M44 4c6 0 9 10 12 22 3 14 10 26 20 32H12c10-8 16-20 20-34 3-12 6-20 12-20z" fill="#6b4a2b"/><path d="M8 62c10-6 64-6 74 0-2 6-72 6-74 0z" fill="#4e3520"/><path d="M34 40c3 3 8 3 11 0M50 38c2 2 5 2 7 0" stroke="#2a1a0e" stroke-width="2" fill="none"/><path class="hp-hat-mouth" d="M36 50c6 3 14 3 20 0" stroke="#2a1a0e" stroke-width="2.2" fill="none"/></svg>';
 var SNITCH_SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="64" height="34" viewBox="0 0 64 34" aria-hidden="true"><g class="hp-wing hp-wing-l"><path d="M26 16C17 3 5 2 1 6c7 1 15 6 24 13z" fill="#fffdf5" stroke="#8a7440" stroke-width="1.1"/><path d="M24 13c-6-5-12-6-17-6M24 15c-5-3-10-4-15-3" stroke="#8a7440" stroke-width=".8" fill="none"/></g><g class="hp-wing hp-wing-r"><path d="M38 16C47 3 59 2 63 6c-7 1-15 6-24 13z" fill="#fffdf5" stroke="#8a7440" stroke-width="1.1"/><path d="M40 13c6-5 12-6 17-6M40 15c5-3 10-4 15-3" stroke="#8a7440" stroke-width=".8" fill="none"/></g><defs><radialGradient id="hp-snitch-gold" cx=".35" cy=".35"><stop offset="0" stop-color="#fff3b0"/><stop offset=".5" stop-color="#e8b923"/><stop offset="1" stop-color="#9a6f0c"/></radialGradient></defs><circle cx="32" cy="19" r="9" fill="url(#hp-snitch-gold)"/><path d="M24 18c5 3 11 3 16 0" stroke="#8a620a" stroke-width=".9" fill="none"/></svg>';
 var FOOT_SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="26" viewBox="0 0 16 26" aria-hidden="true"><path d="M8 25c-3.6 0-5-3-4.6-7 .4-3.6.2-6.2-1-9C1.3 6.2 3 3 6.4 3c3.8 0 5.6 3 5.4 7-.2 3 .9 5.2 1.6 8 .9 3.8-1.4 7-5.4 7z" fill="currentColor"/><circle cx="4" cy="1.6" r="1.4" fill="currentColor"/><circle cx="7.4" cy="1" r="1.3" fill="currentColor"/><circle cx="10.6" cy="1.6" r="1.2" fill="currentColor"/></svg>';
+
+// src/css.ts
+function restrictedCss(names) {
+  if (!names.length) return "";
+  const quote = (s) => `"${s.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\n/g, " ")}"`;
+  const match = names.map((n) => `[data-path=${quote(n)}], [data-path$=${quote("/" + n)}]`).join(", ");
+  const title = `body.hp-theme :is(.nav-folder-title, .tree-item-self):is(${match})`;
+  const folder = (hover) => `body.hp-theme .nav-folder:has(> .nav-folder-title:is(${match}))${hover} > .nav-folder-children, body.hp-theme .tree-item:has(> .tree-item-self:is(${match}))${hover} > .tree-item-children`;
+  return [
+    `${title} { font-style: italic; color: var(--text-faint); }`,
+    `${title} :is(.nav-folder-title-content, .tree-item-inner)::after { content: ' 🔒'; font-style: normal; }`,
+    `${folder("")} { filter: blur(2.5px); opacity: 0.7; transition: filter 0.3s, opacity 0.3s; }`,
+    `${folder(":hover")} { filter: none; opacity: 1; }`
+  ].join("\n");
+}
 
 // src/i18n.ts
 var en = {
@@ -210,19 +226,19 @@ var en = {
   houseShout_slytherin: "SLYTHERIN!",
   houseShout_ravenclaw: "RAVENCLAW!",
   houseShout_hufflepuff: "HUFFLEPUFF!",
-  settingsIntro: "Parchment is used with the light base theme, the common room with the dark one (Settings \u2192 Appearance).",
+  settingsIntro: "Parchment goes with the light base theme, the common room with the dark one (Settings → Appearance), unless you choose otherwise below.",
   settingReadableFont: "Literata for notes",
   settingReadableFontDesc: "A typeface designed for reading on screens, with Cyrillic. Your own font from Appearance settings still wins.",
   settingHeadingFont: "Forum for headings",
   settingHeadingFontDesc: "A classical roman for headings and the note title.",
   settingOrnaments: "Ornaments",
-  settingOrnamentsDesc: "Golden thread under the note title, \u2726 dividers, accents on the active tab and file.",
+  settingOrnamentsDesc: "Golden thread under the note title, ✦ dividers, accents on the active tab and file.",
   settingWandCursor: "Magic wand cursor",
   settingWandCursorDesc: "Your wand instead of the mouse pointer. The editor and text fields keep the text cursor, links keep the hand.",
   settingWand: "Wand",
   buttonWandShop: "Visit Ollivanders",
   settingGestures: "Spells by wand movement",
-  settingGesturesDesc: "Hold the right mouse button, draw a figure and let go. Works when Magic is on.",
+  settingGesturesDesc: "Hold the right mouse button, draw a figure and let go.",
   spellbookTitle: "The Standard Book of Spells (spoilers!)",
   spell_lumos: "Lumos",
   spell_nox: "Nox",
@@ -233,39 +249,38 @@ var en = {
   gesture_lumos: "Raise the wand: a stroke upwards",
   gesture_nox: "Lower the wand: a stroke downwards",
   gesture_wingardiumLeviosa: "Swish and flick! Lifts whatever the wand points at",
-  gesture_accioSnitch: "A circle \u2014 the Snitch is round",
+  gesture_accioSnitch: "A circle — the Snitch is round",
   gesture_solemnlySwear: "The letter M, for Moony and friends. Opens the map",
   gesture_mischiefManaged: "Wipe the map clean: back and forth",
   settingMapTags: "Tags on the Marauder's Map",
   settingMapTagsDesc: "Notes with a common tag are connected through it: on the map and in routes.",
   settingStatusBar: "House and points in the status bar",
   settingEasterEggs: "Magic",
-  settingEasterEggsDesc: "Words have power\u2026",
+  settingEasterEggsDesc: "Words have power…",
   settingSortingHat: "Sorting Hat",
-  settingPoints: "{0} points: {1}",
   buttonSortingHat: "Put on the Hat",
   motto: "Draco dormiens nunquam titillandus",
   mottoTranslation: "Never tickle a sleeping dragon",
   commandChooseHouse: "Choose house",
   commandSortingHat: "Sorting Hat",
-  commandWand: "Wave your wand\u2026",
+  commandWand: "Wave your wand…",
   commandToggle: "Toggle Hogwarts theme",
   commandWandShop: "Ollivanders: choose your wand",
   ribbonTitle: "Hogwarts houses",
   menuSettings: "Theme settings",
   statusTitle: "Snitches caught: {0}",
-  hat1: "Hmm. Difficult. Very difficult\u2026",
-  hat2: "Plenty of courage, I see. Not a bad mind either\u2026",
-  hat3: "There's talent, oh yes, and a thirst to prove yourself\u2026",
+  hat1: "Hmm. Difficult. Very difficult…",
+  hat2: "Plenty of courage, I see. Not a bad mind either…",
+  hat3: "There's talent, oh yes, and a thirst to prove yourself…",
   hat4: "So where shall I put you?..",
   wandTitle: "Wave your wand",
   wandPlaceholder: "Say the incantation",
   wandHint: "Say the incantation and press Enter",
-  wandHintGestures: "Say the incantation and press Enter \u2014 or draw it with the right mouse button",
+  wandHintGestures: "Say the incantation and press Enter — or draw it with the right mouse button",
   wandFail: "Nothing happens. Perhaps it was the wrong wand movement?",
   wandOff: "Magic is switched off in the plugin settings.",
   shopTitle: "Ollivanders",
-  shopQuote: "\u201CThe wand chooses the wizard.\u201D",
+  shopQuote: "“The wand chooses the wizard.”",
   shopCanon: "Famous wands",
   shopCustom: "Make your own",
   shopWood: "Wood",
@@ -340,13 +355,13 @@ var en = {
   eggMap1: "Messrs Moony, Wormtail, Padfoot and Prongs",
   eggMap2: "are proud to present",
   eggMapTitle: "The Marauder's Map",
-  eggMischief: "Mischief managed. The theme returns after a solemn oath \u2014 or a restart.",
+  eggMischief: "Mischief managed. The theme returns after a solemn oath — or a restart.",
   eggSnitch: "+{0} points to {1}! The Snitch is caught.",
-  eggSnitchLabel: "The Golden Snitch \u2014 catch it!",
-  eggBirthday: "July 31st \u2014 happy birthday, Harry! Hagrid is bringing a (slightly squashed) cake.",
+  eggSnitchLabel: "The Golden Snitch — catch it!",
+  eggBirthday: "July 31st — happy birthday, Harry! Hagrid is bringing a (slightly squashed) cake.",
   mapTitle: "The Marauder's Map",
   commandMapOpen: "Marauder's Map: where am I",
-  commandMapRoute: "Marauder's Map: find the way to a note\u2026",
+  commandMapRoute: "Marauder's Map: find the way to a note…",
   commandMapNext: "Marauder's Map: next step",
   mapEmpty: "Open a note, and the map will show where you are and where its links lead.",
   mapHere: "you are here",
@@ -356,9 +371,9 @@ var en = {
   mapLegendBacklink: "backlink",
   mapLegendTag: "common tag",
   mapTagHint: "tag, click to find all its notes",
-  mapRouteButton: "Find the way\u2026",
+  mapRouteButton: "Find the way…",
   mapRoutePlaceholder: "Where to?",
-  mapRouteTitle: "The way to \u201C{0}\u201D",
+  mapRouteTitle: "The way to “{0}”",
   mapRouteSteps: "Steps: {0}",
   mapRerouted: "you left the path, here is a new one",
   mapStepLink: "link in the text",
@@ -366,183 +381,344 @@ var en = {
   mapStepTag: "common tag {0}",
   mapNext: "Next step",
   mapClear: "Clear",
-  mapLost: "No secret passage leads from here to \u201C{0}\u201D.",
-  mapNoPath: "No secret passage leads to \u201C{0}\u201D: the notes are not connected by links.",
+  mapLost: "No secret passage leads from here to “{0}”.",
+  mapNoPath: "No secret passage leads to “{0}”: the notes are not connected by links.",
   mapNoNote: "Open a note first: the map needs to know where you are.",
-  mapArrived: "You have arrived: \u201C{0}\u201D. Mischief managed!",
-  mapFootprints: "Your footprints"
+  mapArrived: "You have arrived: “{0}”. Mischief managed!",
+  mapFootprints: "Your footprints",
+  mapRouteChanged: "the links have changed, here is a new way",
+  mapLegendGhost: "uncharted room",
+  mapGhostHint: "uncharted room: the note does not exist yet, click to create it",
+  locale: "en",
+  sectionAppearance: "Appearance",
+  sectionWand: "Wand",
+  sectionMap: "Marauder's Map",
+  sectionMagic: "Spells",
+  sectionCup: "House Cup",
+  settingMode: "Parchment or common room",
+  settingModeDesc: "By default the plugin follows the light or dark base theme of Obsidian. You can keep one of them for good instead.",
+  mode_auto: "Follow Obsidian",
+  mode_parchment: "Always parchment",
+  mode_common: "Always common room",
+  settingMapUnresolved: "Uncharted rooms",
+  settingMapUnresolvedDesc: "Links to notes that do not exist yet are shown on the map. A click creates the note.",
+  settingMapDepth: "Map rings",
+  settingMapDepthDesc: "Only the neighbours of the note, or their neighbours too.",
+  mapDepth_1: "One ring",
+  mapDepth_2: "Two rings",
+  settingMapExclude: "Folders off the map",
+  settingMapExcludeDesc: "One per line or comma-separated: templates, archive… Notes in them are not on the map, in routes, in the Pensieve or the Time-Turner.",
+  settingRestricted: "Restricted Section",
+  settingRestrictedDesc: "Your own folder names in addition to “Restricted Section” and «Запретная секция». Their contents are blurred until hovered.",
+  settingGesturesDisabled: "Switch on Magic first.",
+  settingGesturesAlt: "On macOS and Linux, hold Alt to start a gesture in the note text as well.",
+  settingWorkPoints: "Points for work",
+  settingWorkPointsDesc: "+{0} to your house for every task you complete (- [x]) and +{1} for writing in the daily note.",
+  cupPoints: "{0} points",
+  cupSnitches: "Snitches caught: {0}",
+  buttonResetPoints: "Reset points",
+  resetTitle: "Reset the House Cup?",
+  resetText: "All houses go back to zero points and the caught Snitches are forgotten.",
+  resetConfirm: "Reset",
+  cancel: "Cancel",
+  hatIntro: "Answer a few questions, and the Hat will see where you belong. Or simply trust it.",
+  hatQuiz: "Take the test",
+  hatTrust: "Trust the Hat",
+  hatProgress: "Question {0} of {1}",
+  quiz_noise: "At night you hear a strange noise in a corridor. What do you do?",
+  quiz_noise_gryffindor: "Go and see what it is",
+  quiz_noise_slytherin: "Find out whether it could be useful to me",
+  quiz_noise_ravenclaw: "Work out first what could make such a sound",
+  quiz_noise_hufflepuff: "Fetch my friends — it is less scary together",
+  quiz_virtue: "Which quality do you value most?",
+  quiz_virtue_gryffindor: "Courage",
+  quiz_virtue_slytherin: "Ambition",
+  quiz_virtue_ravenclaw: "Wit",
+  quiz_virtue_hufflepuff: "Loyalty",
+  quiz_book: "In the library you come across a book that must not be opened.",
+  quiz_book_gryffindor: "Open it: nothing ventured, nothing gained",
+  quiz_book_slytherin: "Open it when nobody is looking",
+  quiz_book_ravenclaw: "First read everything about why it must not be opened",
+  quiz_book_hufflepuff: "Take it to the librarian",
+  quiz_subject: "Which lesson are you looking forward to most?",
+  quiz_subject_gryffindor: "Defence Against the Dark Arts",
+  quiz_subject_slytherin: "Potions",
+  quiz_subject_ravenclaw: "Charms",
+  quiz_subject_hufflepuff: "Herbology",
+  quiz_legacy: "How would you like to be remembered?",
+  quiz_legacy_gryffindor: "As the bold",
+  quiz_legacy_slytherin: "As the great",
+  quiz_legacy_ravenclaw: "As the wise",
+  quiz_legacy_hufflepuff: "As the kind",
+  quiz_team: "A group project has gone wrong. What do you do?",
+  quiz_team_gryffindor: "Take the blame and put things right",
+  quiz_team_slytherin: "Take charge myself",
+  quiz_team_ravenclaw: "Find the mistake and think up a solution",
+  quiz_team_hufflepuff: "Support the others and finish my part",
+  commandPensieve: "Pensieve: an old memory",
+  commandTimeTurner: "Time-Turner: a year ago today",
+  commandCloak: "Invisibility Cloak: hide the selection",
+  pensieveTitle: "Pensieve",
+  timeTurnerTitle: "Time-Turner",
+  pensieveNotice: "A memory from the Pensieve: “{0}”. Days untouched: {1}.",
+  pensieveEmpty: "The Pensieve is empty: there are no notes yet.",
+  timeTurnerNotice: "Three turns of the Time-Turner: {0}.",
+  timeTurnerEmpty: "Nothing was written on {0}.",
+  timeTurnerPlaceholder: "Notes from {0}",
+  cloakTitle: "Invisibility Cloak",
+  pointsDaily: "+{0} points to {1} for the daily note!"
 };
 var ru = {
   pluginName: "HP Theme",
-  house_gryffindor: "\u0413\u0440\u0438\u0444\u0444\u0438\u043D\u0434\u043E\u0440",
-  house_slytherin: "\u0421\u043B\u0438\u0437\u0435\u0440\u0438\u043D",
-  house_ravenclaw: "\u041A\u043E\u0433\u0442\u0435\u0432\u0440\u0430\u043D",
-  house_hufflepuff: "\u041F\u0443\u0444\u0444\u0435\u043D\u0434\u0443\u0439",
-  houseShout_gryffindor: "\u0413\u0420\u0418\u0424\u0424\u0418\u041D\u0414\u041E\u0420!",
-  houseShout_slytherin: "\u0421\u041B\u0418\u0417\u0415\u0420\u0418\u041D!",
-  houseShout_ravenclaw: "\u041A\u041E\u0413\u0422\u0415\u0412\u0420\u0410\u041D!",
-  houseShout_hufflepuff: "\u041F\u0423\u0424\u0424\u0415\u041D\u0414\u0423\u0419!",
-  settingsIntro: "\u041F\u0435\u0440\u0433\u0430\u043C\u0435\u043D\u0442 \u2014 \u0441\u043E \u0441\u0432\u0435\u0442\u043B\u043E\u0439 \u0431\u0430\u0437\u043E\u0432\u043E\u0439 \u0442\u0435\u043C\u043E\u0439, \u0433\u043E\u0441\u0442\u0438\u043D\u0430\u044F \u2014 \u0441 \u0442\u0451\u043C\u043D\u043E\u0439 (\u041D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438 \u2192 \u041E\u0444\u043E\u0440\u043C\u043B\u0435\u043D\u0438\u0435).",
-  settingReadableFont: "\u0428\u0440\u0438\u0444\u0442 \u0437\u0430\u043C\u0435\u0442\u043E\u043A Literata",
-  settingReadableFontDesc: "\u0428\u0440\u0438\u0444\u0442 \u0434\u043B\u044F \u0447\u0442\u0435\u043D\u0438\u044F \u0441 \u044D\u043A\u0440\u0430\u043D\u0430, \u0441 \u043A\u0438\u0440\u0438\u043B\u043B\u0438\u0446\u0435\u0439. \u0421\u0432\u043E\u0439 \u0448\u0440\u0438\u0444\u0442 \u0438\u0437 \u043D\u0430\u0441\u0442\u0440\u043E\u0435\u043A \u043E\u0444\u043E\u0440\u043C\u043B\u0435\u043D\u0438\u044F \u043F\u043E-\u043F\u0440\u0435\u0436\u043D\u0435\u043C\u0443 \u0432\u0430\u0436\u043D\u0435\u0435.",
-  settingHeadingFont: "\u0417\u0430\u0433\u043E\u043B\u043E\u0432\u043A\u0438 Forum",
-  settingHeadingFontDesc: "\u041A\u043B\u0430\u0441\u0441\u0438\u0447\u0435\u0441\u043A\u0430\u044F \u0430\u043D\u0442\u0438\u043A\u0432\u0430 \u0434\u043B\u044F \u0437\u0430\u0433\u043E\u043B\u043E\u0432\u043A\u043E\u0432 \u0438 \u043D\u0430\u0437\u0432\u0430\u043D\u0438\u044F \u0437\u0430\u043C\u0435\u0442\u043A\u0438.",
-  settingOrnaments: "\u041E\u0440\u043D\u0430\u043C\u0435\u043D\u0442\u044B",
-  settingOrnamentsDesc: "\u0417\u043E\u043B\u043E\u0442\u0430\u044F \u043D\u0438\u0442\u044C \u043F\u043E\u0434 \u043D\u0430\u0437\u0432\u0430\u043D\u0438\u0435\u043C \u0437\u0430\u043C\u0435\u0442\u043A\u0438, \u0440\u0430\u0437\u0434\u0435\u043B\u0438\u0442\u0435\u043B\u0438 \u2726, \u0430\u043A\u0446\u0435\u043D\u0442\u044B \u0430\u043A\u0442\u0438\u0432\u043D\u043E\u0439 \u0432\u043A\u043B\u0430\u0434\u043A\u0438 \u0438 \u0444\u0430\u0439\u043B\u0430.",
-  settingWandCursor: "\u041A\u0443\u0440\u0441\u043E\u0440 \u2014 \u0432\u043E\u043B\u0448\u0435\u0431\u043D\u0430\u044F \u043F\u0430\u043B\u043E\u0447\u043A\u0430",
-  settingWandCursorDesc: "\u0412\u0430\u0448\u0430 \u043F\u0430\u043B\u043E\u0447\u043A\u0430 \u0432\u043C\u0435\u0441\u0442\u043E \u0443\u043A\u0430\u0437\u0430\u0442\u0435\u043B\u044F \u043C\u044B\u0448\u0438. \u0412 \u0440\u0435\u0434\u0430\u043A\u0442\u043E\u0440\u0435 \u0438 \u043F\u043E\u043B\u044F\u0445 \u0432\u0432\u043E\u0434\u0430 \u043E\u0441\u0442\u0430\u0451\u0442\u0441\u044F \u0442\u0435\u043A\u0441\u0442\u043E\u0432\u044B\u0439 \u043A\u0443\u0440\u0441\u043E\u0440, \u043D\u0430\u0434 \u0441\u0441\u044B\u043B\u043A\u0430\u043C\u0438 \u2014 \xAB\u0440\u0443\u043A\u0430\xBB.",
-  settingWand: "\u041F\u0430\u043B\u043E\u0447\u043A\u0430",
-  buttonWandShop: "\u0412 \u043B\u0430\u0432\u043A\u0443 \u041E\u043B\u043B\u0438\u0432\u0430\u043D\u0434\u0435\u0440\u0430",
-  settingGestures: "\u0417\u0430\u043A\u043B\u0438\u043D\u0430\u043D\u0438\u044F \u0434\u0432\u0438\u0436\u0435\u043D\u0438\u044F\u043C\u0438 \u043F\u0430\u043B\u043E\u0447\u043A\u0438",
-  settingGesturesDesc: "\u0417\u0430\u0436\u043C\u0438\u0442\u0435 \u043F\u0440\u0430\u0432\u0443\u044E \u043A\u043D\u043E\u043F\u043A\u0443 \u043C\u044B\u0448\u0438, \u043D\u0430\u0440\u0438\u0441\u0443\u0439\u0442\u0435 \u0444\u0438\u0433\u0443\u0440\u0443 \u0438 \u043E\u0442\u043F\u0443\u0441\u0442\u0438\u0442\u0435. \u0420\u0430\u0431\u043E\u0442\u0430\u0435\u0442, \u043A\u043E\u0433\u0434\u0430 \u0432\u043A\u043B\u044E\u0447\u0435\u043D\u0430 \u043C\u0430\u0433\u0438\u044F.",
-  spellbookTitle: "\u0421\u0442\u0430\u043D\u0434\u0430\u0440\u0442\u043D\u0430\u044F \u043A\u043D\u0438\u0433\u0430 \u0437\u0430\u043A\u043B\u0438\u043D\u0430\u043D\u0438\u0439 (\u0441\u043F\u043E\u0439\u043B\u0435\u0440\u044B!)",
-  spell_lumos: "\u041B\u044E\u043C\u043E\u0441",
-  spell_nox: "\u041D\u043E\u043A\u0441",
-  spell_wingardiumLeviosa: "\u0412\u0438\u043D\u0433\u0430\u0440\u0434\u0438\u0443\u043C \u041B\u0435\u0432\u0438\u043E\u0441\u0430",
-  spell_accioSnitch: "\u0410\u043A\u0446\u0438\u043E \u0441\u043D\u0438\u0442\u0447",
-  spell_solemnlySwear: "\u041A\u043B\u044F\u043D\u0443\u0441\u044C, \u0447\u0442\u043E \u0437\u0430\u043C\u044B\u0448\u043B\u044F\u044E \u0442\u043E\u043B\u044C\u043A\u043E \u0448\u0430\u043B\u043E\u0441\u0442\u044C",
-  spell_mischiefManaged: "\u0428\u0430\u043B\u043E\u0441\u0442\u044C \u0443\u0434\u0430\u043B\u0430\u0441\u044C",
-  gesture_lumos: "\u041F\u043E\u0434\u043D\u044F\u0442\u044C \u043F\u0430\u043B\u043E\u0447\u043A\u0443: \u0448\u0442\u0440\u0438\u0445 \u0432\u0432\u0435\u0440\u0445",
-  gesture_nox: "\u041E\u043F\u0443\u0441\u0442\u0438\u0442\u044C \u043F\u0430\u043B\u043E\u0447\u043A\u0443: \u0448\u0442\u0440\u0438\u0445 \u0432\u043D\u0438\u0437",
-  gesture_wingardiumLeviosa: "\u0412\u0437\u043C\u0430\u0445 \u0438 \u0449\u0435\u043B\u0447\u043E\u043A! \u041F\u043E\u0434\u043D\u0438\u043C\u0430\u0435\u0442 \u0442\u043E, \u043D\u0430 \u0447\u0442\u043E \u0443\u043A\u0430\u0437\u0430\u043B\u0430 \u043F\u0430\u043B\u043E\u0447\u043A\u0430",
-  gesture_accioSnitch: "\u041A\u0440\u0443\u0433 \u2014 \u0441\u043D\u0438\u0442\u0447 \u0432\u0435\u0434\u044C \u043A\u0440\u0443\u0433\u043B\u044B\u0439",
-  gesture_solemnlySwear: "\u0411\u0443\u043A\u0432\u0430 M \u2014 \u041C\u0430\u0440\u043E\u0434\u0451\u0440\u044B. \u041E\u0442\u043A\u0440\u044B\u0432\u0430\u0435\u0442 \u043A\u0430\u0440\u0442\u0443",
-  gesture_mischiefManaged: "\u0421\u0442\u0435\u0440\u0435\u0442\u044C \u043A\u0430\u0440\u0442\u0443: \u0442\u0443\u0434\u0430-\u043E\u0431\u0440\u0430\u0442\u043D\u043E",
-  settingMapTags: "\u0422\u0435\u0433\u0438 \u043D\u0430 \u041A\u0430\u0440\u0442\u0435 \u041C\u0430\u0440\u043E\u0434\u0451\u0440\u043E\u0432",
-  settingMapTagsDesc: "\u0417\u0430\u043C\u0435\u0442\u043A\u0438 \u0441 \u043E\u0431\u0449\u0438\u043C \u0442\u0435\u0433\u043E\u043C \u0441\u0432\u044F\u0437\u0430\u043D\u044B \u0447\u0435\u0440\u0435\u0437 \u043D\u0435\u0433\u043E: \u043D\u0430 \u043A\u0430\u0440\u0442\u0435 \u0438 \u0432 \u043C\u0430\u0440\u0448\u0440\u0443\u0442\u0430\u0445.",
-  settingStatusBar: "\u0424\u0430\u043A\u0443\u043B\u044C\u0442\u0435\u0442 \u0438 \u043E\u0447\u043A\u0438 \u0432 \u0441\u0442\u0430\u0442\u0443\u0441-\u0431\u0430\u0440\u0435",
-  settingEasterEggs: "\u041C\u0430\u0433\u0438\u044F",
-  settingEasterEggsDesc: "\u0421\u043B\u043E\u0432\u0430 \u0438\u043C\u0435\u044E\u0442 \u0441\u0438\u043B\u0443\u2026",
-  settingSortingHat: "\u0420\u0430\u0441\u043F\u0440\u0435\u0434\u0435\u043B\u044F\u044E\u0449\u0430\u044F \u0448\u043B\u044F\u043F\u0430",
-  settingPoints: "\u041E\u0447\u043A\u0438 \u0444\u0430\u043A\u0443\u043B\u044C\u0442\u0435\u0442\u0430 {0}: {1}",
-  buttonSortingHat: "\u041D\u0430\u0434\u0435\u0442\u044C \u0448\u043B\u044F\u043F\u0443",
+  house_gryffindor: "Гриффиндор",
+  house_slytherin: "Слизерин",
+  house_ravenclaw: "Когтевран",
+  house_hufflepuff: "Пуффендуй",
+  houseShout_gryffindor: "ГРИФФИНДОР!",
+  houseShout_slytherin: "СЛИЗЕРИН!",
+  houseShout_ravenclaw: "КОГТЕВРАН!",
+  houseShout_hufflepuff: "ПУФФЕНДУЙ!",
+  settingsIntro: "Пергамент — со светлой базовой темой, гостиная — с тёмной (Настройки → Оформление), если ниже не выбрано иное.",
+  settingReadableFont: "Шрифт заметок Literata",
+  settingReadableFontDesc: "Шрифт для чтения с экрана, с кириллицей. Свой шрифт из настроек оформления по-прежнему важнее.",
+  settingHeadingFont: "Заголовки Forum",
+  settingHeadingFontDesc: "Классическая антиква для заголовков и названия заметки.",
+  settingOrnaments: "Орнаменты",
+  settingOrnamentsDesc: "Золотая нить под названием заметки, разделители ✦, акценты активной вкладки и файла.",
+  settingWandCursor: "Курсор — волшебная палочка",
+  settingWandCursorDesc: "Ваша палочка вместо указателя мыши. В редакторе и полях ввода остаётся текстовый курсор, над ссылками — «рука».",
+  settingWand: "Палочка",
+  buttonWandShop: "В лавку Олливандера",
+  settingGestures: "Заклинания движениями палочки",
+  settingGesturesDesc: "Зажмите правую кнопку мыши, нарисуйте фигуру и отпустите.",
+  spellbookTitle: "Стандартная книга заклинаний (спойлеры!)",
+  spell_lumos: "Люмос",
+  spell_nox: "Нокс",
+  spell_wingardiumLeviosa: "Вингардиум Левиоса",
+  spell_accioSnitch: "Акцио снитч",
+  spell_solemnlySwear: "Клянусь, что замышляю только шалость",
+  spell_mischiefManaged: "Шалость удалась",
+  gesture_lumos: "Поднять палочку: штрих вверх",
+  gesture_nox: "Опустить палочку: штрих вниз",
+  gesture_wingardiumLeviosa: "Взмах и щелчок! Поднимает то, на что указала палочка",
+  gesture_accioSnitch: "Круг — снитч ведь круглый",
+  gesture_solemnlySwear: "Буква M — Мародёры. Открывает карту",
+  gesture_mischiefManaged: "Стереть карту: туда-обратно",
+  settingMapTags: "Теги на Карте Мародёров",
+  settingMapTagsDesc: "Заметки с общим тегом связаны через него: на карте и в маршрутах.",
+  settingStatusBar: "Факультет и очки в статус-баре",
+  settingEasterEggs: "Магия",
+  settingEasterEggsDesc: "Слова имеют силу…",
+  settingSortingHat: "Распределяющая шляпа",
+  buttonSortingHat: "Надеть шляпу",
   motto: "Draco dormiens nunquam titillandus",
-  mottoTranslation: "\u041D\u0438\u043A\u043E\u0433\u0434\u0430 \u043D\u0435 \u0449\u0435\u043A\u043E\u0447\u0438 \u0441\u043F\u044F\u0449\u0435\u0433\u043E \u0434\u0440\u0430\u043A\u043E\u043D\u0430",
-  commandChooseHouse: "\u0412\u044B\u0431\u0440\u0430\u0442\u044C \u0444\u0430\u043A\u0443\u043B\u044C\u0442\u0435\u0442",
-  commandSortingHat: "\u0420\u0430\u0441\u043F\u0440\u0435\u0434\u0435\u043B\u044F\u044E\u0449\u0430\u044F \u0448\u043B\u044F\u043F\u0430",
-  commandWand: "\u0412\u0437\u043C\u0430\u0445\u043D\u0443\u0442\u044C \u043F\u0430\u043B\u043E\u0447\u043A\u043E\u0439\u2026",
-  commandToggle: "\u0412\u043A\u043B\u044E\u0447\u0438\u0442\u044C/\u0432\u044B\u043A\u043B\u044E\u0447\u0438\u0442\u044C \u0442\u0435\u043C\u0443 \u0425\u043E\u0433\u0432\u0430\u0440\u0442\u0441\u0430",
-  commandWandShop: "\u041B\u0430\u0432\u043A\u0430 \u041E\u043B\u043B\u0438\u0432\u0430\u043D\u0434\u0435\u0440\u0430: \u0432\u044B\u0431\u0440\u0430\u0442\u044C \u043F\u0430\u043B\u043E\u0447\u043A\u0443",
-  ribbonTitle: "\u0424\u0430\u043A\u0443\u043B\u044C\u0442\u0435\u0442\u044B \u0425\u043E\u0433\u0432\u0430\u0440\u0442\u0441\u0430",
-  menuSettings: "\u041D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438 \u0442\u0435\u043C\u044B",
-  statusTitle: "\u041F\u043E\u0439\u043C\u0430\u043D\u043E \u0441\u043D\u0438\u0442\u0447\u0435\u0439: {0}",
-  hat1: "\u0425\u043C\u2026 \u043D\u0435\u043F\u0440\u043E\u0441\u0442\u043E. \u041E\u0447\u0435\u043D\u044C \u043D\u0435\u043F\u0440\u043E\u0441\u0442\u043E\u2026",
-  hat2: "\u0412\u0438\u0436\u0443 \u043D\u0435\u043C\u0430\u043B\u043E \u0441\u043C\u0435\u043B\u043E\u0441\u0442\u0438. \u0418 \u0443\u043C \u043D\u0435\u043F\u043B\u043E\u0445\u2026",
-  hat3: "\u0415\u0441\u0442\u044C \u0442\u0430\u043B\u0430\u043D\u0442, \u043E \u0434\u0430, \u0438 \u0436\u0430\u0436\u0434\u0430 \u043F\u0440\u043E\u044F\u0432\u0438\u0442\u044C \u0441\u0435\u0431\u044F\u2026",
-  hat4: "\u0422\u0430\u043A \u043A\u0443\u0434\u0430 \u0436\u0435 \u043C\u043D\u0435 \u0442\u0435\u0431\u044F \u043E\u043F\u0440\u0435\u0434\u0435\u043B\u0438\u0442\u044C?..",
-  wandTitle: "\u0412\u0437\u043C\u0430\u0445\u043D\u0443\u0442\u044C \u043F\u0430\u043B\u043E\u0447\u043A\u043E\u0439",
-  wandPlaceholder: "\u041F\u0440\u043E\u0438\u0437\u043D\u0435\u0441\u0438\u0442\u0435 \u0437\u0430\u043A\u043B\u0438\u043D\u0430\u043D\u0438\u0435",
-  wandHint: "\u041F\u0440\u043E\u0438\u0437\u043D\u0435\u0441\u0438\u0442\u0435 \u0437\u0430\u043A\u043B\u0438\u043D\u0430\u043D\u0438\u0435 \u0438 \u043D\u0430\u0436\u043C\u0438\u0442\u0435 Enter",
-  wandHintGestures: "\u041F\u0440\u043E\u0438\u0437\u043D\u0435\u0441\u0438\u0442\u0435 \u0437\u0430\u043A\u043B\u0438\u043D\u0430\u043D\u0438\u0435 \u0438 \u043D\u0430\u0436\u043C\u0438\u0442\u0435 Enter \u2014 \u0438\u043B\u0438 \u043D\u0430\u0440\u0438\u0441\u0443\u0439\u0442\u0435 \u0435\u0433\u043E \u043F\u0440\u0430\u0432\u043E\u0439 \u043A\u043D\u043E\u043F\u043A\u043E\u0439 \u043C\u044B\u0448\u0438",
-  wandFail: "\u041D\u0438\u0447\u0435\u0433\u043E \u043D\u0435 \u043F\u0440\u043E\u0438\u0437\u043E\u0448\u043B\u043E. \u041C\u043E\u0436\u0435\u0442, \u043F\u0430\u043B\u043E\u0447\u043A\u043E\u0439 \u0432\u0437\u043C\u0430\u0445\u043D\u0443\u043B\u0438 \u043D\u0435 \u0442\u0430\u043A?",
-  wandOff: "\u041C\u0430\u0433\u0438\u044F \u0432\u044B\u043A\u043B\u044E\u0447\u0435\u043D\u0430 \u0432 \u043D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0430\u0445 \u043F\u043B\u0430\u0433\u0438\u043D\u0430.",
-  shopTitle: "\u041B\u0430\u0432\u043A\u0430 \u041E\u043B\u043B\u0438\u0432\u0430\u043D\u0434\u0435\u0440\u0430",
-  shopQuote: "\xAB\u041F\u0430\u043B\u043E\u0447\u043A\u0430 \u0432\u044B\u0431\u0438\u0440\u0430\u0435\u0442 \u0432\u043E\u043B\u0448\u0435\u0431\u043D\u0438\u043A\u0430\xBB.",
-  shopCanon: "\u0417\u043D\u0430\u043C\u0435\u043D\u0438\u0442\u044B\u0435 \u043F\u0430\u043B\u043E\u0447\u043A\u0438",
-  shopCustom: "\u0421\u0432\u043E\u044F \u043F\u0430\u043B\u043E\u0447\u043A\u0430",
-  shopWood: "\u0414\u0440\u0435\u0432\u0435\u0441\u0438\u043D\u0430",
-  shopCore: "\u0421\u0435\u0440\u0434\u0446\u0435\u0432\u0438\u043D\u0430",
-  shopLength: "\u0414\u043B\u0438\u043D\u0430",
-  shopFlex: "\u0413\u0438\u0431\u043A\u043E\u0441\u0442\u044C",
-  shopHandle: "\u0420\u0443\u043A\u043E\u044F\u0442\u044C",
-  shopRandom: "\u041F\u0443\u0441\u0442\u044C \u043F\u0430\u043B\u043E\u0447\u043A\u0430 \u0432\u044B\u0431\u0435\u0440\u0435\u0442 \u0441\u0430\u043C\u0430",
-  shopCustomWand: "\u0412\u0430\u0448\u0430 \u0441\u043E\u0431\u0441\u0442\u0432\u0435\u043D\u043D\u0430\u044F \u043F\u0430\u043B\u043E\u0447\u043A\u0430",
+  mottoTranslation: "Никогда не щекочи спящего дракона",
+  commandChooseHouse: "Выбрать факультет",
+  commandSortingHat: "Распределяющая шляпа",
+  commandWand: "Взмахнуть палочкой…",
+  commandToggle: "Включить/выключить тему Хогвартса",
+  commandWandShop: "Лавка Олливандера: выбрать палочку",
+  ribbonTitle: "Факультеты Хогвартса",
+  menuSettings: "Настройки темы",
+  statusTitle: "Поймано снитчей: {0}",
+  hat1: "Хм… непросто. Очень непросто…",
+  hat2: "Вижу немало смелости. И ум неплох…",
+  hat3: "Есть талант, о да, и жажда проявить себя…",
+  hat4: "Так куда же мне тебя определить?..",
+  wandTitle: "Взмахнуть палочкой",
+  wandPlaceholder: "Произнесите заклинание",
+  wandHint: "Произнесите заклинание и нажмите Enter",
+  wandHintGestures: "Произнесите заклинание и нажмите Enter — или нарисуйте его правой кнопкой мыши",
+  wandFail: "Ничего не произошло. Может, палочкой взмахнули не так?",
+  wandOff: "Магия выключена в настройках плагина.",
+  shopTitle: "Лавка Олливандера",
+  shopQuote: "«Палочка выбирает волшебника».",
+  shopCanon: "Знаменитые палочки",
+  shopCustom: "Своя палочка",
+  shopWood: "Древесина",
+  shopCore: "Сердцевина",
+  shopLength: "Длина",
+  shopFlex: "Гибкость",
+  shopHandle: "Рукоять",
+  shopRandom: "Пусть палочка выберет сама",
+  shopCustomWand: "Ваша собственная палочка",
   wandDescription: "{0}, {1}, {2}, {3}",
-  lengthWhole: "{0} \u0434\u044E\u0439\u043C\u043E\u0432",
-  lengthFraction: "{0} \u0434\u044E\u0439\u043C\u0430",
-  wood_holly: "\u041E\u0441\u0442\u0440\u043E\u043B\u0438\u0441\u0442",
-  wood_vine: "\u0412\u0438\u043D\u043E\u0433\u0440\u0430\u0434\u043D\u0430\u044F \u043B\u043E\u0437\u0430",
-  wood_willow: "\u0418\u0432\u0430",
-  wood_elder: "\u0411\u0443\u0437\u0438\u043D\u0430",
-  wood_yew: "\u0422\u0438\u0441",
-  wood_hawthorn: "\u0411\u043E\u044F\u0440\u044B\u0448\u043D\u0438\u043A",
-  wood_cherry: "\u0412\u0438\u0448\u043D\u044F",
-  wood_ash: "\u042F\u0441\u0435\u043D\u044C",
-  wood_walnut: "\u0413\u0440\u0435\u0446\u043A\u0438\u0439 \u043E\u0440\u0435\u0445",
-  wood_hornbeam: "\u0413\u0440\u0430\u0431",
-  wood_rosewood: "\u0420\u043E\u0437\u043E\u0432\u043E\u0435 \u0434\u0435\u0440\u0435\u0432\u043E",
-  wood_cypress: "\u041A\u0438\u043F\u0430\u0440\u0438\u0441",
-  wood_oak: "\u0414\u0443\u0431",
-  wood_ebony: "\u0427\u0451\u0440\u043D\u043E\u0435 \u0434\u0435\u0440\u0435\u0432\u043E",
-  wood_mahogany: "\u041A\u0440\u0430\u0441\u043D\u043E\u0435 \u0434\u0435\u0440\u0435\u0432\u043E",
-  core_phoenix: "\u043F\u0435\u0440\u043E \u0444\u0435\u043D\u0438\u043A\u0441\u0430",
-  core_dragon: "\u0441\u0435\u0440\u0434\u0435\u0447\u043D\u0430\u044F \u0436\u0438\u043B\u0430 \u0434\u0440\u0430\u043A\u043E\u043D\u0430",
-  core_unicorn: "\u0432\u043E\u043B\u043E\u0441 \u0435\u0434\u0438\u043D\u043E\u0440\u043E\u0433\u0430",
-  core_thestral: "\u0432\u043E\u043B\u043E\u0441 \u0438\u0437 \u0445\u0432\u043E\u0441\u0442\u0430 \u0444\u0435\u0441\u0442\u0440\u0430\u043B\u0430",
-  core_veela: "\u0432\u043E\u043B\u043E\u0441 \u0432\u0435\u0439\u043B\u044B",
-  flex_unyielding: "\u043D\u0435\u0441\u0433\u0438\u0431\u0430\u0435\u043C\u0430\u044F",
-  flex_rigid: "\u0436\u0451\u0441\u0442\u043A\u0430\u044F",
-  flex_springy: "\u0443\u043F\u0440\u0443\u0433\u0430\u044F",
-  flex_supple: "\u0433\u0438\u0431\u043A\u0430\u044F",
-  flex_pliable: "\u043F\u043E\u0434\u0430\u0442\u043B\u0438\u0432\u0430\u044F",
-  flex_swishy: "\u0445\u043B\u0451\u0441\u0442\u043A\u0430\u044F",
-  handle_smooth: "\u0413\u043B\u0430\u0434\u043A\u0430\u044F",
-  handle_ringed: "\u0421 \u043A\u043E\u043B\u044C\u0446\u0430\u043C\u0438",
-  handle_spiral: "\u0420\u0435\u0437\u043D\u0430\u044F \u043B\u043E\u0437\u0430",
-  handle_knotted: "\u0423\u0437\u043B\u043E\u0432\u0430\u0442\u0430\u044F",
-  handle_claw: "\u041A\u043E\u0441\u0442\u044F\u043D\u043E\u0439 \u043A\u043E\u0433\u043E\u0442\u044C",
-  handle_bulb: "\u041D\u0430\u0432\u0435\u0440\u0448\u0438\u0435-\u0448\u0430\u0440",
-  preset_harry: "\u0413\u0430\u0440\u0440\u0438 \u041F\u043E\u0442\u0442\u0435\u0440",
-  preset_hermione: "\u0413\u0435\u0440\u043C\u0438\u043E\u043D\u0430 \u0413\u0440\u0435\u0439\u043D\u0434\u0436\u0435\u0440",
-  preset_ron: "\u0420\u043E\u043D \u0423\u0438\u0437\u043B\u0438",
-  preset_dumbledore: "\u0410\u043B\u044C\u0431\u0443\u0441 \u0414\u0430\u043C\u0431\u043B\u0434\u043E\u0440",
-  preset_voldemort: "\u0412\u043E\u043B\u0430\u043D-\u0434\u0435-\u041C\u043E\u0440\u0442",
-  preset_draco: "\u0414\u0440\u0430\u043A\u043E \u041C\u0430\u043B\u0444\u043E\u0439",
-  preset_neville: "\u041D\u0435\u0432\u0438\u043B\u043B \u0414\u043E\u043B\u0433\u043E\u043F\u0443\u043F\u0441",
-  preset_bellatrix: "\u0411\u0435\u043B\u043B\u0430\u0442\u0440\u0438\u0441\u0430 \u041B\u0435\u0441\u0442\u0440\u0435\u0439\u043D\u0434\u0436",
-  preset_cedric: "\u0421\u0435\u0434\u0440\u0438\u043A \u0414\u0438\u0433\u0433\u043E\u0440\u0438",
-  preset_lupin: "\u0420\u0438\u043C\u0443\u0441 \u041B\u044E\u043F\u0438\u043D",
-  preset_fleur: "\u0424\u043B\u0451\u0440 \u0414\u0435\u043B\u0430\u043A\u0443\u0440",
-  preset_krum: "\u0412\u0438\u043A\u0442\u043E\u0440 \u041A\u0440\u0430\u043C",
-  presetWand_harry: "\u041F\u0430\u043B\u043E\u0447\u043A\u0430 \u0413\u0430\u0440\u0440\u0438 \u041F\u043E\u0442\u0442\u0435\u0440\u0430",
-  presetWand_hermione: "\u041F\u0430\u043B\u043E\u0447\u043A\u0430 \u0413\u0435\u0440\u043C\u0438\u043E\u043D\u044B \u0413\u0440\u0435\u0439\u043D\u0434\u0436\u0435\u0440",
-  presetWand_ron: "\u041F\u0430\u043B\u043E\u0447\u043A\u0430 \u0420\u043E\u043D\u0430 \u0423\u0438\u0437\u043B\u0438",
-  presetWand_dumbledore: "\u0411\u0443\u0437\u0438\u043D\u043D\u0430\u044F \u043F\u0430\u043B\u043E\u0447\u043A\u0430, \u0414\u0430\u0440 \u0421\u043C\u0435\u0440\u0442\u0438",
-  presetWand_voldemort: "\u041F\u0430\u043B\u043E\u0447\u043A\u0430 \u0412\u043E\u043B\u0430\u043D-\u0434\u0435-\u041C\u043E\u0440\u0442\u0430",
-  presetWand_draco: "\u041F\u0430\u043B\u043E\u0447\u043A\u0430 \u0414\u0440\u0430\u043A\u043E \u041C\u0430\u043B\u0444\u043E\u044F",
-  presetWand_neville: "\u041F\u0430\u043B\u043E\u0447\u043A\u0430 \u041D\u0435\u0432\u0438\u043B\u043B\u0430 \u0414\u043E\u043B\u0433\u043E\u043F\u0443\u043F\u0441\u0430",
-  presetWand_bellatrix: "\u041F\u0430\u043B\u043E\u0447\u043A\u0430 \u0411\u0435\u043B\u043B\u0430\u0442\u0440\u0438\u0441\u044B \u041B\u0435\u0441\u0442\u0440\u0435\u0439\u043D\u0434\u0436",
-  presetWand_cedric: "\u041F\u0430\u043B\u043E\u0447\u043A\u0430 \u0421\u0435\u0434\u0440\u0438\u043A\u0430 \u0414\u0438\u0433\u0433\u043E\u0440\u0438",
-  presetWand_lupin: "\u041F\u0430\u043B\u043E\u0447\u043A\u0430 \u0420\u0438\u043C\u0443\u0441\u0430 \u041B\u044E\u043F\u0438\u043D\u0430",
-  presetWand_fleur: "\u041F\u0430\u043B\u043E\u0447\u043A\u0430 \u0424\u043B\u0451\u0440 \u0414\u0435\u043B\u0430\u043A\u0443\u0440",
-  presetWand_krum: "\u041F\u0430\u043B\u043E\u0447\u043A\u0430 \u0412\u0438\u043A\u0442\u043E\u0440\u0430 \u041A\u0440\u0430\u043C\u0430",
-  eggLumos: "Lumos! \u0414\u0430 \u0431\u0443\u0434\u0435\u0442 \u0441\u0432\u0435\u0442.",
-  eggLeviosa: "\u0412\u0438\u043D\u0433\u0430\u0440\u0434\u0438\u0443\u043C \u041B\u0435\u0432\u0438\u043E\u0441\u0430! \u041B\u0435\u0432\u0438-\u041E-\u0441\u0430, \u0430 \u043D\u0435 \u041B\u0435\u0432\u0438\u043E-\u0421\u0410.",
-  eggNox: "Nox. \u0414\u043E\u0431\u0440\u043E \u043F\u043E\u0436\u0430\u043B\u043E\u0432\u0430\u0442\u044C \u0432 \u0433\u043E\u0441\u0442\u0438\u043D\u0443\u044E.",
-  eggMap1: "\u0413\u043E\u0441\u043F\u043E\u0434\u0430 \u041B\u0443\u043D\u0430\u0442\u0438\u043A, \u0425\u0432\u043E\u0441\u0442, \u0411\u0440\u043E\u0434\u044F\u0433\u0430 \u0438 \u0421\u043E\u0445\u0430\u0442\u044B\u0439",
-  eggMap2: "\u0441 \u0433\u043E\u0440\u0434\u043E\u0441\u0442\u044C\u044E \u043F\u0440\u0435\u0434\u0441\u0442\u0430\u0432\u043B\u044F\u044E\u0442",
-  eggMapTitle: "\u041A\u0430\u0440\u0442\u0443 \u041C\u0430\u0440\u043E\u0434\u0451\u0440\u043E\u0432",
-  eggMischief: "\u0428\u0430\u043B\u043E\u0441\u0442\u044C \u0443\u0434\u0430\u043B\u0430\u0441\u044C. \u0422\u0435\u043C\u0430 \u0432\u0435\u0440\u043D\u0451\u0442\u0441\u044F \u043F\u043E\u0441\u043B\u0435 \u043A\u043B\u044F\u0442\u0432\u044B \u2014 \u0438\u043B\u0438 \u043F\u0435\u0440\u0435\u0437\u0430\u043F\u0443\u0441\u043A\u0430.",
-  eggSnitch: "+{0} \u043E\u0447\u043A\u043E\u0432 \u0444\u0430\u043A\u0443\u043B\u044C\u0442\u0435\u0442\u0443 {1}! \u0421\u043D\u0438\u0442\u0447 \u043F\u043E\u0439\u043C\u0430\u043D.",
-  eggSnitchLabel: "\u0417\u043E\u043B\u043E\u0442\u043E\u0439 \u0441\u043D\u0438\u0442\u0447 \u2014 \u043F\u043E\u0439\u043C\u0430\u0439 \u0435\u0433\u043E!",
-  eggBirthday: "31 \u0438\u044E\u043B\u044F \u2014 \u0441 \u0434\u043D\u0451\u043C \u0440\u043E\u0436\u0434\u0435\u043D\u0438\u044F, \u0413\u0430\u0440\u0440\u0438! \u0425\u0430\u0433\u0440\u0438\u0434 \u0443\u0436\u0435 \u043D\u0435\u0441\u0451\u0442 \u0442\u043E\u0440\u0442 (\u0441\u043B\u0435\u0433\u043A\u0430 \u043F\u043E\u043C\u044F\u0442\u044B\u0439).",
-  mapTitle: "\u041A\u0430\u0440\u0442\u0430 \u041C\u0430\u0440\u043E\u0434\u0451\u0440\u043E\u0432",
-  commandMapOpen: "\u041A\u0430\u0440\u0442\u0430 \u041C\u0430\u0440\u043E\u0434\u0451\u0440\u043E\u0432: \u0433\u0434\u0435 \u044F",
-  commandMapRoute: "\u041A\u0430\u0440\u0442\u0430 \u041C\u0430\u0440\u043E\u0434\u0451\u0440\u043E\u0432: \u043F\u0440\u043E\u043B\u043E\u0436\u0438\u0442\u044C \u043F\u0443\u0442\u044C \u043A \u0437\u0430\u043C\u0435\u0442\u043A\u0435\u2026",
-  commandMapNext: "\u041A\u0430\u0440\u0442\u0430 \u041C\u0430\u0440\u043E\u0434\u0451\u0440\u043E\u0432: \u0441\u043B\u0435\u0434\u0443\u044E\u0449\u0438\u0439 \u0448\u0430\u0433",
-  mapEmpty: "\u041E\u0442\u043A\u0440\u043E\u0439\u0442\u0435 \u0437\u0430\u043C\u0435\u0442\u043A\u0443 \u2014 \u0438 \u043A\u0430\u0440\u0442\u0430 \u043F\u043E\u043A\u0430\u0436\u0435\u0442, \u0433\u0434\u0435 \u0432\u044B \u0438 \u043A\u0443\u0434\u0430 \u0432\u0435\u0434\u0443\u0442 \u0441\u0441\u044B\u043B\u043A\u0438.",
-  mapHere: "\u0432\u044B \u0437\u0434\u0435\u0441\u044C",
-  mapLonely: "\u0421\u044E\u0434\u0430 \u043D\u0435 \u0432\u0435\u0434\u0451\u0442 \u043D\u0438 \u043E\u0434\u0438\u043D \u0442\u0430\u0439\u043D\u044B\u0439 \u0445\u043E\u0434: \u0443 \u0437\u0430\u043C\u0435\u0442\u043A\u0438 \u043D\u0435\u0442 \u043D\u0438 \u0441\u0441\u044B\u043B\u043E\u043A, \u043D\u0438 \u043E\u0431\u0440\u0430\u0442\u043D\u044B\u0445 \u0441\u0441\u044B\u043B\u043E\u043A.",
-  mapHidden: "\u0438 \u0435\u0449\u0451 {0}",
-  mapLegendLink: "\u0441\u0441\u044B\u043B\u043A\u0430",
-  mapLegendBacklink: "\u043E\u0431\u0440\u0430\u0442\u043D\u0430\u044F \u0441\u0441\u044B\u043B\u043A\u0430",
-  mapLegendTag: "\u043E\u0431\u0449\u0438\u0439 \u0442\u0435\u0433",
-  mapTagHint: "\u0442\u0435\u0433, \u043A\u043B\u0438\u043A \u2014 \u0432\u0441\u0435 \u0437\u0430\u043C\u0435\u0442\u043A\u0438 \u0441 \u043D\u0438\u043C",
-  mapRouteButton: "\u041F\u0440\u043E\u043B\u043E\u0436\u0438\u0442\u044C \u043F\u0443\u0442\u044C\u2026",
-  mapRoutePlaceholder: "\u041A\u0443\u0434\u0430 \u0438\u0434\u0451\u043C?",
-  mapRouteTitle: "\u041F\u0443\u0442\u044C \u043A \xAB{0}\xBB",
-  mapRouteSteps: "\u0428\u0430\u0433\u043E\u0432: {0}",
-  mapRerouted: "\u0432\u044B \u0441\u0432\u0435\u0440\u043D\u0443\u043B\u0438 \u0441 \u043F\u0443\u0442\u0438, \u0432\u043E\u0442 \u043D\u043E\u0432\u044B\u0439",
-  mapStepLink: "\u0441\u0441\u044B\u043B\u043A\u0430 \u0432 \u0442\u0435\u043A\u0441\u0442\u0435",
-  mapStepBacklink: "\u043E\u0431\u0440\u0430\u0442\u043D\u0430\u044F \u0441\u0441\u044B\u043B\u043A\u0430: \u0432 \u0442\u0435\u043A\u0441\u0442\u0435 \u0435\u0451 \u043D\u0435\u0442",
-  mapStepTag: "\u043E\u0431\u0449\u0438\u0439 \u0442\u0435\u0433 {0}",
-  mapNext: "\u0421\u043B\u0435\u0434\u0443\u044E\u0449\u0438\u0439 \u0448\u0430\u0433",
-  mapClear: "\u0421\u0431\u0440\u043E\u0441\u0438\u0442\u044C",
-  mapLost: "\u041E\u0442\u0441\u044E\u0434\u0430 \u043A \xAB{0}\xBB \u0442\u0430\u0439\u043D\u043E\u0433\u043E \u0445\u043E\u0434\u0430 \u043D\u0435\u0442.",
-  mapNoPath: "\u041A \xAB{0}\xBB \u0442\u0430\u0439\u043D\u043E\u0433\u043E \u0445\u043E\u0434\u0430 \u043D\u0435\u0442: \u0437\u0430\u043C\u0435\u0442\u043A\u0438 \u043D\u0435 \u0441\u0432\u044F\u0437\u0430\u043D\u044B \u0441\u0441\u044B\u043B\u043A\u0430\u043C\u0438.",
-  mapNoNote: "\u0421\u043D\u0430\u0447\u0430\u043B\u0430 \u043E\u0442\u043A\u0440\u043E\u0439\u0442\u0435 \u0437\u0430\u043C\u0435\u0442\u043A\u0443: \u043A\u0430\u0440\u0442\u0435 \u043D\u0443\u0436\u043D\u043E \u0437\u043D\u0430\u0442\u044C, \u0433\u0434\u0435 \u0432\u044B.",
-  mapArrived: "\u0412\u044B \u043D\u0430 \u043C\u0435\u0441\u0442\u0435: \xAB{0}\xBB. \u0428\u0430\u043B\u043E\u0441\u0442\u044C \u0443\u0434\u0430\u043B\u0430\u0441\u044C!",
-  mapFootprints: "\u0412\u0430\u0448\u0438 \u0441\u043B\u0435\u0434\u044B"
+  lengthWhole: "{0} дюймов",
+  lengthFraction: "{0} дюйма",
+  wood_holly: "Остролист",
+  wood_vine: "Виноградная лоза",
+  wood_willow: "Ива",
+  wood_elder: "Бузина",
+  wood_yew: "Тис",
+  wood_hawthorn: "Боярышник",
+  wood_cherry: "Вишня",
+  wood_ash: "Ясень",
+  wood_walnut: "Грецкий орех",
+  wood_hornbeam: "Граб",
+  wood_rosewood: "Розовое дерево",
+  wood_cypress: "Кипарис",
+  wood_oak: "Дуб",
+  wood_ebony: "Чёрное дерево",
+  wood_mahogany: "Красное дерево",
+  core_phoenix: "перо феникса",
+  core_dragon: "сердечная жила дракона",
+  core_unicorn: "волос единорога",
+  core_thestral: "волос из хвоста фестрала",
+  core_veela: "волос вейлы",
+  flex_unyielding: "несгибаемая",
+  flex_rigid: "жёсткая",
+  flex_springy: "упругая",
+  flex_supple: "гибкая",
+  flex_pliable: "податливая",
+  flex_swishy: "хлёсткая",
+  handle_smooth: "Гладкая",
+  handle_ringed: "С кольцами",
+  handle_spiral: "Резная лоза",
+  handle_knotted: "Узловатая",
+  handle_claw: "Костяной коготь",
+  handle_bulb: "Навершие-шар",
+  preset_harry: "Гарри Поттер",
+  preset_hermione: "Гермиона Грейнджер",
+  preset_ron: "Рон Уизли",
+  preset_dumbledore: "Альбус Дамблдор",
+  preset_voldemort: "Волан-де-Морт",
+  preset_draco: "Драко Малфой",
+  preset_neville: "Невилл Долгопупс",
+  preset_bellatrix: "Беллатриса Лестрейндж",
+  preset_cedric: "Седрик Диггори",
+  preset_lupin: "Римус Люпин",
+  preset_fleur: "Флёр Делакур",
+  preset_krum: "Виктор Крам",
+  presetWand_harry: "Палочка Гарри Поттера",
+  presetWand_hermione: "Палочка Гермионы Грейнджер",
+  presetWand_ron: "Палочка Рона Уизли",
+  presetWand_dumbledore: "Бузинная палочка, Дар Смерти",
+  presetWand_voldemort: "Палочка Волан-де-Морта",
+  presetWand_draco: "Палочка Драко Малфоя",
+  presetWand_neville: "Палочка Невилла Долгопупса",
+  presetWand_bellatrix: "Палочка Беллатрисы Лестрейндж",
+  presetWand_cedric: "Палочка Седрика Диггори",
+  presetWand_lupin: "Палочка Римуса Люпина",
+  presetWand_fleur: "Палочка Флёр Делакур",
+  presetWand_krum: "Палочка Виктора Крама",
+  eggLumos: "Lumos! Да будет свет.",
+  eggLeviosa: "Вингардиум Левиоса! Леви-О-са, а не Левио-СА.",
+  eggNox: "Nox. Добро пожаловать в гостиную.",
+  eggMap1: "Господа Лунатик, Хвост, Бродяга и Сохатый",
+  eggMap2: "с гордостью представляют",
+  eggMapTitle: "Карту Мародёров",
+  eggMischief: "Шалость удалась. Тема вернётся после клятвы — или перезапуска.",
+  eggSnitch: "+{0} очков факультету {1}! Снитч пойман.",
+  eggSnitchLabel: "Золотой снитч — поймай его!",
+  eggBirthday: "31 июля — с днём рождения, Гарри! Хагрид уже несёт торт (слегка помятый).",
+  mapTitle: "Карта Мародёров",
+  commandMapOpen: "Карта Мародёров: где я",
+  commandMapRoute: "Карта Мародёров: проложить путь к заметке…",
+  commandMapNext: "Карта Мародёров: следующий шаг",
+  mapEmpty: "Откройте заметку — и карта покажет, где вы и куда ведут ссылки.",
+  mapHere: "вы здесь",
+  mapLonely: "Сюда не ведёт ни один тайный ход: у заметки нет ни ссылок, ни обратных ссылок.",
+  mapHidden: "и ещё {0}",
+  mapLegendLink: "ссылка",
+  mapLegendBacklink: "обратная ссылка",
+  mapLegendTag: "общий тег",
+  mapTagHint: "тег, клик — все заметки с ним",
+  mapRouteButton: "Проложить путь…",
+  mapRoutePlaceholder: "Куда идём?",
+  mapRouteTitle: "Путь к «{0}»",
+  mapRouteSteps: "Шагов: {0}",
+  mapRerouted: "вы свернули с пути, вот новый",
+  mapStepLink: "ссылка в тексте",
+  mapStepBacklink: "обратная ссылка: в тексте её нет",
+  mapStepTag: "общий тег {0}",
+  mapNext: "Следующий шаг",
+  mapClear: "Сбросить",
+  mapLost: "Отсюда к «{0}» тайного хода нет.",
+  mapNoPath: "К «{0}» тайного хода нет: заметки не связаны ссылками.",
+  mapNoNote: "Сначала откройте заметку: карте нужно знать, где вы.",
+  mapArrived: "Вы на месте: «{0}». Шалость удалась!",
+  mapFootprints: "Ваши следы",
+  mapRouteChanged: "ссылки изменились, вот новый путь",
+  mapLegendGhost: "неизведанная комната",
+  mapGhostHint: "неизведанная комната: заметки ещё нет, клик — создать её",
+  locale: "ru",
+  sectionAppearance: "Оформление",
+  sectionWand: "Палочка",
+  sectionMap: "Карта Мародёров",
+  sectionMagic: "Заклинания",
+  sectionCup: "Кубок школы",
+  settingMode: "Пергамент или гостиная",
+  settingModeDesc: "Обычно плагин следует светлой или тёмной базовой теме Obsidian. Можно оставить что-то одно насовсем.",
+  mode_auto: "Как в Obsidian",
+  mode_parchment: "Всегда пергамент",
+  mode_common: "Всегда гостиная",
+  settingMapUnresolved: "Неизведанные комнаты",
+  settingMapUnresolvedDesc: "Ссылки на заметки, которых ещё нет, видны на карте. Клик создаёт заметку.",
+  settingMapDepth: "Круги карты",
+  settingMapDepthDesc: "Только соседи заметки или и соседи соседей.",
+  mapDepth_1: "Один круг",
+  mapDepth_2: "Два круга",
+  settingMapExclude: "Папки не на карте",
+  settingMapExcludeDesc: "По одной на строке или через запятую: шаблоны, архив… Их заметок нет на карте, в маршрутах, в Омуте памяти и в Маховике времени.",
+  settingRestricted: "Запретная секция",
+  settingRestrictedDesc: "Свои названия папок в дополнение к «Запретная секция» и «Restricted Section». Их содержимое размыто, пока не наведёшь курсор.",
+  settingGesturesDisabled: "Сначала включите магию.",
+  settingGesturesAlt: "На macOS и Linux зажмите Alt, чтобы начать жест и в тексте заметки.",
+  settingWorkPoints: "Очки за работу",
+  settingWorkPointsDesc: "+{0} факультету за каждую закрытую задачу (- [x]) и +{1} за запись в ежедневной заметке.",
+  cupPoints: "Очков: {0}",
+  cupSnitches: "Поймано снитчей: {0}",
+  buttonResetPoints: "Сбросить очки",
+  resetTitle: "Сбросить Кубок школы?",
+  resetText: "У всех факультетов снова будет ноль очков, а пойманные снитчи забудутся.",
+  resetConfirm: "Сбросить",
+  cancel: "Отмена",
+  hatIntro: "Ответьте на несколько вопросов, и шляпа поймёт, где ваше место. Или просто доверьтесь ей.",
+  hatQuiz: "Пройти испытание",
+  hatTrust: "Довериться шляпе",
+  hatProgress: "Вопрос {0} из {1}",
+  quiz_noise: "Ночью вы слышите в коридоре странный шум. Что вы сделаете?",
+  quiz_noise_gryffindor: "Пойду посмотрю, что там",
+  quiz_noise_slytherin: "Узнаю, нельзя ли извлечь из этого пользу",
+  quiz_noise_ravenclaw: "Сначала подумаю, что может издавать такой звук",
+  quiz_noise_hufflepuff: "Позову друзей — вместе не страшно",
+  quiz_virtue: "Какое качество вы цените больше всего?",
+  quiz_virtue_gryffindor: "Смелость",
+  quiz_virtue_slytherin: "Целеустремлённость",
+  quiz_virtue_ravenclaw: "Ум",
+  quiz_virtue_hufflepuff: "Верность",
+  quiz_book: "В библиотеке вам попалась книга, которую нельзя открывать.",
+  quiz_book_gryffindor: "Открою: кто не рискует, тот не узнает",
+  quiz_book_slytherin: "Открою, когда никто не видит",
+  quiz_book_ravenclaw: "Сначала прочитаю всё о том, почему её нельзя открывать",
+  quiz_book_hufflepuff: "Отнесу библиотекарю",
+  quiz_subject: "Какого урока вы ждёте больше всего?",
+  quiz_subject_gryffindor: "Защита от Тёмных искусств",
+  quiz_subject_slytherin: "Зельеварение",
+  quiz_subject_ravenclaw: "Заклинания",
+  quiz_subject_hufflepuff: "Травология",
+  quiz_legacy: "Каким вас должны запомнить?",
+  quiz_legacy_gryffindor: "Смелым",
+  quiz_legacy_slytherin: "Великим",
+  quiz_legacy_ravenclaw: "Мудрым",
+  quiz_legacy_hufflepuff: "Добрым",
+  quiz_team: "Общий проект пошёл не так. Что вы сделаете?",
+  quiz_team_gryffindor: "Возьму вину на себя и всё исправлю",
+  quiz_team_slytherin: "Возьму руководство в свои руки",
+  quiz_team_ravenclaw: "Найду ошибку и придумаю решение",
+  quiz_team_hufflepuff: "Поддержу остальных и доделаю свою часть",
+  commandPensieve: "Омут памяти: старое воспоминание",
+  commandTimeTurner: "Маховик времени: год назад в этот день",
+  commandCloak: "Мантия-невидимка: спрятать выделенное",
+  pensieveTitle: "Омут памяти",
+  timeTurnerTitle: "Маховик времени",
+  pensieveNotice: "Воспоминание из Омута памяти: «{0}». Дней без изменений: {1}.",
+  pensieveEmpty: "Омут памяти пуст: заметок пока нет.",
+  timeTurnerNotice: "Три оборота Маховика времени: {0}.",
+  timeTurnerEmpty: "{0} ничего не записывали.",
+  timeTurnerPlaceholder: "Заметки за {0}",
+  cloakTitle: "Мантия-невидимка",
+  pointsDaily: "+{0} очков факультету {1} за запись в дневнике!"
 };
 function createTranslator(language) {
   const dict = language.toLowerCase().startsWith("ru") ? ru : en;
@@ -551,18 +727,19 @@ function createTranslator(language) {
 
 // src/spells.ts
 var SPELLS = [
-  { id: "solemnlySwear", words: ["i solemnly swear that i am up to no good", "solemnly swear", "\u043A\u043B\u044F\u043D\u0443\u0441\u044C \u0447\u0442\u043E \u0437\u0430\u043C\u044B\u0448\u043B\u044F\u044E \u0442\u043E\u043B\u044C\u043A\u043E \u0448\u0430\u043B\u043E\u0441\u0442\u044C"] },
-  { id: "mischiefManaged", words: ["mischief managed", "\u0448\u0430\u043B\u043E\u0441\u0442\u044C \u0443\u0434\u0430\u043B\u0430\u0441\u044C"] },
-  { id: "accioSnitch", words: ["accio snitch", "\u0430\u043A\u0446\u0438\u043E \u0441\u043D\u0438\u0442\u0447"] },
-  { id: "wingardiumLeviosa", words: ["wingardium leviosa", "\u0432\u0438\u043D\u0433\u0430\u0440\u0434\u0438\u0443\u043C \u043B\u0435\u0432\u0438\u043E\u0441\u0430"] },
-  { id: "lumos", words: ["lumos", "\u043B\u044E\u043C\u043E\u0441"] },
-  { id: "nox", words: ["nox", "\u043D\u043E\u043A\u0441"] }
+  { id: "solemnlySwear", words: ["i solemnly swear that i am up to no good", "solemnly swear", "клянусь что замышляю только шалость"] },
+  { id: "mischiefManaged", words: ["mischief managed", "шалость удалась"] },
+  { id: "accioSnitch", words: ["accio snitch", "акцио снитч"] },
+  { id: "wingardiumLeviosa", words: ["wingardium leviosa", "вингардиум левиоса"] },
+  { id: "lumos", words: ["lumos", "люмос"] },
+  { id: "nox", words: ["nox", "нокс"] }
 ];
 var KONAMI = ["arrowup", "arrowup", "arrowdown", "arrowdown", "arrowleft", "arrowright", "arrowleft", "arrowright", "b", "a"];
-var KONAMI_ALIASES = { "\u0438": "b", "\u0444": "a" };
+var KONAMI_ALIASES = { "и": "b", "ф": "a" };
 var MAX_BUFFER = 48;
+var SPELL_TIMEOUT = 3e3;
 function normalize(phrase) {
-  return phrase.toLowerCase().replace(/ё/g, "\u0435").replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+  return phrase.toLowerCase().replace(/ё/g, "е").replace(/[^\p{L}\p{N}]+/gu, " ").trim();
 }
 function parseIncantation(phrase) {
   const text = normalize(phrase);
@@ -574,9 +751,15 @@ function parseIncantation(phrase) {
 function createSpellbook() {
   let text = "";
   let keys = [];
+  let last = -Infinity;
   return {
-    push(key) {
+    push(key, now = Date.now()) {
       if (typeof key !== "string") return null;
+      if (now - last > SPELL_TIMEOUT) {
+        text = "";
+        keys = [];
+      }
+      last = now;
       const k = key.toLowerCase();
       keys.push(KONAMI_ALIASES[k] ?? k);
       if (keys.length > KONAMI.length) keys.shift();
@@ -586,7 +769,7 @@ function createSpellbook() {
         return "accioSnitch";
       }
       if ([...k].length !== 1) return null;
-      const ch = /[\p{L}\p{N}]/u.test(k) ? k === "\u0451" ? "\u0435" : k : " ";
+      const ch = /[\p{L}\p{N}]/u.test(k) ? k === "ё" ? "е" : k : " ";
       if (ch === " " && (text === "" || text.endsWith(" "))) return null;
       text = (text + ch).slice(-MAX_BUFFER);
       for (const spell of SPELLS) {
@@ -613,47 +796,61 @@ function isWordStart(text, word) {
 // src/effects.ts
 var SVG_NS = "http://www.w3.org/2000/svg";
 var rand = (min, max) => min + Math.random() * (max - min);
+var viewOf = (doc) => doc.defaultView ?? window;
 var LEVITATE_TARGETS = ".nav-file-title, .nav-folder-title, .tree-item-self, .workspace-tab-header, .side-dock-ribbon-action, .status-bar-item, .callout, .cm-line, .inline-title, p, li, h1, h2, h3, h4, h5, h6, blockquote, pre, img, table, .setting-item";
 var Effects = class {
   constructor(reducedMotion) {
     this.reducedMotion = reducedMotion;
-    this.layer = null;
+    this.layers = /* @__PURE__ */ new Map();
     this.snitch = null;
     this.timers = /* @__PURE__ */ new Set();
-    this.pointer = { x: window.innerWidth / 2, y: window.innerHeight / 3 };
+    this.pointer = { x: 0, y: 0, doc: null };
   }
-  get pointerPosition() {
-    return { ...this.pointer };
+  /** Где курсор в этом документе; если он в другом окне — середина окна, чуть выше центра. */
+  pointerIn(doc) {
+    if (this.pointer.doc === doc) return { x: this.pointer.x, y: this.pointer.y };
+    const view = viewOf(doc);
+    return { x: view.innerWidth / 2, y: view.innerHeight / 3 };
   }
   trackPointer(e) {
-    this.pointer = { x: e.clientX, y: e.clientY };
+    this.pointer = { x: e.clientX, y: e.clientY, doc: e.view?.document ?? e.target?.ownerDocument ?? null };
+  }
+  /** Окно закрыли: его слой больше не нужен. */
+  forget(doc) {
+    this.layers.get(doc)?.remove();
+    this.layers.delete(doc);
+    if (this.pointer.doc === doc) this.pointer.doc = null;
+    if (this.snitch?.ownerDocument === doc) this.snitch = null;
   }
   destroy() {
     for (const id of this.timers) window.clearTimeout(id);
     this.timers.clear();
-    this.layer?.remove();
-    this.layer = null;
+    for (const layer of this.layers.values()) layer.remove();
+    this.layers.clear();
     this.snitch = null;
   }
   get snitchActive() {
     return this.snitch !== null;
   }
   // ---------- Lumos / Nox ----------
-  lumos() {
+  lumos(doc) {
     const size = 80;
-    const glow = this.add("div", "hp-glow");
-    glow.style.left = `${this.pointer.x - size / 2}px`;
-    glow.style.top = `${this.pointer.y - size / 2}px`;
-    const scale = Math.hypot(window.innerWidth, window.innerHeight) / size * 2.2;
+    const at = this.pointerIn(doc);
+    const view = viewOf(doc);
+    const glow = this.add(doc, "div", "hp-glow");
+    glow.style.left = `${at.x - size / 2}px`;
+    glow.style.top = `${at.y - size / 2}px`;
+    const scale = Math.hypot(view.innerWidth, view.innerHeight) / size * 2.2;
     this.removeAfter(glow.animate([
       { transform: "scale(.2)", opacity: 1 },
       { transform: `scale(${scale})`, opacity: 0.85, offset: 0.55 },
       { transform: `scale(${scale})`, opacity: 0 }
     ], { duration: this.reducedMotion() ? 400 : 1100, easing: "ease-out" }), glow);
   }
-  nox() {
-    const shade = this.add("div", "hp-shade");
-    shade.style.background = `radial-gradient(circle at ${this.pointer.x}px ${this.pointer.y}px, rgba(0,0,0,0) 0, rgba(0,0,0,.92) 220px)`;
+  nox(doc) {
+    const at = this.pointerIn(doc);
+    const shade = this.add(doc, "div", "hp-shade");
+    shade.style.background = `radial-gradient(circle at ${at.x}px ${at.y}px, rgba(0,0,0,0) 0, rgba(0,0,0,.92) 220px)`;
     this.removeAfter(shade.animate([
       { opacity: 0 },
       { opacity: 1, offset: 0.45 },
@@ -666,17 +863,17 @@ var Effects = class {
     return this.reducedMotion() ? 200 : 600;
   }
   // ---------- След палочки и Вингардиум Левиоса ----------
-  trail(colors, x, y) {
-    const svg = document.createElementNS(SVG_NS, "svg");
+  trail(doc, colors, x, y) {
+    const svg = doc.createElementNS(SVG_NS, "svg");
     svg.setAttribute("class", "hp-trail");
     svg.style.setProperty("--hp-trail-glow", colors.glow);
     svg.style.setProperty("--hp-trail-ink", colors.ink);
     const lines = ["hp-trail-glow", "hp-trail-core"].map((cls) => {
-      const line = svg.appendChild(document.createElementNS(SVG_NS, "polyline"));
+      const line = svg.appendChild(doc.createElementNS(SVG_NS, "polyline"));
       line.setAttribute("class", cls);
       return line;
     });
-    this.getLayer().appendChild(svg);
+    this.getLayer(doc).appendChild(svg);
     let points = `${x},${y}`;
     let last = { x, y };
     const draw = () => lines.forEach((l) => l.setAttribute("points", points));
@@ -688,7 +885,7 @@ var Effects = class {
         draw();
       },
       finish: (success) => {
-        if (success) this.sparkle(last.x, last.y, colors);
+        if (success) this.sparkle(doc, last.x, last.y, colors);
         else svg.classList.add("is-fizzled");
         this.removeAfter(svg.animate(
           [{ opacity: 1 }, { opacity: 0 }],
@@ -698,9 +895,9 @@ var Effects = class {
       cancel: () => svg.remove()
     };
   }
-  levitate(x, y) {
-    const hit = document.elementFromPoint(x, y);
-    const target = hit?.closest(LEVITATE_TARGETS) ?? document.querySelector(".workspace-leaf.mod-active .view-content") ?? document.querySelector(".workspace");
+  levitate(doc, x, y) {
+    const hit = doc.elementFromPoint(x, y);
+    const target = hit?.closest(LEVITATE_TARGETS) ?? doc.querySelector(".workspace-leaf.mod-active .view-content") ?? doc.querySelector(".workspace");
     if (!target) return;
     const lift = this.reducedMotion() ? -4 : -16;
     const frames = this.reducedMotion() ? [{ transform: "translateY(0)" }, { transform: `translateY(${lift}px)`, offset: 0.3 }, { transform: `translateY(${lift}px)`, offset: 0.7 }, { transform: "translateY(0)" }] : [
@@ -714,10 +911,10 @@ var Effects = class {
     target.animate(frames, { duration: this.reducedMotion() ? 1200 : 3200, easing: "ease-in-out", composite: "add" });
   }
   // ---------- Карта Мародёров ----------
-  marauders(lines) {
-    const card = this.add("div", "hp-map-card");
-    for (const line of lines.slice(0, 2)) card.appendChild(document.createElement("div")).textContent = line;
-    const title = card.appendChild(document.createElement("div"));
+  marauders(doc, lines) {
+    const card = this.add(doc, "div", "hp-map-card");
+    for (const line of lines.slice(0, 2)) card.appendChild(doc.createElement("div")).textContent = line;
+    const title = card.appendChild(doc.createElement("div"));
     title.className = "hp-map-title";
     title.textContent = lines[2];
     this.removeAfter(card.animate([
@@ -727,8 +924,8 @@ var Effects = class {
       { opacity: 0, filter: "blur(4px)" }
     ], { duration: 5200, easing: "ease-in-out" }), card);
     if (this.reducedMotion()) return;
-    const w = window.innerWidth;
-    const h = window.innerHeight;
+    const w = viewOf(doc).innerWidth;
+    const h = viewOf(doc).innerHeight;
     const fromLeft = Math.random() < 0.5;
     const p0 = { x: fromLeft ? -20 : w + 20, y: rand(h * 0.55, h * 0.95) };
     const p1 = { x: rand(w * 0.2, w * 0.8), y: rand(0, h) };
@@ -742,7 +939,7 @@ var Effects = class {
       const dy = 2 * (1 - s) * (p1.y - p0.y) + 2 * s * (p2.y - p1.y);
       const len = Math.hypot(dx, dy) || 1;
       const side = i % 2 ? 9 : -9;
-      const foot = this.add("div", "hp-footprint");
+      const foot = this.add(doc, "div", "hp-footprint");
       foot.appendChild(svgElement(FOOT_SVG));
       foot.style.left = `${x - dy / len * side - 8}px`;
       foot.style.top = `${y + dx / len * side - 13}px`;
@@ -756,15 +953,16 @@ var Effects = class {
     }
   }
   /** Лёгкое «чернильное» затемнение для «Шалость удалась». */
-  inkFade() {
-    const ink = this.add("div", "hp-shade");
+  inkFade(doc) {
+    const ink = this.add(doc, "div", "hp-shade");
     ink.style.background = "radial-gradient(circle, rgba(74,46,20,0) 30%, rgba(74,46,20,.35))";
     this.removeAfter(ink.animate([{ opacity: 0 }, { opacity: 1, offset: 0.5 }, { opacity: 0 }], { duration: 1200 }), ink);
   }
   // ---------- Золотой снитч ----------
-  releaseSnitch({ label, onCatch }) {
-    if (this.snitch) return;
-    const btn = this.add("button", "hp-snitch");
+  releaseSnitch(doc, { label, onCatch }) {
+    if (this.snitch?.isConnected) return;
+    const view = viewOf(doc);
+    const btn = this.add(doc, "button", "hp-snitch");
     btn.setAttribute("type", "button");
     btn.setAttribute("aria-label", label);
     btn.dataset.hpSnitch = "";
@@ -779,14 +977,14 @@ var Effects = class {
         );
       }
     }
-    let pos = { x: -70, y: rand(40, window.innerHeight - 80) };
+    let pos = { x: -70, y: rand(40, view.innerHeight - 80) };
     let current = null;
     let caught = false;
     const deadline = Date.now() + 25e3;
     const fly = () => {
       if (caught || !btn.isConnected) return;
       const leaving = Date.now() > deadline;
-      const next = leaving ? { x: window.innerWidth + 90, y: rand(-60, window.innerHeight / 2) } : { x: rand(10, window.innerWidth - 80), y: rand(40, window.innerHeight - 60) };
+      const next = leaving ? { x: view.innerWidth + 90, y: rand(-60, view.innerHeight / 2) } : { x: rand(10, view.innerWidth - 80), y: rand(40, view.innerHeight - 60) };
       const hover = !leaving && Math.random() < 0.3 ? rand(350, 900) : 0;
       current = btn.animate([
         { transform: `translate(${pos.x}px, ${pos.y}px)` },
@@ -811,7 +1009,7 @@ var Effects = class {
       caught = true;
       current?.pause();
       const box = btn.getBoundingClientRect();
-      this.sparkle(box.left + box.width / 2, box.top + box.height / 2);
+      this.sparkle(doc, box.left + box.width / 2, box.top + box.height / 2);
       this.removeAfter(btn.animate(
         [{ opacity: 1 }, { opacity: 0, transform: `translate(${box.left}px, ${box.top}px) scale(.3)` }],
         { duration: 400, fill: "forwards" }
@@ -821,12 +1019,28 @@ var Effects = class {
     });
     fly();
   }
-  sparkle(x, y, colors) {
-    const dark = document.body.classList.contains("theme-dark");
+  // ---------- Очки факультету ----------
+  /** «+10» всплывает над элементом (счётчиком очков в статус-баре) и тает. */
+  floatText(anchor, text) {
+    const doc = anchor.ownerDocument;
+    const box = anchor.getBoundingClientRect();
+    const el = this.add(doc, "div", "hp-float-points");
+    el.textContent = text;
+    el.style.left = `${box.left + box.width / 2}px`;
+    el.style.top = `${box.top}px`;
+    const rise = this.reducedMotion() ? 0 : -28;
+    this.removeAfter(el.animate([
+      { transform: "translate(-50%, 0)", opacity: 0 },
+      { transform: `translate(-50%, ${rise / 3}px)`, opacity: 1, offset: 0.2 },
+      { transform: `translate(-50%, ${rise}px)`, opacity: 0 }
+    ], { duration: 1400, easing: "ease-out" }), el);
+  }
+  sparkle(doc, x, y, colors) {
+    const dark = doc.body.classList.contains("theme-dark");
     for (let i = 0; i < 14; i++) {
       const a = i / 14 * Math.PI * 2;
       const r = rand(40, 80);
-      const dot = this.add("div", "hp-spark");
+      const dot = this.add(doc, "div", "hp-spark");
       dot.style.left = `${x - 3}px`;
       dot.style.top = `${y - 3}px`;
       if (colors) {
@@ -843,17 +1057,19 @@ var Effects = class {
     }
   }
   // ---------- Служебное ----------
-  getLayer() {
-    if (this.layer?.isConnected) return this.layer;
-    this.layer = document.createElement("div");
-    this.layer.className = "hp-overlay";
-    document.body.appendChild(this.layer);
-    return this.layer;
+  getLayer(doc) {
+    let layer = this.layers.get(doc);
+    if (layer?.isConnected) return layer;
+    layer = doc.createElement("div");
+    layer.className = "hp-overlay";
+    doc.body.appendChild(layer);
+    this.layers.set(doc, layer);
+    return layer;
   }
-  add(tag, cls) {
-    const el = document.createElement(tag);
+  add(doc, tag, cls) {
+    const el = doc.createElement(tag);
     el.className = cls;
-    this.getLayer().appendChild(el);
+    this.getLayer(doc).appendChild(el);
     return el;
   }
   removeAfter(animation, el) {
@@ -876,6 +1092,12 @@ function isEditable(el) {
   if (tag === "TEXTAREA" || tag === "SELECT") return true;
   if (tag === "INPUT") return !/^(button|checkbox|radio|range|color|submit|reset|file|image)$/i.test(el.type);
   return !!el.closest('.cm-editor, [contenteditable="true"]');
+}
+function eventDocument(e) {
+  const view = e.view;
+  if (view?.document) return view.document;
+  const target = e.target;
+  return target?.ownerDocument ?? target?.defaultView?.document ?? document;
 }
 
 // src/gestures.ts
@@ -1030,7 +1252,15 @@ var GestureInput = class {
     this.suppressMenuUntil = 0;
     if (!this.host.enabled()) return;
     this.cancel();
-    this.stroke = { points: [{ x: e.clientX, y: e.clientY }], moved: false, trail: null, pointerId: e.pointerId, menu: null };
+    this.stroke = {
+      points: [{ x: e.clientX, y: e.clientY }],
+      moved: false,
+      trail: null,
+      pointerId: e.pointerId,
+      doc: eventDocument(e),
+      alt: e.altKey,
+      menu: null
+    };
   }
   pointerMove(e) {
     const s = this.stroke;
@@ -1046,7 +1276,7 @@ var GestureInput = class {
     const start = s.points[0];
     if (!s.moved && Math.hypot(e.clientX - start.x, e.clientY - start.y) > MOVE_THRESHOLD) {
       s.moved = true;
-      s.trail = this.effects.trail(this.host.colors(), start.x, start.y);
+      s.trail = this.effects.trail(s.doc, this.host.colors(), start.x, start.y);
       for (const p of s.points.slice(1)) s.trail.add(p.x, p.y);
       try {
         e.target.setPointerCapture?.(e.pointerId);
@@ -1064,7 +1294,7 @@ var GestureInput = class {
     if (this.replaying) return;
     const s = this.stroke;
     if (s) {
-      if (isEditable(e.target)) {
+      if (isEditable(e.target) && !s.alt) {
         this.cancel();
         return;
       }
@@ -1107,7 +1337,7 @@ var GestureInput = class {
       this.suppressMenuUntil = Date.now() + 500;
       const result = released ? recognize(s.points) : null;
       s.trail?.finish(!!result);
-      if (result) this.host.cast(result.spell, s.points[0]);
+      if (result) this.host.cast(result.spell, s.points[0], s.doc);
       return;
     }
     if (released && s.menu) {
@@ -1125,18 +1355,29 @@ var GestureInput = class {
 var import_obsidian = require("obsidian");
 
 // src/map.ts
-var isNote = (path) => path.endsWith(".md");
+var GHOST = "?";
+function isGhost(id) {
+  return id.startsWith(GHOST);
+}
+var ghostId = (linktext) => GHOST + linktext;
+var ghostLink = (id) => id.slice(GHOST.length);
+var isNote = (path) => path.endsWith(".md") && !isGhost(path);
 function isTag(id) {
   return id.startsWith("#") && !isNote(id);
 }
 function noteName(path) {
   if (isTag(path)) return path;
-  return path.slice(path.lastIndexOf("/") + 1).replace(/\.md$/, "");
+  const name = isGhost(path) ? ghostLink(path) : path;
+  return name.slice(name.lastIndexOf("/") + 1).replace(/\.md$/, "");
 }
 function noteFolder(path) {
-  if (isTag(path)) return "";
+  if (isTag(path) || isGhost(path)) return "";
   const i = path.lastIndexOf("/");
   return i < 0 ? "" : path.slice(0, i);
+}
+function inFolder(path, folders, anyDepth = false) {
+  const p = "/" + path;
+  return folders.some((f) => path.startsWith(f + "/") || anyDepth && p.includes("/" + f + "/"));
 }
 var collator = new Intl.Collator();
 var byName = (a, b) => collator.compare(noteName(a), noteName(b)) || collator.compare(a, b);
@@ -1145,31 +1386,64 @@ var LinkGraph = class {
    * Вложения (картинки, PDF) в граф не попадают: через общую картинку заметки не связаны.
    * Теги сравниваются без учёта регистра, как в Obsidian; на карте — написание из первой заметки.
    */
-  constructor(links, tags = {}) {
+  constructor(links, tags = {}, options = {}) {
     this.out = /* @__PURE__ */ new Map();
     this.in = /* @__PURE__ */ new Map();
     /** Заметка → её теги и тег → его заметки. */
     this.tagged = /* @__PURE__ */ new Map();
-    for (const [from, targets] of Object.entries(links)) {
-      if (!isNote(from)) continue;
-      for (const to of Object.keys(targets ?? {})) {
-        if (to === from || !isNote(to)) continue;
-        link(this.out, from, to);
-        link(this.in, to, from);
+    /** Заметка → неизведанные комнаты, на которые она ссылается. */
+    this.ghostsOf = /* @__PURE__ */ new Map();
+    /** Тег без учёта регистра → написание на карте. */
+    this.tagIds = /* @__PURE__ */ new Map();
+    /** Отсортированные соседи: поиск пути спрашивает их много раз. */
+    this.sorted = /* @__PURE__ */ new Map();
+    this.exclude = options.exclude ?? [];
+    const unresolved = options.unresolved ?? {};
+    const paths = /* @__PURE__ */ new Set([...Object.keys(links), ...Object.keys(tags), ...Object.keys(unresolved)]);
+    for (const path of paths) this.addNote(path, links[path], tags[path], unresolved[path]);
+  }
+  /** Заметку поправили: её ссылки, теги и неизведанные комнаты — заново, остальной граф не трогаем. */
+  setNote(path, links, tags, unresolved) {
+    this.removeNote(path);
+    this.addNote(path, links, tags, unresolved);
+    this.sorted.clear();
+  }
+  excluded(path) {
+    return inFolder(path, this.exclude);
+  }
+  addNote(path, links, tags, unresolved) {
+    if (!isNote(path) || this.excluded(path)) return;
+    for (const to of Object.keys(links ?? {})) {
+      if (to === path || !isNote(to) || this.excluded(to)) continue;
+      link(this.out, path, to);
+      link(this.in, to, path);
+    }
+    for (const raw of tags ?? []) {
+      const tag = raw.startsWith("#") ? raw : `#${raw}`;
+      if (tag.length < 2) continue;
+      const key = tag.toLowerCase();
+      if (!this.tagIds.has(key)) this.tagIds.set(key, tag);
+      const id = this.tagIds.get(key);
+      link(this.tagged, path, id);
+      link(this.tagged, id, path);
+    }
+    for (const text of Object.keys(unresolved ?? {})) {
+      if (text) link(this.ghostsOf, path, ghostId(text));
+    }
+  }
+  removeNote(path) {
+    for (const to of this.out.get(path) ?? []) this.in.get(to)?.delete(path);
+    this.out.delete(path);
+    for (const tag of this.tagged.get(path) ?? []) {
+      const notes = this.tagged.get(tag);
+      notes?.delete(path);
+      if (notes && !notes.size) {
+        this.tagged.delete(tag);
+        this.tagIds.delete(tag.toLowerCase());
       }
     }
-    const ids = /* @__PURE__ */ new Map();
-    for (const [path, list] of Object.entries(tags)) {
-      if (!isNote(path)) continue;
-      for (const raw of list ?? []) {
-        const tag = raw.startsWith("#") ? raw : `#${raw}`;
-        if (tag.length < 2) continue;
-        const key = tag.toLowerCase();
-        if (!ids.has(key)) ids.set(key, tag);
-        link(this.tagged, path, ids.get(key));
-        link(this.tagged, ids.get(key), path);
-      }
-    }
+    this.tagged.delete(path);
+    this.ghostsOf.delete(path);
   }
   passage(from, to) {
     if (this.tagged.get(from)?.has(to)) return "tag";
@@ -1179,13 +1453,22 @@ var LinkGraph = class {
   }
   /**
    * Соседи: сначала куда ведут ссылки из текста, потом откуда ссылаются сюда, потом теги;
-   * внутри — по имени. У тега соседи — заметки с этим тегом.
+   * внутри — по имени. У тега соседи — заметки с этим тегом. Список общий, менять его нельзя.
    */
   neighbors(path) {
-    const out = [...this.out.get(path) ?? []].sort(byName);
-    const back = [...this.in.get(path) ?? []].filter((p) => !this.out.get(path)?.has(p)).sort(byName);
-    const tags = [...this.tagged.get(path) ?? []].sort(byName);
-    return [...out, ...back, ...tags].map((p) => ({ path: p, passage: this.passage(path, p) }));
+    let list = this.sorted.get(path);
+    if (!list) {
+      const out = [...this.out.get(path) ?? []].sort(byName);
+      const back = [...this.in.get(path) ?? []].filter((p) => !this.out.get(path)?.has(p)).sort(byName);
+      const tags = [...this.tagged.get(path) ?? []].sort(byName);
+      list = [...out, ...back, ...tags].map((p) => ({ path: p, passage: this.passage(path, p) }));
+      this.sorted.set(path, list);
+    }
+    return list;
+  }
+  /** Неизведанные комнаты: ссылки из заметки на заметки, которых ещё нет. По имени. */
+  ghosts(path) {
+    return [...this.ghostsOf.get(path) ?? []].sort(byName);
   }
   degree(path) {
     const out = this.out.get(path);
@@ -1247,15 +1530,30 @@ function followRoute(graph, route, current) {
   const steps = graph.route(current, route.target);
   return { route: { ...route, steps }, status: steps ? "rerouted" : "lost" };
 }
+function revalidateRoute(graph, route, current) {
+  const steps = route.steps;
+  const start = current ?? steps?.[0];
+  if (steps && steps.every((p, i) => i === 0 || graph.passage(steps[i - 1], p) !== null) && (!current || steps[0] === current)) {
+    return { route, status: null };
+  }
+  if (!start) return { route, status: null };
+  const fresh = graph.route(start, route.target);
+  if (!steps) return fresh ? { route: { ...route, steps: fresh }, status: null } : { route, status: null };
+  return { route: { ...route, steps: fresh }, status: fresh ? "changed" : "lost" };
+}
 var FOOTPRINTS_MAX = 12;
 function addFootprint(footprints, path, max = FOOTPRINTS_MAX) {
   return [path, ...footprints.filter((p) => p !== path)].slice(0, max);
+}
+var RESTRICTED_FOLDERS = ["Restricted Section", "Запретная секция"];
+function isRestricted(path, extra = []) {
+  return inFolder(path, [...RESTRICTED_FOLDERS, ...extra], true);
 }
 var MAP_RINGS = { ring1: { rx: 70, ry: 98 }, ring2: { rx: 122, ry: 150 } };
 var MAP_LIMITS = { ring1: 12, ring2: 16 };
 function layoutMap(graph, center, route = [], limits = MAP_LIMITS) {
   const nodes = [{ path: center, x: 0, y: 0, ring: 0, parent: null, passage: null }];
-  const all = graph.neighbors(center);
+  const all = [...graph.neighbors(center), ...graph.ghosts(center).map((path) => ({ path, passage: "link" }))];
   const first = route[0] === center ? route[1] : void 0;
   const isFirst = (n) => Number(n.path === first);
   const tagFirst = (n) => Number(isTag(n.path));
@@ -1296,13 +1594,13 @@ function footsteps(a, b, spacing = 15, margin = 14) {
   const dx = b.x - a.x;
   const dy = b.y - a.y;
   const len = Math.hypot(dx, dy);
-  const count = Math.floor((len - margin * 2) / spacing);
-  if (count < 1) return [];
+  const count2 = Math.floor((len - margin * 2) / spacing);
+  if (count2 < 1) return [];
   const ux = dx / len;
   const uy = dy / len;
   const angle = round(Math.atan2(dy, dx) * 180 / Math.PI + 90);
-  const start = (len - (count - 1) * spacing) / 2;
-  return Array.from({ length: count }, (_, i) => {
+  const start = (len - (count2 - 1) * spacing) / 2;
+  return Array.from({ length: count2 }, (_, i) => {
     const d = start + i * spacing;
     const side = i % 2 ? 3.5 : -3.5;
     return { x: round(a.x + ux * d - uy * side), y: round(a.y + uy * d + ux * side), angle };
@@ -1312,8 +1610,9 @@ function footsteps(a, b, spacing = 15, margin = 14) {
 // src/marauders.ts
 var MAP_VIEW = "hp-marauders-map";
 var SVG_NS2 = "http://www.w3.org/2000/svg";
-var RESTRICTED = /(^|\/)(Restricted Section|Запретная секция)\//;
 var LABEL_MAX = 14;
+var GRAPH_DELAY = 400;
+var PERSIST_DELAY = 5e3;
 var MaraudersMap = class {
   constructor(plugin) {
     this.plugin = plugin;
@@ -1322,8 +1621,13 @@ var MaraudersMap = class {
     this.routeStatus = null;
     this.footprints = [];
     this.cachedGraph = null;
-    /** С тегами ли построен граф: настройка могла поменяться. */
-    this.graphTags = false;
+    /** С какими настройками построен граф: теги, исключённые папки, неизведанные комнаты. */
+    this.graphKey = "";
+    /** Заметки, чьи ссылки поменялись с последнего обновления графа. */
+    this.dirty = /* @__PURE__ */ new Set();
+    /** Файлы переименовали, удалили или создали — граф проще построить заново. */
+    this.rebuild = false;
+    this.flushTimer = 0;
   }
   get app() {
     return this.plugin.app;
@@ -1333,6 +1637,9 @@ var MaraudersMap = class {
   }
   load() {
     const { plugin, app, t } = this;
+    const saved = plugin.settings;
+    this.footprints = [...saved.footprints];
+    this.route = saved.route ? { ...saved.route } : null;
     plugin.registerView(MAP_VIEW, (leaf) => new MaraudersMapView(leaf, this));
     plugin.registerHoverLinkSource(MAP_VIEW, { display: t("mapTitle"), defaultMod: true });
     plugin.addRibbonIcon("footprints", t("mapTitle"), () => void this.reveal());
@@ -1349,46 +1656,95 @@ var MaraudersMap = class {
     });
     plugin.registerEvent(app.workspace.on("file-open", (file) => this.onFileOpen(file)));
     plugin.registerEvent(app.workspace.on("active-leaf-change", () => this.refresh()));
-    plugin.registerEvent(app.metadataCache.on("resolved", () => {
-      this.cachedGraph = null;
-      this.refresh();
-    }));
+    plugin.registerEvent(app.workspace.on("layout-change", () => this.refresh()));
+    plugin.registerEvent(app.metadataCache.on("resolve", (file) => this.markDirty(file.path)));
+    plugin.registerEvent(app.metadataCache.on("resolved", () => this.scheduleFlush()));
     plugin.registerEvent(app.vault.on("rename", (file, oldPath) => this.onRename(file.path, oldPath)));
-    plugin.registerEvent(app.vault.on("delete", (file) => this.onDelete(file.path)));
+    plugin.registerEvent(app.vault.on("delete", (file) => this.onDelete(file)));
+    plugin.registerEvent(app.vault.on("create", () => this.rebuildSoon()));
+    plugin.register(() => window.clearTimeout(this.flushTimer));
     app.workspace.onLayoutReady(() => {
+      const exists = (p) => app.vault.getAbstractFileByPath(p) instanceof import_obsidian.TFile;
+      this.footprints = this.footprints.filter(exists);
+      if (this.route && !exists(this.route.target)) this.route = null;
       const here = this.here();
       if (here) this.footprints = addFootprint(this.footprints, here);
+      this.persist();
       this.refresh();
     });
   }
   get graph() {
-    const tags = this.plugin.settings.mapTags;
-    if (!this.cachedGraph || this.graphTags !== tags) {
-      this.graphTags = tags;
-      this.cachedGraph = new LinkGraph(this.app.metadataCache.resolvedLinks, tags ? this.tags() : {});
+    const { settings } = this.plugin;
+    const key = JSON.stringify([settings.mapTags, settings.mapUnresolved, settings.mapExclude]);
+    if (!this.cachedGraph || this.graphKey !== key) {
+      const { metadataCache } = this.app;
+      this.graphKey = key;
+      this.dirty.clear();
+      this.rebuild = false;
+      this.cachedGraph = new LinkGraph(metadataCache.resolvedLinks, settings.mapTags ? this.tags() : {}, {
+        unresolved: settings.mapUnresolved ? metadataCache.unresolvedLinks : {},
+        exclude: settings.mapExclude
+      });
     }
     return this.cachedGraph;
   }
   /** Теги всех заметок: из текста и из свойств (frontmatter). */
   tags() {
-    const { vault, metadataCache } = this.app;
     const tags = {};
-    for (const file of vault.getMarkdownFiles()) {
-      const cache = metadataCache.getFileCache(file);
-      const list = cache ? (0, import_obsidian.getAllTags)(cache) : null;
+    for (const file of this.app.vault.getMarkdownFiles()) {
+      const list = this.tagsOf(file);
       if (list?.length) tags[file.path] = list;
     }
     return tags;
   }
-  /** Включили или выключили связи по тегам: граф заново, маршрут — тоже. */
-  settingsChanged() {
-    if (this.plugin.settings.mapTags === this.graphTags) return;
-    const here = this.here();
-    if (this.route && here) {
-      const steps = this.graph.route(here, this.route.target);
-      this.route = { ...this.route, steps };
-      this.routeStatus = steps ? null : "lost";
+  tagsOf(file) {
+    const cache = this.app.metadataCache.getFileCache(file);
+    return cache && (0, import_obsidian.getAllTags)(cache) || void 0;
+  }
+  markDirty(path) {
+    this.dirty.add(path);
+    this.scheduleFlush();
+  }
+  rebuildSoon() {
+    this.rebuild = true;
+    this.scheduleFlush();
+  }
+  scheduleFlush() {
+    window.clearTimeout(this.flushTimer);
+    this.flushTimer = window.setTimeout(() => this.flush(), GRAPH_DELAY);
+  }
+  /** Применить накопленные правки к графу, проверить маршрут и перерисовать карту. */
+  flush() {
+    window.clearTimeout(this.flushTimer);
+    this.flushTimer = 0;
+    if (this.rebuild) this.cachedGraph = null;
+    const graph = this.cachedGraph;
+    if (graph) {
+      const { resolvedLinks, unresolvedLinks } = this.app.metadataCache;
+      const { mapTags, mapUnresolved } = this.plugin.settings;
+      for (const path of this.dirty) {
+        const file = this.app.vault.getAbstractFileByPath(path);
+        const tags = mapTags && file instanceof import_obsidian.TFile ? this.tagsOf(file) : void 0;
+        graph.setNote(path, resolvedLinks[path], tags, mapUnresolved ? unresolvedLinks[path] : void 0);
+      }
     }
+    this.dirty.clear();
+    this.rebuild = false;
+    this.checkRoute();
+    this.refresh();
+  }
+  /** Граф мог поменяться: по маршруту ещё можно пройти? */
+  checkRoute() {
+    if (!this.route) return;
+    const { route, status } = revalidateRoute(this.graph, this.route, this.here());
+    if (route === this.route) return;
+    this.route = route;
+    this.routeStatus = status;
+    this.persist();
+  }
+  /** Поменялись настройки карты: граф и маршрут — заново. */
+  settingsChanged() {
+    this.checkRoute();
     this.refresh();
   }
   /** Открытая заметка (последняя, если сейчас в фокусе боковая панель). */
@@ -1420,9 +1776,14 @@ var MaraudersMap = class {
       this.searchTag(path);
       return;
     }
+    const newLeaf = evt ? import_obsidian.Keymap.isModEvent(evt) : false;
+    if (isGhost(path)) {
+      void this.app.workspace.openLinkText(ghostLink(path), this.here() ?? "", newLeaf);
+      return;
+    }
     const file = this.app.vault.getAbstractFileByPath(path);
     if (!(file instanceof import_obsidian.TFile)) return;
-    void this.app.workspace.getLeaf(evt ? import_obsidian.Keymap.isModEvent(evt) : false).openFile(file);
+    void this.app.workspace.getLeaf(newLeaf).openFile(file);
   }
   /** Тег на карте: все заметки с ним — в поиске Obsidian. API поиска не публичное. */
   searchTag(tag) {
@@ -1445,12 +1806,14 @@ var MaraudersMap = class {
     }
     this.route = { target: to, steps };
     this.routeStatus = null;
+    this.persist();
     this.refresh();
     void this.reveal();
   }
   clearRoute() {
     this.route = null;
     this.routeStatus = null;
+    this.persist();
     this.refresh();
   }
   goNext() {
@@ -1459,8 +1822,15 @@ var MaraudersMap = class {
   }
   refresh() {
     for (const leaf of this.app.workspace.getLeavesOfType(MAP_VIEW)) {
-      if (leaf.view instanceof MaraudersMapView) leaf.view.render();
+      if (leaf.view instanceof MaraudersMapView) leaf.view.refresh();
     }
+  }
+  /** Следы и маршрут — в data.json, чтобы пережить перезапуск. */
+  persist() {
+    const { settings } = this.plugin;
+    settings.footprints = [...this.footprints];
+    settings.route = this.route ? { target: this.route.target, steps: this.route.steps ? [...this.route.steps] : null } : null;
+    this.plugin.saveSoon(PERSIST_DELAY);
   }
   onFileOpen(file) {
     if (!file || file.extension !== "md") return;
@@ -1471,18 +1841,25 @@ var MaraudersMap = class {
       this.route = route;
       this.routeStatus = route ? status : null;
     }
+    this.persist();
     this.refresh();
   }
   onRename(path, oldPath) {
-    const rename = (p) => p === oldPath ? path : p;
+    const rename = (p) => p === oldPath ? path : p.startsWith(oldPath + "/") ? path + p.slice(oldPath.length) : p;
     this.footprints = this.footprints.map(rename);
     if (this.route) this.route = { target: rename(this.route.target), steps: this.route.steps?.map(rename) ?? null };
-    this.refresh();
+    this.persist();
+    this.rebuildSoon();
   }
-  onDelete(path) {
-    this.footprints = this.footprints.filter((p) => p !== path);
-    if (this.route?.target === path) this.route = null;
-    this.refresh();
+  onDelete(file) {
+    const gone = (p) => p === file.path || p.startsWith(file.path + "/");
+    this.footprints = this.footprints.filter((p) => !gone(p));
+    if (this.route && gone(this.route.target)) {
+      this.route = null;
+      this.routeStatus = null;
+    }
+    this.persist();
+    this.rebuildSoon();
   }
 };
 var MaraudersMapView = class extends import_obsidian.ItemView {
@@ -1492,6 +1869,8 @@ var MaraudersMapView = class extends import_obsidian.ItemView {
     this.hoverPopover = null;
     /** Что нарисовано сейчас: карта перерисовывается, только если что-то поменялось. */
     this.drawn = "";
+    /** Карту не видно (свёрнутая панель, соседняя вкладка): нарисуем, когда покажут. */
+    this.stale = false;
   }
   getViewType() {
     return MAP_VIEW;
@@ -1504,20 +1883,39 @@ var MaraudersMapView = class extends import_obsidian.ItemView {
   }
   async onOpen() {
     this.contentEl.addClass("hp-marauders");
-    this.render();
+    const view = this.containerEl.ownerDocument.defaultView ?? window;
+    if (typeof view.ResizeObserver === "function") {
+      const observer = new view.ResizeObserver(() => {
+        if (this.stale) this.refresh();
+      });
+      observer.observe(this.containerEl);
+      this.register(() => observer.disconnect());
+    }
+    this.refresh();
   }
   async onClose() {
     this.contentEl.empty();
     this.drawn = "";
+  }
+  get visible() {
+    const el = this.containerEl;
+    return el.isConnected && el.offsetWidth > 0 && !el.closest(".is-collapsed");
+  }
+  /** Перерисовать, если карту видно; иначе — когда покажут. */
+  refresh() {
+    this.stale = !this.visible;
+    if (!this.stale) this.render();
   }
   render() {
     const { map, contentEl } = this;
     const here = map.here();
     const route = map.route;
     const steps = here && route?.steps && route.steps[0] === here ? route.steps : [];
-    const layout = here ? layoutMap(map.graph, here, steps) : null;
+    const { mapDepth, restrictedFolders } = map.plugin.settings;
+    const limits = mapDepth === 1 ? { ...MAP_LIMITS, ring2: 0 } : MAP_LIMITS;
+    const layout = here ? layoutMap(map.graph, here, steps, limits) : null;
     const footprints = map.footprints.filter((p) => p !== here).slice(0, FOOTPRINTS_MAX - 4);
-    const state = JSON.stringify([here, layout, route, map.routeStatus, footprints]);
+    const state = JSON.stringify([here, layout, route, map.routeStatus, footprints, restrictedFolders]);
     if (state === this.drawn) return;
     this.drawn = state;
     contentEl.empty();
@@ -1539,6 +1937,7 @@ var MaraudersMapView = class extends import_obsidian.ItemView {
       legend.createSpan({ cls: "hp-legend-link", text: t("mapLegendLink") });
       legend.createSpan({ cls: "hp-legend-backlink", text: t("mapLegendBacklink") });
       if (layout.nodes.some((n) => isTag(n.path))) legend.createSpan({ cls: "hp-legend-tag", text: t("mapLegendTag") });
+      if (layout.nodes.some((n) => isGhost(n.path))) legend.createSpan({ cls: "hp-legend-ghost", text: t("mapLegendGhost") });
     }
     this.renderRoute(here);
     this.renderFootprints(footprints);
@@ -1557,7 +1956,7 @@ var MaraudersMapView = class extends import_obsidian.ItemView {
       const my = (from.y + node.y) / 2 + (node.x - from.x) * 0.08;
       svgEl(edges, "path", {
         d: `M${from.x} ${from.y}Q${round2(mx)} ${round2(my)} ${node.x} ${node.y}`,
-        class: `hp-map-edge is-${node.passage}` + (onRoute(from.path, node.path) ? " is-route" : "")
+        class: `hp-map-edge is-${node.passage}` + (isGhost(node.path) ? " is-ghost" : "") + (onRoute(from.path, node.path) ? " is-route" : "")
       });
     }
     let i = 0;
@@ -1576,15 +1975,17 @@ var MaraudersMapView = class extends import_obsidian.ItemView {
     const { t } = this.map;
     const name = noteName(node.path);
     const tag = isTag(node.path);
+    const ghost = isGhost(node.path);
     const cls = ["hp-map-node", `ring-${node.ring}`];
     if (node.ring === 0) cls.push("is-here");
     if (tag) cls.push("is-tag");
+    if (ghost) cls.push("is-ghost");
     if (nextNote(steps) === node.path) cls.push("is-next");
     if (steps.includes(node.path) && node.ring > 0) cls.push("is-route");
     if (node.path === target) cls.push("is-target");
     if (visited.has(node.path)) cls.push("is-visited");
-    if (RESTRICTED.test(node.path)) cls.push("is-restricted");
-    const label = node.ring === 0 ? `${name} \u2014 ${t("mapHere")}` : tag ? `${name} \u2014 ${t("mapTagHint")}` : `${name}${passageHint(t, node.passage)}`;
+    if (isRestricted(node.path, this.map.plugin.settings.restrictedFolders)) cls.push("is-restricted");
+    const label = node.ring === 0 ? `${name} — ${t("mapHere")}` : tag ? `${name} — ${t("mapTagHint")}` : ghost ? `${name} — ${t("mapGhostHint")}` : `${name}${passageHint(t, node.passage)}`;
     const g = svgEl(parent, "g", {
       class: cls.join(" "),
       "data-path": node.path,
@@ -1600,7 +2001,7 @@ ${noteFolder(node.path)}` : label;
     if (tag) svgEl(g, "path", { class: "hp-map-dot", d: `M0 ${-r - 1.5}L${r + 1.5} 0L0 ${r + 1.5}L${-r - 1.5} 0Z` });
     else svgEl(g, "circle", { class: "hp-map-dot", r });
     const text = svgEl(g, "text", { class: "hp-map-label" });
-    text.textContent = name.length > LABEL_MAX ? name.slice(0, LABEL_MAX - 1) + "\u2026" : name;
+    text.textContent = name.length > LABEL_MAX ? name.slice(0, LABEL_MAX - 1) + "…" : name;
     placeLabel(text, node);
     if (node.ring === 0) svgEl(g, "text", { class: "hp-map-here", y: 42, "text-anchor": "middle" }).textContent = t("mapHere");
     const go = (e) => {
@@ -1612,7 +2013,7 @@ ${noteFolder(node.path)}` : label;
       e.preventDefault();
       go(e);
     });
-    if (!tag) g.addEventListener("mouseover", (event) => {
+    if (!tag && !ghost) g.addEventListener("mouseover", (event) => {
       this.app.workspace.trigger("hover-link", {
         event,
         source: MAP_VIEW,
@@ -1637,8 +2038,8 @@ ${noteFolder(node.path)}` : label;
       box.createEl("p", { cls: "hp-marauders-note", text: t("mapLost", noteName(route.target)) });
     } else {
       const steps = routeSteps(map.graph, route.steps);
-      const note = map.routeStatus === "rerouted" ? t("mapRerouted") : "";
-      box.createEl("p", { cls: "hp-marauders-note", text: [t("mapRouteSteps", steps.length - 1), note].filter(Boolean).join(" \xB7 ") });
+      const note = map.routeStatus === "rerouted" ? t("mapRerouted") : map.routeStatus === "changed" ? t("mapRouteChanged") : "";
+      box.createEl("p", { cls: "hp-marauders-note", text: [t("mapRouteSteps", steps.length - 1), note].filter(Boolean).join(" · ") });
       const list = box.createEl("ol", { cls: "hp-marauders-steps" });
       steps.forEach(({ path, passage, tag }, i) => {
         const li = list.createEl("li", { cls: i === 0 ? "is-here" : i === 1 ? "is-next" : "" });
@@ -1712,6 +2113,65 @@ function svgEl(parent, tag, attrs = {}) {
   for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, String(v));
   parent.appendChild(el);
   return el;
+}
+
+// src/work.ts
+var TASK_POINTS = 10;
+var DAILY_POINTS = 20;
+function countDoneTasks(listItems) {
+  return listItems?.filter((item) => item.task === "x" || item.task === "X").length ?? 0;
+}
+function newlyDone(best, done) {
+  if (best === void 0) return { award: 0, best: done };
+  return { award: Math.max(0, done - best), best: Math.max(best, done) };
+}
+function isDailyNote(path, todayName) {
+  const name = path.replace(/\.md$/, "");
+  return !!todayName && (name === todayName || name.endsWith("/" + todayName));
+}
+
+// src/memories.ts
+var DAY = 24 * 60 * 60 * 1e3;
+var PENSIEVE_DAYS = 90;
+function daysSince(time, now) {
+  return Math.max(0, Math.floor((now - time) / DAY));
+}
+function pensieveCandidates(notes, now, minDays = PENSIEVE_DAYS) {
+  const old = notes.filter((n) => now - n.mtime >= minDays * DAY);
+  if (old.length) return old;
+  const sorted = [...notes].sort((a, b) => a.mtime - b.mtime);
+  return sorted.slice(0, Math.ceil(sorted.length / 4));
+}
+function pickPensieve(notes, now, random = Math.random) {
+  const list = pensieveCandidates(notes, now);
+  return list.length ? list[Math.floor(random() * list.length)] : null;
+}
+function yearAgo(now) {
+  const d = new Date(now.getFullYear() - 1, now.getMonth(), 1);
+  const last = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+  d.setDate(Math.min(now.getDate(), last));
+  return d;
+}
+function sameDay(time, day) {
+  const t = new Date(time);
+  return t.getFullYear() === day.getFullYear() && t.getMonth() === day.getMonth() && t.getDate() === day.getDate();
+}
+function timeTurner(notes, day, dailyName) {
+  const daily = notes.filter((n) => isDailyNote(n.path, dailyName));
+  const created = notes.filter((n) => sameDay(n.ctime, day) && !daily.includes(n)).sort((a, b) => a.ctime - b.ctime);
+  return [...daily, ...created];
+}
+
+// src/cloak.ts
+var OPEN = '<span class="hp-cloak">';
+var CLOSE = "</span>";
+function toggleCloak(text) {
+  if (text.startsWith(OPEN) && text.endsWith(CLOSE)) return text.slice(OPEN.length, -CLOSE.length);
+  return OPEN + text + CLOSE;
+}
+function cloakCallout(title) {
+  return `> [!cloak] ${title}
+> `;
 }
 
 // src/modals.ts
@@ -1796,7 +2256,7 @@ function randomWand(rnd = Math.random) {
     handle: one(HANDLE_IDS)
   };
 }
-var FRACTIONS = { "0.25": "\xBC", "0.5": "\xBD", "0.75": "\xBE" };
+var FRACTIONS = { "0.25": "¼", "0.5": "½", "0.75": "¾" };
 function formatLength(length) {
   const whole = Math.floor(length);
   const frac = String(Math.round((length - whole) * 100) / 100);
@@ -1970,6 +2430,26 @@ function wandCursorCss(spec) {
   return `image-set(${dataUri(one.svg)} 1x, ${dataUri(two.svg)} 2x) ${x} ${y}, auto`;
 }
 
+// src/sorting.ts
+var QUIZ_QUESTIONS = ["noise", "virtue", "book", "subject", "legacy", "team"];
+function shuffled(items, random = Math.random) {
+  const out = [...items];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(random() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+function sortByAnswers(answers, random = Math.random) {
+  if (!answers.length) return HOUSE_IDS[Math.floor(random() * HOUSE_IDS.length)];
+  const score = new Map(HOUSE_IDS.map((h) => [h, 0]));
+  for (const a of answers) score.set(a, (score.get(a) ?? 0) + 1);
+  const best = Math.max(...score.values());
+  const tied = HOUSE_IDS.filter((h) => score.get(h) === best);
+  for (let i = answers.length - 1; i >= 0; i--) if (tied.includes(answers[i])) return answers[i];
+  return tied[0];
+}
+
 // src/modals.ts
 var SortingHatModal = class extends import_obsidian2.Modal {
   constructor(app, t, isDark, onSorted) {
@@ -1983,26 +2463,64 @@ var SortingHatModal = class extends import_obsidian2.Modal {
     this.modalEl.addClass("hp-hat-modal");
     const hat = this.contentEl.appendChild(svgElement(HAT_SVG));
     hat.classList.add("hp-hat-img");
-    const text = this.contentEl.createEl("p", { cls: "hp-hat-text" });
-    text.setAttribute("aria-live", "assertive");
-    void this.run(text);
+    this.progress = this.contentEl.createDiv({ cls: "hp-hat-progress" });
+    this.text = this.contentEl.createEl("p", { cls: "hp-hat-text" });
+    this.text.setAttribute("aria-live", "assertive");
+    this.choices = this.contentEl.createDiv({ cls: "hp-hat-choices" });
+    this.intro();
   }
   onClose() {
     this.cancelled = true;
     this.contentEl.empty();
   }
+  intro() {
+    const { t } = this;
+    this.text.setText(t("hatIntro"));
+    this.choices.empty();
+    const quiz = this.choices.createEl("button", { cls: "mod-cta hp-hat-quiz", text: t("hatQuiz"), attr: { type: "button" } });
+    quiz.addEventListener("click", () => this.ask(0, []));
+    this.choices.createEl("button", { cls: "hp-hat-trust", text: t("hatTrust"), attr: { type: "button" } }).addEventListener("click", () => void this.verdict(null));
+    window.setTimeout(() => quiz.focus(), 0);
+  }
+  ask(index, answers) {
+    const { t } = this;
+    if (index === QUIZ_QUESTIONS.length) {
+      void this.verdict(sortByAnswers(answers));
+      return;
+    }
+    const question = QUIZ_QUESTIONS[index];
+    this.progress.setText(t("hatProgress", index + 1, QUIZ_QUESTIONS.length));
+    this.text.setText(t(`quiz_${question}`));
+    this.choices.empty();
+    this.choices.addClass("is-quiz");
+    const buttons = shuffled(HOUSE_IDS).map((house) => {
+      const btn = this.choices.createEl("button", {
+        cls: "hp-hat-answer",
+        text: t(`quiz_${question}_${house}`),
+        attr: { type: "button", "data-house": house }
+      });
+      btn.addEventListener("click", () => this.ask(index + 1, [...answers, house]));
+      return btn;
+    });
+    window.setTimeout(() => buttons[0]?.focus(), 0);
+  }
   // При «уменьшении движения» анимации отключает CSS, а паузы остаются: фразы нужно успеть прочитать.
   sleep(ms) {
     return new Promise((r) => window.setTimeout(r, ms));
   }
-  async run(text) {
-    const phrases = ["hat1", "hat2", "hat3", "hat4"].slice().sort(() => Math.random() - 0.5).slice(0, 3);
+  /** house — итог испытания; null — шляпа решает сама. */
+  async verdict(chosen) {
+    const { text } = this;
+    this.choices.empty();
+    this.choices.removeClass("is-quiz");
+    this.progress.setText("");
+    const phrases = shuffled(["hat1", "hat2", "hat3", "hat4"]).slice(0, chosen ? 2 : 3);
     for (const key of phrases) {
       text.setText(this.t(key));
       await this.sleep(1100);
       if (this.cancelled) return;
     }
-    const house = HOUSE_IDS[Math.floor(Math.random() * HOUSE_IDS.length)];
+    const house = chosen ?? HOUSE_IDS[Math.floor(Math.random() * HOUSE_IDS.length)];
     text.addClass("hp-verdict");
     text.style.setProperty("--hp-verdict-color", palette(house, this.isDark ? "common" : "parchment").primary);
     text.setText(this.t(`houseShout_${house}`));
@@ -2117,7 +2635,7 @@ var WandShopModal = class extends import_obsidian2.Modal {
       card.toggleClass("is-selected", id === preset);
       card.setAttribute("aria-pressed", String(id === preset));
     }
-    this.lengthLabel?.setText(` \xB7 ${formatLength(wand.length)}\u2033`);
+    this.lengthLabel?.setText(` · ${formatLength(wand.length)}″`);
   }
 };
 var WandModal = class extends import_obsidian2.Modal {
@@ -2171,13 +2689,50 @@ var HouseSuggestModal = class extends import_obsidian2.FuzzySuggestModal {
     this.onChoose(house);
   }
 };
+var NoteSuggestModal = class extends import_obsidian2.FuzzySuggestModal {
+  constructor(app, placeholder, paths, onChoose) {
+    super(app);
+    this.paths = paths;
+    this.onChoose = onChoose;
+    this.setPlaceholder(placeholder);
+  }
+  getItems() {
+    return this.paths;
+  }
+  getItemText(path) {
+    return path.replace(/\.md$/, "");
+  }
+  onChooseItem(path) {
+    this.onChoose(path);
+  }
+};
+var ConfirmModal = class extends import_obsidian2.Modal {
+  constructor(app, options) {
+    super(app);
+    this.options = options;
+  }
+  onOpen() {
+    const { title, text, confirm, cancel, onConfirm } = this.options;
+    this.titleEl.setText(title);
+    this.contentEl.createEl("p", { text });
+    new import_obsidian2.Setting(this.contentEl).addButton((b) => b.setButtonText(cancel).onClick(() => this.close())).addButton((b) => b.setButtonText(confirm).setWarning().onClick(() => {
+      this.close();
+      onConfirm();
+    }));
+  }
+  onClose() {
+    this.contentEl.empty();
+  }
+};
 
 // src/settings.ts
 var import_obsidian3 = require("obsidian");
 
 // src/settings-data.ts
+var MODE_SETTINGS = ["auto", "parchment", "common"];
 var DEFAULT_SETTINGS = {
   house: "gryffindor",
+  mode: "auto",
   readableFont: true,
   headingFont: true,
   ornaments: true,
@@ -2185,18 +2740,58 @@ var DEFAULT_SETTINGS = {
   wand: { ...DEFAULT_WAND },
   gestures: true,
   mapTags: true,
+  mapUnresolved: true,
+  mapDepth: 2,
+  mapExclude: [],
+  restrictedFolders: [],
   statusBar: true,
   easterEggs: true,
+  workPoints: true,
   points: { gryffindor: 0, slytherin: 0, ravenclaw: 0, hufflepuff: 0 },
   snitches: 0,
-  birthdayShown: ""
+  birthdayShown: "",
+  dailyAwarded: "",
+  footprints: [],
+  route: null
 };
+var isStringList = (v) => Array.isArray(v) && v.every((x) => typeof x === "string");
+var count = (v) => typeof v === "number" && Number.isFinite(v) && v >= 0 ? Math.floor(v) : 0;
+function sanitizeRoute(v) {
+  if (!v || typeof v !== "object") return null;
+  const { target, steps } = v;
+  if (typeof target !== "string") return null;
+  return { target, steps: isStringList(steps) ? [...steps] : null };
+}
 function migrateSettings(data) {
   const raw = data && typeof data === "object" ? data : {};
-  const settings = { ...DEFAULT_SETTINGS, ...raw, points: { ...DEFAULT_SETTINGS.points, ...raw.points ?? {} } };
-  if (!HOUSE_IDS.includes(settings.house)) settings.house = DEFAULT_SETTINGS.house;
-  settings.wand = sanitizeWand(raw.wand);
-  return settings;
+  const settings = { ...DEFAULT_SETTINGS };
+  for (const [key, fallback] of Object.entries(DEFAULT_SETTINGS)) {
+    const value = raw[key];
+    if (typeof fallback === "boolean" || typeof fallback === "string") {
+      if (typeof value === typeof fallback) settings[key] = value;
+    }
+  }
+  const s = settings;
+  if (!HOUSE_IDS.includes(s.house)) s.house = DEFAULT_SETTINGS.house;
+  if (!MODE_SETTINGS.includes(s.mode)) s.mode = DEFAULT_SETTINGS.mode;
+  s.mapDepth = raw.mapDepth === 1 ? 1 : 2;
+  const points = raw.points && typeof raw.points === "object" ? raw.points : {};
+  s.points = Object.fromEntries(HOUSE_IDS.map((id) => [id, count(points[id])]));
+  s.snitches = count(raw.snitches);
+  s.mapExclude = isStringList(raw.mapExclude) ? [...raw.mapExclude] : [];
+  s.restrictedFolders = isStringList(raw.restrictedFolders) ? [...raw.restrictedFolders] : [];
+  s.footprints = isStringList(raw.footprints) ? [...raw.footprints] : [];
+  s.route = sanitizeRoute(raw.route);
+  s.wand = sanitizeWand(raw.wand);
+  return s;
+}
+function parseFolderList(text) {
+  const out = [];
+  for (const part of text.split(/[\n,]/)) {
+    const folder = part.trim().replace(/^\/+|\/+$/g, "");
+    if (folder && !out.includes(folder)) out.push(folder);
+  }
+  return out;
 }
 
 // src/settings.ts
@@ -2239,17 +2834,38 @@ var HpSettingTab = class extends import_obsidian3.PluginSettingTab {
       });
     }
     containerEl.createEl("p", { cls: "setting-item-description", text: t("settingsIntro") });
+    this.heading(t("sectionAppearance"));
+    new import_obsidian3.Setting(containerEl).setName(t("settingMode")).setDesc(t("settingModeDesc")).addDropdown((d) => {
+      for (const mode of MODE_SETTINGS) d.addOption(mode, t(`mode_${mode}`));
+      d.setValue(settings.mode).onChange((value) => void this.plugin.setMode(value));
+    }).settingEl.addClass("hp-mode-setting");
     this.toggle("readableFont", t("settingReadableFont"), t("settingReadableFontDesc"));
     this.toggle("headingFont", t("settingHeadingFont"), t("settingHeadingFontDesc"));
     this.toggle("ornaments", t("settingOrnaments"), t("settingOrnamentsDesc"));
+    this.toggle("statusBar", t("settingStatusBar"));
+    this.heading(t("sectionWand"));
     const wand = new import_obsidian3.Setting(containerEl).setName(t("settingWand")).setDesc(`${wandName(t, settings.wand)}: ${describeWand(t, settings.wand).toLowerCase()}`).addButton((b) => b.setButtonText(t("buttonWandShop")).onClick(() => this.plugin.openWandShop(() => this.display())));
     wand.settingEl.addClass("hp-wand-setting");
     wand.infoEl.createDiv({ cls: "hp-wand-current" }).appendChild(svgElement(wandSideSvg(settings.wand, 260, "hp-settings-wand")));
     this.toggle("wandCursor", t("settingWandCursor"), t("settingWandCursorDesc"));
+    this.heading(t("sectionMap"));
     this.toggle("mapTags", t("settingMapTags"), t("settingMapTagsDesc"));
-    this.toggle("statusBar", t("settingStatusBar"));
-    this.toggle("easterEggs", t("settingEasterEggs"), t("settingEasterEggsDesc"));
-    this.toggle("gestures", t("settingGestures"), t("settingGesturesDesc"));
+    this.toggle("mapUnresolved", t("settingMapUnresolved"), t("settingMapUnresolvedDesc"));
+    new import_obsidian3.Setting(containerEl).setName(t("settingMapDepth")).setDesc(t("settingMapDepthDesc")).addDropdown((d) => d.addOption("2", t("mapDepth_2")).addOption("1", t("mapDepth_1")).setValue(String(settings.mapDepth)).onChange(async (value) => {
+      settings.mapDepth = value === "1" ? 1 : 2;
+      await this.plugin.saveSettings();
+    })).settingEl.addClass("hp-map-depth-setting");
+    this.folders("mapExclude", t("settingMapExclude"), t("settingMapExcludeDesc"), "Templates\nArchive", true);
+    this.folders("restrictedFolders", t("settingRestricted"), t("settingRestrictedDesc"), "Secrets", false);
+    this.heading(t("sectionMagic"));
+    this.toggle("easterEggs", t("settingEasterEggs"), t("settingEasterEggsDesc"), () => this.display());
+    const gestures = this.toggle(
+      "gestures",
+      t("settingGestures"),
+      `${t("settingGesturesDesc")} ${settings.easterEggs ? t("settingGesturesAlt") : t("settingGesturesDisabled")}`
+    );
+    gestures.setDisabled(!settings.easterEggs);
+    gestures.settingEl.toggleClass("is-disabled", !settings.easterEggs);
     const book = containerEl.createEl("details", { cls: "hp-spellbook" });
     book.createEl("summary", { text: t("spellbookTitle") });
     const list = book.createDiv({ cls: "hp-spellbook-list" });
@@ -2260,22 +2876,78 @@ var HpSettingTab = class extends import_obsidian3.PluginSettingTab {
       text.createDiv({ cls: "hp-spellbook-name", text: t(`spell_${spell}`) });
       text.createDiv({ cls: "setting-item-description", text: t(`gesture_${spell}`) });
     }
-    new import_obsidian3.Setting(containerEl).setName(t("settingSortingHat")).setDesc(t("settingPoints", t(`house_${settings.house}`), settings.points[settings.house] ?? 0)).addButton((b) => b.setButtonText(t("buttonSortingHat")).setCta().onClick(() => this.plugin.openSortingHat(() => this.display())));
+    this.heading(t("sectionCup"));
+    this.toggle("workPoints", t("settingWorkPoints"), t("settingWorkPointsDesc", TASK_POINTS, DAILY_POINTS));
+    this.cup();
+    new import_obsidian3.Setting(containerEl).setName(t("settingSortingHat")).addButton((b) => b.setButtonText(t("buttonSortingHat")).setCta().onClick(() => this.plugin.openSortingHat(() => this.display()))).addButton((b) => b.setButtonText(t("buttonResetPoints")).setWarning().onClick(() => new ConfirmModal(this.app, {
+      title: t("resetTitle"),
+      text: t("resetText"),
+      confirm: t("resetConfirm"),
+      cancel: t("cancel"),
+      onConfirm: () => void this.plugin.resetPoints().then(() => this.display())
+    }).open())).settingEl.addClass("hp-cup-actions");
   }
-  toggle(key, name, desc) {
+  heading(name) {
+    new import_obsidian3.Setting(this.containerEl).setName(name).setHeading();
+  }
+  /** Кубок школы: очки всех факультетов, полоски — относительно лидера. */
+  cup() {
+    const { t, settings } = this.plugin;
+    const cup = this.containerEl.createDiv({ cls: "hp-cup" });
+    const max = Math.max(1, ...HOUSE_IDS.map((id) => settings.points[id] ?? 0));
+    for (const id of HOUSE_IDS) {
+      const points = settings.points[id] ?? 0;
+      const row = cup.createDiv({ cls: "hp-cup-row" + (id === settings.house ? " is-current" : ""), attr: { "data-house": id } });
+      row.appendChild(svgElement(crestSvg(id, 20)));
+      row.createSpan({ cls: "hp-cup-name", text: t(`house_${id}`) });
+      const bar = row.createDiv({ cls: "hp-cup-bar" }).createDiv({ cls: "hp-cup-fill" });
+      bar.style.width = `${Math.round(points / max * 100)}%`;
+      bar.style.background = HOUSES[id].crest.field;
+      row.createSpan({ cls: "hp-cup-points", text: t("cupPoints", points) });
+    }
+    cup.createDiv({ cls: "setting-item-description", text: t("cupSnitches", settings.snitches) });
+  }
+  toggle(key, name, desc, after) {
     const setting = new import_obsidian3.Setting(this.containerEl).setName(name);
     if (desc) setting.setDesc(desc);
     setting.addToggle((tg) => tg.setValue(this.plugin.settings[key]).onChange(async (value) => {
       this.plugin.settings[key] = value;
       await this.plugin.saveSettings();
+      after?.();
     }));
+    return setting;
+  }
+  /** Список папок: сохраняется, когда поле отпустили, а не на каждую букву — карта перестраивается целиком. */
+  folders(key, name, desc, placeholder, multiline) {
+    const setting = new import_obsidian3.Setting(this.containerEl).setName(name).setDesc(desc);
+    setting.settingEl.addClass(`hp-folders-${key}`);
+    const save = async (text) => {
+      const folders = parseFolderList(text);
+      if (folders.join("\n") === this.plugin.settings[key].join("\n")) return;
+      this.plugin.settings[key] = folders;
+      await this.plugin.saveSettings();
+    };
+    const value = this.plugin.settings[key].join(multiline ? "\n" : ", ");
+    if (multiline) {
+      setting.addTextArea((ta) => {
+        ta.setPlaceholder(placeholder).setValue(value);
+        ta.inputEl.rows = 3;
+        ta.inputEl.addEventListener("change", () => void save(ta.getValue()));
+      });
+    } else {
+      setting.addText((tx) => {
+        tx.setPlaceholder(placeholder).setValue(value);
+        tx.inputEl.addEventListener("change", () => void save(tx.getValue()));
+      });
+    }
   }
 };
 
 // src/main.ts
 var SNITCH_POINTS = 150;
-var LIGHT_THEME = "moonstone";
-var DARK_THEME = "obsidian";
+var SAVE_DELAY = 400;
+var NEW_NOTE_MS = 60 * 1e3;
+var RESTRICTED_STYLE_ID = "hp-restricted-css";
 function detectLanguage() {
   const getLanguage2 = obsidian.getLanguage;
   if (typeof getLanguage2 === "function") return getLanguage2();
@@ -2289,10 +2961,22 @@ var HpThemePlugin = class extends import_obsidian4.Plugin {
     /** «Шалость удалась»: тема выключена до клятвы или перезапуска. */
     this.paused = false;
     this.saveTimer = 0;
+    this.saveDue = 0;
     this.statusEl = null;
     this.bodies = /* @__PURE__ */ new Set();
     this.spellbook = createSpellbook();
     this.reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    /**
+     * Светлая или тёмная тема — как выбрано в Obsidian. Плагин может временно её подменить
+     * («Люмос», «Нокс») или держать пергамент / гостиную всегда (настройка), но настройку Obsidian не трогает.
+     */
+    this.nativeDark = document.body.classList.contains("theme-dark");
+    /** Что плагин поставил на <body> сам: чужие изменения классов темы — это Obsidian. */
+    this.appliedDark = null;
+    /** «Люмос» и «Нокс» до перезапуска, смены темы в Obsidian или настройки режима. */
+    this.spellMode = null;
+    /** Рекорд закрытых задач по заметкам: очки только за новые. */
+    this.taskBest = /* @__PURE__ */ new Map();
   }
   async onload() {
     this.t = createTranslator(detectLanguage());
@@ -2301,15 +2985,19 @@ var HpThemePlugin = class extends import_obsidian4.Plugin {
     this.gestures = new GestureInput({
       enabled: () => this.settings.easterEggs && this.settings.gestures,
       colors: () => CORES[this.settings.wand.core],
-      cast: (spell, at) => this.cast(spell, at)
+      cast: (spell, at, doc) => this.cast(spell, at, doc)
     }, this.effects);
     this.bodies.add(document.body);
-    this.registerEvent(this.app.workspace.on("window-open", (win) => {
+    this.watchWindow(window);
+    this.watchNativeTheme();
+    this.registerEvent(this.app.workspace.on("window-open", (win, view) => {
       this.bodies.add(win.doc.body);
+      this.watchWindow(view ?? win.win);
       this.applyTheme();
     }));
     this.registerEvent(this.app.workspace.on("window-close", (win) => {
       this.bodies.delete(win.doc.body);
+      this.effects.forget(win.doc);
     }));
     this.addSettingTab(new HpSettingTab(this.app, this));
     this.addRibbonIcon("wand", this.t("ribbonTitle"), (evt) => this.openHouseMenu(evt));
@@ -2326,6 +3014,9 @@ var HpThemePlugin = class extends import_obsidian4.Plugin {
     this.addCommand({ id: "sorting-hat", name: this.t("commandSortingHat"), callback: () => this.openSortingHat() });
     this.addCommand({ id: "wave-wand", name: this.t("commandWand"), callback: () => this.openWand() });
     this.addCommand({ id: "wand-shop", name: this.t("commandWandShop"), callback: () => this.openWandShop() });
+    this.addCommand({ id: "pensieve", name: this.t("commandPensieve"), callback: () => this.openPensieve() });
+    this.addCommand({ id: "time-turner", name: this.t("commandTimeTurner"), callback: () => this.openTimeTurner() });
+    this.addCommand({ id: "cloak", name: this.t("commandCloak"), editorCallback: (editor) => this.cloak(editor) });
     this.addCommand({
       id: "toggle-theme",
       name: this.t("commandToggle"),
@@ -2334,17 +3025,18 @@ var HpThemePlugin = class extends import_obsidian4.Plugin {
         this.applyTheme();
       }
     });
-    this.registerDomEvent(window, "keydown", (e) => this.onKeydown(e), true);
-    this.registerDomEvent(window, "pointermove", (e) => {
-      this.effects.trackPointer(e);
-      this.gestures.pointerMove(e);
-    }, { passive: true });
-    this.registerDomEvent(window, "pointerdown", (e) => this.gestures.pointerDown(e), true);
-    this.registerDomEvent(window, "pointerup", (e) => this.gestures.pointerUp(e), true);
-    this.registerDomEvent(window, "pointercancel", () => this.gestures.cancel(), true);
-    this.registerDomEvent(window, "contextmenu", (e) => this.gestures.contextMenu(e), true);
+    this.registerEvent(this.app.metadataCache.on("changed", (file, _data, cache) => this.onNoteChanged(file, cache)));
+    this.registerEvent(this.app.vault.on("rename", (file, oldPath) => {
+      const best = this.taskBest.get(oldPath);
+      this.taskBest.delete(oldPath);
+      if (best !== void 0) this.taskBest.set(file.path, best);
+    }));
+    this.registerEvent(this.app.vault.on("delete", (file) => this.taskBest.delete(file.path)));
     this.applyTheme();
-    this.app.workspace.onLayoutReady(() => void this.birthday());
+    this.app.workspace.onLayoutReady(() => {
+      this.rememberTasks();
+      void this.birthday();
+    });
   }
   onunload() {
     if (this.saveTimer) {
@@ -2353,42 +3045,85 @@ var HpThemePlugin = class extends import_obsidian4.Plugin {
     }
     this.gestures?.cancel();
     this.effects?.destroy();
+    let changed = false;
     for (const body of this.bodies) {
       this.setBodyClasses(body, false);
       body.style.removeProperty("--hp-wand-cursor");
+      body.ownerDocument.getElementById(RESTRICTED_STYLE_ID)?.remove();
+      if (body.classList.contains("theme-dark") !== this.nativeDark) {
+        body.classList.toggle("theme-dark", this.nativeDark);
+        body.classList.toggle("theme-light", !this.nativeDark);
+        changed = true;
+      }
     }
+    if (changed) this.app.workspace.trigger("css-change");
+  }
+  /** Заклинания с клавиатуры и жесты — в каждом окне Obsidian, а не только в главном. */
+  watchWindow(view) {
+    this.registerDomEvent(view, "keydown", (e) => this.onKeydown(e), true);
+    this.registerDomEvent(view, "pointermove", (e) => {
+      this.effects.trackPointer(e);
+      this.gestures.pointerMove(e);
+    }, { passive: true });
+    this.registerDomEvent(view, "pointerdown", (e) => this.gestures.pointerDown(e), true);
+    this.registerDomEvent(view, "pointerup", (e) => this.gestures.pointerUp(e), true);
+    this.registerDomEvent(view, "pointercancel", () => this.gestures.cancel(), true);
+    this.registerDomEvent(view, "contextmenu", (e) => this.gestures.contextMenu(e), true);
   }
   // ---------- Настройки ----------
   async loadSettings() {
     this.settings = migrateSettings(await this.loadData());
   }
   async saveSettings() {
+    window.clearTimeout(this.saveTimer);
+    this.saveTimer = 0;
     await this.saveData(this.settings);
     this.applyTheme();
     this.map?.settingsChanged();
   }
-  /** Палочка меняется сразу, а сохраняется с задержкой: в лавке её крутят ползунком. */
-  setWand(wand) {
-    this.settings.wand = wand;
-    this.applyTheme();
+  /** Сохранить чуть позже: палочку крутят ползунком, следы на карте меняются на каждом шаге. */
+  saveSoon(delay = SAVE_DELAY) {
+    const due = Date.now() + delay;
+    if (this.saveTimer && this.saveDue <= due) return;
     window.clearTimeout(this.saveTimer);
+    this.saveDue = due;
     this.saveTimer = window.setTimeout(() => {
       this.saveTimer = 0;
       void this.saveData(this.settings);
-    }, 400);
+    }, delay);
+  }
+  /** Палочка меняется сразу, а сохраняется с задержкой. */
+  setWand(wand) {
+    this.settings.wand = wand;
+    this.applyTheme();
+    this.saveSoon();
   }
   async setHouse(house) {
     this.settings.house = house;
     await this.saveSettings();
   }
+  /** Пергамент, гостиная или по теме Obsidian. Временный «Люмос» или «Нокс» при этом забывается. */
+  async setMode(mode) {
+    this.settings.mode = mode;
+    this.spellMode = null;
+    await this.saveSettings();
+  }
+  async resetPoints() {
+    this.settings.points = { ...DEFAULT_SETTINGS.points };
+    this.settings.snitches = 0;
+    await this.saveSettings();
+  }
   // ---------- Тема ----------
   applyTheme() {
     const cursor = wandCursorCss(this.settings.wand);
+    const css = restrictedCss(this.settings.restrictedFolders);
     for (const body of this.bodies) {
       this.setBodyClasses(body, !this.paused);
       if (this.settings.wandCursor && !this.paused) body.style.setProperty("--hp-wand-cursor", cursor);
       else body.style.removeProperty("--hp-wand-cursor");
+      this.setRestrictedCss(body.ownerDocument, css);
     }
+    this.applyBaseMode();
     this.updateStatus();
   }
   setBodyClasses(body, on) {
@@ -2400,32 +3135,61 @@ var HpThemePlugin = class extends import_obsidian4.Plugin {
     body.classList.toggle("hp-ornaments", on && s.ornaments);
     body.classList.toggle("hp-wand", on && s.wandCursor);
   }
+  /** Свои «Запретные секции» в проводнике: селекторы зависят от настроек. */
+  setRestrictedCss(doc, css) {
+    let style = doc.getElementById(RESTRICTED_STYLE_ID);
+    if (!css) {
+      style?.remove();
+      return;
+    }
+    if (!style) {
+      style = doc.createElement("style");
+      style.id = RESTRICTED_STYLE_ID;
+      doc.head.appendChild(style);
+    }
+    if (style.textContent !== css) style.textContent = css;
+  }
+  wantDark() {
+    if (this.paused) return this.nativeDark;
+    const mode = this.spellMode ?? (this.settings.mode === "auto" ? null : this.settings.mode);
+    return mode ? mode === "common" : this.nativeDark;
+  }
+  /** Классы светлой и тёмной темы на <body> всех окон — как нужно сейчас (без записи в настройки Obsidian). */
+  applyBaseMode() {
+    const dark = this.wantDark();
+    this.appliedDark = dark;
+    let changed = false;
+    for (const body of this.bodies) {
+      if (body.classList.contains("theme-dark") === dark && body.classList.contains("theme-light") !== dark) continue;
+      body.classList.toggle("theme-dark", dark);
+      body.classList.toggle("theme-light", !dark);
+      changed = true;
+    }
+    if (changed) this.app.workspace.trigger("css-change");
+  }
+  /** Тему поменяли в Obsidian (настройки, «как в системе»): запомнить выбор и снова применить свой режим. */
+  watchNativeTheme() {
+    const body = document.body;
+    const observer = new MutationObserver(() => {
+      const dark = body.classList.contains("theme-dark");
+      if (dark === this.appliedDark || !dark && !body.classList.contains("theme-light")) return;
+      this.nativeDark = dark;
+      this.spellMode = null;
+      this.applyBaseMode();
+    });
+    observer.observe(body, { attributes: true, attributeFilter: ["class"] });
+    this.register(() => observer.disconnect());
+  }
   updateStatus() {
     const el = this.statusEl;
     if (!el) return;
     const s = this.settings;
     el.toggle(s.statusBar && !this.paused);
-    el.setText(`\u26A1 ${this.t(`house_${s.house}`)} \xB7 ${s.points[s.house] ?? 0}`);
+    el.setText(`⚡ ${this.t(`house_${s.house}`)} · ${s.points[s.house] ?? 0}`);
     el.setAttribute("aria-label", this.t("statusTitle", s.snitches));
   }
   isDark() {
     return document.body.classList.contains("theme-dark");
-  }
-  /** Переключает базовую тему Obsidian (светлая/тёмная). API не публичное, поэтому с запасными путями. */
-  setBaseTheme(theme) {
-    const app = this.app;
-    if (typeof app.setTheme === "function") {
-      app.setTheme(theme);
-      app.vault.setConfig?.("theme", theme);
-    } else if (typeof app.changeTheme === "function") {
-      app.changeTheme(theme);
-    } else {
-      for (const body of this.bodies) {
-        body.classList.toggle("theme-dark", theme === DARK_THEME);
-        body.classList.toggle("theme-light", theme === LIGHT_THEME);
-      }
-      this.app.workspace.trigger("css-change");
-    }
   }
   // ---------- Меню, Шляпа, палочка ----------
   openHouseMenu(evt) {
@@ -2443,6 +3207,8 @@ var HpThemePlugin = class extends import_obsidian4.Plugin {
     menu.addSeparator();
     menu.addItem((item) => item.setTitle(this.t("shopTitle")).setIcon("wand").onClick(() => this.openWandShop()));
     menu.addItem((item) => item.setTitle(this.t("mapTitle")).setIcon("footprints").onClick(() => void this.map.reveal()));
+    menu.addItem((item) => item.setTitle(this.t("pensieveTitle")).setIcon("droplets").onClick(() => this.openPensieve()));
+    menu.addItem((item) => item.setTitle(this.t("timeTurnerTitle")).setIcon("hourglass").onClick(() => this.openTimeTurner()));
     menu.addItem((item) => item.setTitle(this.t("commandSortingHat")).setIcon("graduation-cap").onClick(() => this.openSortingHat()));
     menu.addItem((item) => item.setTitle(this.t("menuSettings")).setIcon("settings").onClick(() => this.openSettings()));
     menu.showAtMouseEvent(evt);
@@ -2480,32 +3246,114 @@ var HpThemePlugin = class extends import_obsidian4.Plugin {
     setting?.open();
     setting?.openTabById(this.manifest.id);
   }
+  // ---------- Омут памяти, Маховик времени, Мантия-невидимка ----------
+  /** Заметки хранилища без исключённых с карты папок (шаблоны, архив). */
+  noteStats() {
+    return this.app.vault.getMarkdownFiles().filter((f) => !inFolder(f.path, this.settings.mapExclude)).map((f) => ({ path: f.path, ctime: f.stat.ctime, mtime: f.stat.mtime }));
+  }
+  openNote(path) {
+    const file = this.app.vault.getAbstractFileByPath(path);
+    if (file instanceof import_obsidian4.TFile) void this.app.workspace.getLeaf(false).openFile(file);
+  }
+  /** «Омут памяти»: случайная заметка, которую давно не открывали для правки. */
+  openPensieve() {
+    const here = this.app.workspace.getActiveFile()?.path;
+    const now = Date.now();
+    const note = pickPensieve(this.noteStats().filter((n) => n.path !== here), now);
+    if (!note) {
+      new import_obsidian4.Notice(this.t("pensieveEmpty"));
+      return;
+    }
+    this.openNote(note.path);
+    new import_obsidian4.Notice(this.t("pensieveNotice", noteName(note.path), daysSince(note.mtime, now)));
+  }
+  /** «Маховик времени»: что было записано ровно год назад. */
+  openTimeTurner() {
+    const day = yearAgo(/* @__PURE__ */ new Date());
+    const notes = timeTurner(this.noteStats(), day, (0, import_obsidian4.moment)(day).format(this.dailyFormat()));
+    const date = day.toLocaleDateString(this.t("locale"), { day: "numeric", month: "long", year: "numeric" });
+    if (!notes.length) {
+      new import_obsidian4.Notice(this.t("timeTurnerEmpty", date));
+      return;
+    }
+    if (notes.length === 1) {
+      this.openNote(notes[0].path);
+      new import_obsidian4.Notice(this.t("timeTurnerNotice", date));
+      return;
+    }
+    new NoteSuggestModal(this.app, this.t("timeTurnerPlaceholder", date), notes.map((n) => n.path), (path) => this.openNote(path)).open();
+  }
+  /** «Мантия-невидимка»: выделенное — под мантию (или из-под неё), без выделения — коллаут-мантия. */
+  cloak(editor) {
+    const selection = editor.getSelection();
+    if (selection) editor.replaceSelection(toggleCloak(selection));
+    else editor.replaceSelection(cloakCallout(this.t("cloakTitle")));
+  }
+  // ---------- Очки за работу ----------
+  /** Формат имени ежедневной заметки из настроек дневника Obsidian (API не публичное). */
+  dailyFormat() {
+    const app = this.app;
+    return app.internalPlugins?.getPluginById?.("daily-notes")?.instance?.options?.format || "YYYY-MM-DD";
+  }
+  /** Сколько задач уже закрыто в каждой заметке: за них очков не дают. */
+  rememberTasks() {
+    for (const file of this.app.vault.getMarkdownFiles()) {
+      const cache = this.app.metadataCache.getFileCache(file);
+      if (cache) this.taskBest.set(file.path, countDoneTasks(cache.listItems));
+    }
+  }
+  onNoteChanged(file, cache) {
+    let best = this.taskBest.get(file.path);
+    if (best === void 0 && Date.now() - file.stat.ctime < NEW_NOTE_MS) best = 0;
+    const { award, best: record } = newlyDone(best, countDoneTasks(cache.listItems));
+    this.taskBest.set(file.path, record);
+    if (!this.settings.workPoints || this.paused) return;
+    if (this.app.workspace.getActiveFile()?.path !== file.path) return;
+    if (award > 0) this.addPoints(award * TASK_POINTS);
+    const today = (0, import_obsidian4.moment)().format("YYYY-MM-DD");
+    if (this.settings.dailyAwarded !== today && isDailyNote(file.path, (0, import_obsidian4.moment)().format(this.dailyFormat()))) {
+      this.settings.dailyAwarded = today;
+      this.addPoints(DAILY_POINTS, this.t("pointsDaily", DAILY_POINTS, this.t(`house_${this.settings.house}`)));
+    }
+  }
+  addPoints(points, message) {
+    const house = this.settings.house;
+    this.settings.points[house] = (this.settings.points[house] ?? 0) + points;
+    this.saveSoon();
+    this.updateStatus();
+    if (this.statusEl?.isShown()) this.effects.floatText(this.statusEl, `+${points}`);
+    if (message) new import_obsidian4.Notice(message);
+  }
   // ---------- Пасхалки ----------
   onKeydown(e) {
     if (!this.settings.easterEggs || e.ctrlKey || e.metaKey || e.altKey || e.isComposing) return;
     const target = e.composedPath()[0] ?? e.target;
     if (isEditable(target)) return;
     const spell = this.spellbook.push(e.key);
-    if (spell) this.cast(spell);
+    if (spell) this.cast(spell, void 0, eventDocument(e));
   }
-  /** at — где начат жест палочкой (для «Вингардиум Левиосы»), иначе — где курсор. */
-  cast(spell, at) {
+  /** at — где начат жест палочкой (для «Вингардиум Левиосы»), иначе — где курсор. doc — окно, где колдуют. */
+  cast(spell, at, doc = activeDocument) {
     if (this.paused && spell !== "solemnlySwear") return;
     switch (spell) {
       case "wingardiumLeviosa": {
-        const p = at ?? this.effects.pointerPosition;
-        this.effects.levitate(p.x, p.y);
+        const p = at ?? this.effects.pointerIn(doc);
+        this.effects.levitate(doc, p.x, p.y);
         new import_obsidian4.Notice(this.t("eggLeviosa"));
         break;
       }
       case "lumos":
-        this.effects.lumos();
-        this.setBaseTheme(LIGHT_THEME);
+        this.effects.lumos(doc);
+        this.spellMode = "parchment";
+        this.applyBaseMode();
         new import_obsidian4.Notice(this.t("eggLumos"));
         break;
       case "nox":
-        this.effects.nox();
-        this.effects.later(() => this.setBaseTheme(DARK_THEME), this.effects.noxSwitchDelay);
+        this.effects.nox(doc);
+        this.effects.later(() => {
+          this.spellMode = "common";
+          this.applyBaseMode();
+        }, this.effects.noxSwitchDelay);
         new import_obsidian4.Notice(this.t("eggNox"));
         break;
       case "solemnlySwear":
@@ -2513,11 +3361,11 @@ var HpThemePlugin = class extends import_obsidian4.Plugin {
           this.paused = false;
           this.applyTheme();
         }
-        this.effects.marauders([this.t("eggMap1"), this.t("eggMap2"), this.t("eggMapTitle")]);
+        this.effects.marauders(doc, [this.t("eggMap1"), this.t("eggMap2"), this.t("eggMapTitle")]);
         this.effects.later(() => void this.map.reveal(), 1200);
         break;
       case "mischiefManaged":
-        this.effects.inkFade();
+        this.effects.inkFade(doc);
         this.map.close();
         new import_obsidian4.Notice(this.t("eggMischief"));
         this.effects.later(() => {
@@ -2526,7 +3374,7 @@ var HpThemePlugin = class extends import_obsidian4.Plugin {
         }, 500);
         break;
       case "accioSnitch":
-        this.effects.releaseSnitch({ label: this.t("eggSnitchLabel"), onCatch: () => void this.awardSnitch() });
+        this.effects.releaseSnitch(doc, { label: this.t("eggSnitchLabel"), onCatch: () => void this.awardSnitch() });
         break;
     }
   }

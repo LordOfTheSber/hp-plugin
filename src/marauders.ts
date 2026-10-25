@@ -4,10 +4,11 @@
  * Граф, маршрут и раскладка — в src/map.ts, здесь — Obsidian и отрисовка.
  */
 import { FuzzySuggestModal, ItemView, Keymap, Notice, TFile, getAllTags } from 'obsidian';
-import type { App, HoverParent, HoverPopover, WorkspaceLeaf } from 'obsidian';
+import type { App, HoverParent, HoverPopover, TAbstractFile, WorkspaceLeaf } from 'obsidian';
 import type { Translate } from './i18n.ts';
 import {
-  FOOTPRINTS_MAX, LinkGraph, addFootprint, followRoute, footsteps, isTag, layoutMap, nextNote, noteFolder, noteName, routeSteps
+  FOOTPRINTS_MAX, LinkGraph, addFootprint, followRoute, footsteps, ghostLink, isGhost, isRestricted, isTag, layoutMap,
+  MAP_LIMITS, nextNote, noteFolder, noteName, revalidateRoute, routeSteps
 } from './map.ts';
 import type { MapNode, Passage, Route, RouteStatus, TagTable } from './map.ts';
 import type HpThemePlugin from './main.ts';
@@ -15,8 +16,11 @@ import type HpThemePlugin from './main.ts';
 export const MAP_VIEW = 'hp-marauders-map';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
-const RESTRICTED = /(^|\/)(Restricted Section|Запретная секция)\//;
 const LABEL_MAX = 14;
+/** Правки идут пачками (набор текста, синхронизация): граф обновляется, когда они утихнут. */
+const GRAPH_DELAY = 400;
+/** Следы меняются на каждом переходе: data.json пишется не чаще, чем раз в несколько секунд. */
+const PERSIST_DELAY = 5000;
 
 /** Состояние карты: маршрут, следы, граф ссылок. Панелей карты может быть несколько, состояние одно. */
 export class MaraudersMap {
@@ -25,10 +29,15 @@ export class MaraudersMap {
   routeStatus: RouteStatus | null = null;
   footprints: string[] = [];
   private cachedGraph: LinkGraph | null = null;
-  /** С тегами ли построен граф: настройка могла поменяться. */
-  private graphTags = false;
+  /** С какими настройками построен граф: теги, исключённые папки, неизведанные комнаты. */
+  private graphKey = '';
+  /** Заметки, чьи ссылки поменялись с последнего обновления графа. */
+  private dirty = new Set<string>();
+  /** Файлы переименовали, удалили или создали — граф проще построить заново. */
+  private rebuild = false;
+  private flushTimer = 0;
 
-  constructor(private readonly plugin: HpThemePlugin) {}
+  constructor(readonly plugin: HpThemePlugin) {}
 
   get app(): App {
     return this.plugin.app;
@@ -40,6 +49,10 @@ export class MaraudersMap {
 
   load(): void {
     const { plugin, app, t } = this;
+    const saved = plugin.settings;
+    this.footprints = [...saved.footprints];
+    this.route = saved.route ? { ...saved.route } : null;
+
     plugin.registerView(MAP_VIEW, (leaf) => new MaraudersMapView(leaf, this));
     plugin.registerHoverLinkSource(MAP_VIEW, { display: t('mapTitle'), defaultMod: true });
     plugin.addRibbonIcon('footprints', t('mapTitle'), () => void this.reveal());
@@ -58,49 +71,106 @@ export class MaraudersMap {
 
     plugin.registerEvent(app.workspace.on('file-open', (file) => this.onFileOpen(file)));
     plugin.registerEvent(app.workspace.on('active-leaf-change', () => this.refresh()));
-    plugin.registerEvent(app.metadataCache.on('resolved', () => {
-      this.cachedGraph = null;
-      this.refresh();
-    }));
+    plugin.registerEvent(app.workspace.on('layout-change', () => this.refresh()));
+    // Ссылки одной заметки разрешены — обновим только её; все разрешены — пора показать
+    plugin.registerEvent(app.metadataCache.on('resolve', (file) => this.markDirty(file.path)));
+    plugin.registerEvent(app.metadataCache.on('resolved', () => this.scheduleFlush()));
     plugin.registerEvent(app.vault.on('rename', (file, oldPath) => this.onRename(file.path, oldPath)));
-    plugin.registerEvent(app.vault.on('delete', (file) => this.onDelete(file.path)));
+    plugin.registerEvent(app.vault.on('delete', (file) => this.onDelete(file)));
+    plugin.registerEvent(app.vault.on('create', () => this.rebuildSoon()));
+    plugin.register(() => window.clearTimeout(this.flushTimer));
     app.workspace.onLayoutReady(() => {
+      // Следы и маршрут из прошлого сеанса: удалённые заметки забываются
+      const exists = (p: string) => app.vault.getAbstractFileByPath(p) instanceof TFile;
+      this.footprints = this.footprints.filter(exists);
+      if (this.route && !exists(this.route.target)) this.route = null;
       const here = this.here();
       if (here) this.footprints = addFootprint(this.footprints, here);
+      this.persist();
       this.refresh();
     });
   }
 
   get graph(): LinkGraph {
-    const tags = this.plugin.settings.mapTags;
-    if (!this.cachedGraph || this.graphTags !== tags) {
-      this.graphTags = tags;
-      this.cachedGraph = new LinkGraph(this.app.metadataCache.resolvedLinks, tags ? this.tags() : {});
+    const { settings } = this.plugin;
+    const key = JSON.stringify([settings.mapTags, settings.mapUnresolved, settings.mapExclude]);
+    if (!this.cachedGraph || this.graphKey !== key) {
+      const { metadataCache } = this.app;
+      this.graphKey = key;
+      this.dirty.clear();
+      this.rebuild = false;
+      this.cachedGraph = new LinkGraph(metadataCache.resolvedLinks, settings.mapTags ? this.tags() : {}, {
+        unresolved: settings.mapUnresolved ? metadataCache.unresolvedLinks : {},
+        exclude: settings.mapExclude
+      });
     }
     return this.cachedGraph;
   }
 
   /** Теги всех заметок: из текста и из свойств (frontmatter). */
   private tags(): TagTable {
-    const { vault, metadataCache } = this.app;
     const tags: TagTable = {};
-    for (const file of vault.getMarkdownFiles()) {
-      const cache = metadataCache.getFileCache(file);
-      const list = cache ? getAllTags(cache) : null;
+    for (const file of this.app.vault.getMarkdownFiles()) {
+      const list = this.tagsOf(file);
       if (list?.length) tags[file.path] = list;
     }
     return tags;
   }
 
-  /** Включили или выключили связи по тегам: граф заново, маршрут — тоже. */
-  settingsChanged(): void {
-    if (this.plugin.settings.mapTags === this.graphTags) return;
-    const here = this.here();
-    if (this.route && here) {
-      const steps = this.graph.route(here, this.route.target);
-      this.route = { ...this.route, steps };
-      this.routeStatus = steps ? null : 'lost';
+  private tagsOf(file: TFile): string[] | undefined {
+    const cache = this.app.metadataCache.getFileCache(file);
+    return (cache && getAllTags(cache)) || undefined;
+  }
+
+  private markDirty(path: string): void {
+    this.dirty.add(path);
+    this.scheduleFlush();
+  }
+
+  private rebuildSoon(): void {
+    this.rebuild = true;
+    this.scheduleFlush();
+  }
+
+  private scheduleFlush(): void {
+    window.clearTimeout(this.flushTimer);
+    this.flushTimer = window.setTimeout(() => this.flush(), GRAPH_DELAY);
+  }
+
+  /** Применить накопленные правки к графу, проверить маршрут и перерисовать карту. */
+  flush(): void {
+    window.clearTimeout(this.flushTimer);
+    this.flushTimer = 0;
+    if (this.rebuild) this.cachedGraph = null;
+    const graph = this.cachedGraph;
+    if (graph) {
+      const { resolvedLinks, unresolvedLinks } = this.app.metadataCache;
+      const { mapTags, mapUnresolved } = this.plugin.settings;
+      for (const path of this.dirty) {
+        const file = this.app.vault.getAbstractFileByPath(path);
+        const tags = mapTags && file instanceof TFile ? this.tagsOf(file) : undefined;
+        graph.setNote(path, resolvedLinks[path], tags, mapUnresolved ? unresolvedLinks[path] : undefined);
+      }
     }
+    this.dirty.clear();
+    this.rebuild = false;
+    this.checkRoute();
+    this.refresh();
+  }
+
+  /** Граф мог поменяться: по маршруту ещё можно пройти? */
+  private checkRoute(): void {
+    if (!this.route) return;
+    const { route, status } = revalidateRoute(this.graph, this.route, this.here());
+    if (route === this.route) return;
+    this.route = route;
+    this.routeStatus = status;
+    this.persist();
+  }
+
+  /** Поменялись настройки карты: граф и маршрут — заново. */
+  settingsChanged(): void {
+    this.checkRoute();
     this.refresh();
   }
 
@@ -137,9 +207,15 @@ export class MaraudersMap {
       this.searchTag(path);
       return;
     }
+    const newLeaf = evt ? Keymap.isModEvent(evt) : false;
+    if (isGhost(path)) {
+      // Неизведанная комната: Obsidian создаёт заметку, как при клике по неразрешённой ссылке
+      void this.app.workspace.openLinkText(ghostLink(path), this.here() ?? '', newLeaf);
+      return;
+    }
     const file = this.app.vault.getAbstractFileByPath(path);
     if (!(file instanceof TFile)) return;
-    void this.app.workspace.getLeaf(evt ? Keymap.isModEvent(evt) : false).openFile(file);
+    void this.app.workspace.getLeaf(newLeaf).openFile(file);
   }
 
   /** Тег на карте: все заметки с ним — в поиске Obsidian. API поиска не публичное. */
@@ -167,6 +243,7 @@ export class MaraudersMap {
     }
     this.route = { target: to, steps };
     this.routeStatus = null;
+    this.persist();
     this.refresh();
     void this.reveal();
   }
@@ -174,6 +251,7 @@ export class MaraudersMap {
   clearRoute(): void {
     this.route = null;
     this.routeStatus = null;
+    this.persist();
     this.refresh();
   }
 
@@ -184,8 +262,16 @@ export class MaraudersMap {
 
   refresh(): void {
     for (const leaf of this.app.workspace.getLeavesOfType(MAP_VIEW)) {
-      if (leaf.view instanceof MaraudersMapView) leaf.view.render();
+      if (leaf.view instanceof MaraudersMapView) leaf.view.refresh();
     }
+  }
+
+  /** Следы и маршрут — в data.json, чтобы пережить перезапуск. */
+  private persist(): void {
+    const { settings } = this.plugin;
+    settings.footprints = [...this.footprints];
+    settings.route = this.route ? { target: this.route.target, steps: this.route.steps ? [...this.route.steps] : null } : null;
+    this.plugin.saveSoon(PERSIST_DELAY);
   }
 
   private onFileOpen(file: TFile | null): void {
@@ -197,20 +283,29 @@ export class MaraudersMap {
       this.route = route;
       this.routeStatus = route ? status : null;
     }
+    this.persist();
     this.refresh();
   }
 
   private onRename(path: string, oldPath: string): void {
-    const rename = (p: string) => (p === oldPath ? path : p);
+    // Переименовали папку — поменялись пути всех заметок в ней
+    const rename = (p: string) => (p === oldPath ? path : p.startsWith(oldPath + '/') ? path + p.slice(oldPath.length) : p);
     this.footprints = this.footprints.map(rename);
     if (this.route) this.route = { target: rename(this.route.target), steps: this.route.steps?.map(rename) ?? null };
-    this.refresh();
+    this.persist();
+    this.rebuildSoon();
   }
 
-  private onDelete(path: string): void {
-    this.footprints = this.footprints.filter((p) => p !== path);
-    if (this.route?.target === path) this.route = null;
-    this.refresh();
+  private onDelete(file: TAbstractFile): void {
+    const gone = (p: string) => p === file.path || p.startsWith(file.path + '/');
+    this.footprints = this.footprints.filter((p) => !gone(p));
+    if (this.route && gone(this.route.target)) {
+      this.route = null;
+      this.routeStatus = null;
+    }
+    this.persist();
+    // Удалили заметку из середины пути — маршрут перестроится вместе с графом
+    this.rebuildSoon();
   }
 }
 
@@ -219,6 +314,8 @@ export class MaraudersMapView extends ItemView implements HoverParent {
   hoverPopover: HoverPopover | null = null;
   /** Что нарисовано сейчас: карта перерисовывается, только если что-то поменялось. */
   private drawn = '';
+  /** Карту не видно (свёрнутая панель, соседняя вкладка): нарисуем, когда покажут. */
+  private stale = false;
 
   constructor(leaf: WorkspaceLeaf, private readonly map: MaraudersMap) {
     super(leaf);
@@ -238,7 +335,16 @@ export class MaraudersMapView extends ItemView implements HoverParent {
 
   async onOpen(): Promise<void> {
     this.contentEl.addClass('hp-marauders');
-    this.render();
+    // Панель развернули или переключились на её вкладку — у неё появился размер
+    const view = this.containerEl.ownerDocument.defaultView ?? window;
+    if (typeof view.ResizeObserver === 'function') {
+      const observer = new view.ResizeObserver(() => {
+        if (this.stale) this.refresh();
+      });
+      observer.observe(this.containerEl);
+      this.register(() => observer.disconnect());
+    }
+    this.refresh();
   }
 
   async onClose(): Promise<void> {
@@ -246,14 +352,27 @@ export class MaraudersMapView extends ItemView implements HoverParent {
     this.drawn = '';
   }
 
+  private get visible(): boolean {
+    const el = this.containerEl;
+    return el.isConnected && el.offsetWidth > 0 && !el.closest('.is-collapsed');
+  }
+
+  /** Перерисовать, если карту видно; иначе — когда покажут. */
+  refresh(): void {
+    this.stale = !this.visible;
+    if (!this.stale) this.render();
+  }
+
   render(): void {
     const { map, contentEl } = this;
     const here = map.here();
     const route = map.route;
     const steps = here && route?.steps && route.steps[0] === here ? route.steps : [];
-    const layout = here ? layoutMap(map.graph, here, steps) : null;
+    const { mapDepth, restrictedFolders } = map.plugin.settings;
+    const limits = mapDepth === 1 ? { ...MAP_LIMITS, ring2: 0 } : MAP_LIMITS;
+    const layout = here ? layoutMap(map.graph, here, steps, limits) : null;
     const footprints = map.footprints.filter((p) => p !== here).slice(0, FOOTPRINTS_MAX - 4);
-    const state = JSON.stringify([here, layout, route, map.routeStatus, footprints]);
+    const state = JSON.stringify([here, layout, route, map.routeStatus, footprints, restrictedFolders]);
     if (state === this.drawn) return;
     this.drawn = state;
 
@@ -278,6 +397,7 @@ export class MaraudersMapView extends ItemView implements HoverParent {
       legend.createSpan({ cls: 'hp-legend-link', text: t('mapLegendLink') });
       legend.createSpan({ cls: 'hp-legend-backlink', text: t('mapLegendBacklink') });
       if (layout.nodes.some((n) => isTag(n.path))) legend.createSpan({ cls: 'hp-legend-tag', text: t('mapLegendTag') });
+      if (layout.nodes.some((n) => isGhost(n.path))) legend.createSpan({ cls: 'hp-legend-ghost', text: t('mapLegendGhost') });
     }
 
     this.renderRoute(here);
@@ -300,7 +420,7 @@ export class MaraudersMapView extends ItemView implements HoverParent {
       const my = (from.y + node.y) / 2 + (node.x - from.x) * 0.08;
       svgEl(edges, 'path', {
         d: `M${from.x} ${from.y}Q${round(mx)} ${round(my)} ${node.x} ${node.y}`,
-        class: `hp-map-edge is-${node.passage}` + (onRoute(from.path, node.path) ? ' is-route' : '')
+        class: `hp-map-edge is-${node.passage}` + (isGhost(node.path) ? ' is-ghost' : '') + (onRoute(from.path, node.path) ? ' is-route' : '')
       });
     }
 
@@ -323,15 +443,20 @@ export class MaraudersMapView extends ItemView implements HoverParent {
     const { t } = this.map;
     const name = noteName(node.path);
     const tag = isTag(node.path);
+    const ghost = isGhost(node.path);
     const cls = ['hp-map-node', `ring-${node.ring}`];
     if (node.ring === 0) cls.push('is-here');
     if (tag) cls.push('is-tag');
+    if (ghost) cls.push('is-ghost');
     if (nextNote(steps) === node.path) cls.push('is-next');
     if (steps.includes(node.path) && node.ring > 0) cls.push('is-route');
     if (node.path === target) cls.push('is-target');
     if (visited.has(node.path)) cls.push('is-visited');
-    if (RESTRICTED.test(node.path)) cls.push('is-restricted');
-    const label = node.ring === 0 ? `${name} — ${t('mapHere')}` : tag ? `${name} — ${t('mapTagHint')}` : `${name}${passageHint(t, node.passage)}`;
+    if (isRestricted(node.path, this.map.plugin.settings.restrictedFolders)) cls.push('is-restricted');
+    const label = node.ring === 0 ? `${name} — ${t('mapHere')}`
+      : tag ? `${name} — ${t('mapTagHint')}`
+      : ghost ? `${name} — ${t('mapGhostHint')}`
+      : `${name}${passageHint(t, node.passage)}`;
     const g = svgEl(parent, 'g', {
       class: cls.join(' '),
       'data-path': node.path,
@@ -361,7 +486,7 @@ export class MaraudersMapView extends ItemView implements HoverParent {
       e.preventDefault();
       go(e);
     });
-    if (!tag) g.addEventListener('mouseover', (event) => {
+    if (!tag && !ghost) g.addEventListener('mouseover', (event) => {
       this.app.workspace.trigger('hover-link', {
         event, source: MAP_VIEW, hoverParent: this, targetEl: g, linktext: node.path, sourcePath: this.map.here() ?? ''
       });
@@ -384,7 +509,7 @@ export class MaraudersMapView extends ItemView implements HoverParent {
       box.createEl('p', { cls: 'hp-marauders-note', text: t('mapLost', noteName(route.target)) });
     } else {
       const steps = routeSteps(map.graph, route.steps);
-      const note = map.routeStatus === 'rerouted' ? t('mapRerouted') : '';
+      const note = map.routeStatus === 'rerouted' ? t('mapRerouted') : map.routeStatus === 'changed' ? t('mapRouteChanged') : '';
       box.createEl('p', { cls: 'hp-marauders-note', text: [t('mapRouteSteps', steps.length - 1), note].filter(Boolean).join(' · ') });
       const list = box.createEl('ol', { cls: 'hp-marauders-steps' });
       steps.forEach(({ path, passage, tag }, i) => {
