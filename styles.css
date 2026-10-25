@@ -902,24 +902,27 @@ body.theme-dark .hp-footprint {
   line-height: 1.25;
 }
 
-.hp-snitch {
+/* Снитч — кнопка, а у кнопок Obsidian фон, рамка и тень заданы сильным селектором
+   (button:not(.clickable-icon)); перебиваем его, иначе вокруг снитча видна прямоугольная рамка. */
+.hp-overlay > button.hp-snitch,
+.hp-overlay > button.hp-snitch:is(:hover, :active, :focus, :focus-visible) {
   left: 0;
   top: 0;
+  display: block;
   width: 64px;
   height: 34px;
+  min-width: 0;
   padding: 0;
   margin: 0;
   border: 0;
+  border-radius: 0;
+  outline: none;
   background: none;
   box-shadow: none;
+  appearance: none;
   cursor: var(--cursor, pointer);
   pointer-events: auto;
   filter: drop-shadow(0 0 5px rgba(255, 200, 60, 0.9)) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
-}
-
-.hp-snitch:hover {
-  background: none;
-  box-shadow: none;
 }
 
 .hp-snitch .hp-wing-l { transform-origin: 26px 16px; }

@@ -154,3 +154,5 @@ input.slider { accent-color: var(--interactive-accent); width: 180px; }
 /* Как в Obsidian: интерактивные элементы берут курсор из --cursor (по умолчанию — стрелка) */
 body { --cursor: default; --cursor-link: pointer; }
 a { cursor: var(--cursor-link); }
+/* Как в Obsidian: стиль кнопок задан селектором посильнее, чем просто button */
+button:not(.clickable-icon) { box-shadow: 0 1px 2px rgba(0, 0, 0, .25); height: 30px; display: inline-flex; align-items: center; }

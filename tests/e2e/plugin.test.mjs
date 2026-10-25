@@ -233,6 +233,12 @@ test('плагин на стенде Obsidian', { skip: !playwright && 'Playwrig
       }
       const snitch = page.locator('[data-hp-snitch]');
       await snitch.waitFor();
+      // Без прямоугольной рамки кнопки: ни фона, ни рамки, ни тени
+      const look = await snitch.evaluate((el) => {
+        const cs = getComputedStyle(el);
+        return [cs.backgroundColor, cs.borderTopWidth, cs.boxShadow, cs.outlineStyle, cs.height];
+      });
+      assert.deepEqual(look, ['rgba(0, 0, 0, 0)', '0px', 'none', 'none', '34px']);
       await snitch.evaluate((el) => el.click());
       await page.waitForFunction(() => document.querySelector('.hp-status').textContent.includes('150'));
       const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('hp-harness-data'))['hp-theme']);
