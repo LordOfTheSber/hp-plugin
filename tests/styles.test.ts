@@ -22,7 +22,7 @@ test('theme.css использует только объявленные пер�
   const declared = new Set(Object.keys(houseVariables(palette('gryffindor', 'parchment'))));
   for (const m of themeCss.matchAll(/--hp-[\w-]+:/g)) declared.add(m[0].slice(0, -1));
   // Переменные, которые задаёт сам плагин инлайном
-  declared.add('--hp-verdict-color');
+  for (const v of ['--hp-verdict-color', '--hp-wand-cursor', '--hp-trail-glow', '--hp-trail-ink']) declared.add(v);
   const used = new Set([...themeCss.matchAll(/var\((--hp-[\w-]+)/g)].map((m) => m[1]));
   const missing = [...used].filter((v) => !declared.has(v));
   assert.deepEqual(missing, []);

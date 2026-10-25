@@ -1,9 +1,14 @@
-import { FuzzySuggestModal, Modal } from 'obsidian';
-import type { App } from 'obsidian';
+import { FuzzySuggestModal, Modal, Setting } from 'obsidian';
+import type { App, DropdownComponent, SliderComponent, ToggleComponent } from 'obsidian';
 import { HOUSE_IDS, palette } from './houses.ts';
 import type { HouseId } from './houses.ts';
 import { HAT_SVG, crestSvg, svgElement } from './crest.ts';
 import type { Translate } from './i18n.ts';
+import {
+  CORE_IDS, FLEX_IDS, HANDLE_IDS, LENGTH_MAX, LENGTH_MIN, LENGTH_STEP, WAND_PRESETS, WOOD_IDS,
+  formatLength, presetOf, randomWand, wandSideSvg
+} from './wands.ts';
+import type { PresetId, WandSpec } from './wands.ts';
 
 /** Распределяющая шляпа: три фразы «в раздумьях», затем вердикт. */
 export class SortingHatModal extends Modal {
@@ -54,9 +59,161 @@ export class SortingHatModal extends Modal {
   }
 }
 
+/** «Остролист, перо феникса, 11 дюймов, гибкая». */
+export function describeWand(t: Translate, wand: WandSpec): string {
+  const length = t(wand.length % 1 ? 'lengthFraction' : 'lengthWhole', formatLength(wand.length));
+  return t('wandDescription', t(`wood_${wand.wood}`), t(`core_${wand.core}`), length, t(`flex_${wand.flex}`));
+}
+
+/** «Палочка Гарри Поттера» или «Ваша собственная палочка». */
+export function wandName(t: Translate, wand: WandSpec): string {
+  const preset = presetOf(wand);
+  return preset ? t(`presetWand_${preset}`) : t('shopCustomWand');
+}
+
+export interface WandShopOptions {
+  wand: WandSpec;
+  /** Включён ли курсор-палочка: переключатель есть прямо в лавке, а выбор палочки его включает. */
+  cursor: boolean;
+  onChange(wand: WandSpec): void;
+  onCursor(enabled: boolean): void;
+  onClosed?(): void;
+}
+
+/** Лавка Олливандера: знаменитые палочки и конструктор своей. */
+export class WandShopModal extends Modal {
+  private wand: WandSpec;
+  private stage!: { preview: HTMLElement; name: HTMLElement; desc: HTMLElement };
+  private cards = new Map<PresetId, HTMLElement>();
+  private dropdowns: { key: 'wood' | 'core' | 'handle' | 'flex'; control: DropdownComponent }[] = [];
+  private slider: SliderComponent | null = null;
+  private lengthLabel: HTMLElement | null = null;
+  private cursorToggle: ToggleComponent | null = null;
+  private cursorOn: boolean;
+
+  constructor(app: App, private readonly t: Translate, private readonly options: WandShopOptions) {
+    super(app);
+    this.wand = { ...options.wand };
+    this.cursorOn = options.cursor;
+  }
+
+  onOpen(): void {
+    const { t, contentEl } = this;
+    this.modalEl.addClass('hp-shop-modal');
+    this.titleEl.setText(t('shopTitle'));
+    this.titleEl.addClass('hp-display');
+    contentEl.createEl('p', { cls: 'hp-shop-quote', text: t('shopQuote') });
+
+    const stage = contentEl.createDiv({ cls: 'hp-shop-stage' });
+    this.stage = {
+      preview: stage.createDiv({ cls: 'hp-shop-preview' }),
+      name: stage.createDiv({ cls: 'hp-shop-name' }),
+      desc: stage.createDiv({ cls: 'hp-shop-desc' })
+    };
+    new Setting(contentEl)
+      .setName(t('settingWandCursor'))
+      .setDesc(t('settingWandCursorDesc'))
+      .addToggle((tg) => {
+        this.cursorToggle = tg;
+        tg.setValue(this.cursorOn).onChange((value) => this.setCursor(value));
+      })
+      .settingEl.addClass('hp-shop-cursor');
+
+    contentEl.createDiv({ cls: 'hp-shop-heading', text: t('shopCanon') });
+    const grid = contentEl.createDiv({ cls: 'hp-shop-presets' });
+    for (const preset of WAND_PRESETS) {
+      const card = grid.createEl('button', { cls: 'hp-shop-preset', attr: { type: 'button', 'data-preset': preset.id } });
+      card.appendChild(svgElement(wandSideSvg(preset.wand, 150, `hp-shop-${preset.id}`)));
+      card.createSpan({ text: t(`preset_${preset.id}`) });
+      card.addEventListener('click', () => this.set(preset.wand));
+      this.cards.set(preset.id, card);
+    }
+
+    contentEl.createDiv({ cls: 'hp-shop-heading', text: t('shopCustom') });
+    const form = contentEl.createDiv({ cls: 'hp-shop-form' });
+    this.dropdown(form, 'wood', t('shopWood'), WOOD_IDS.map((id) => [id, t(`wood_${id}`)]));
+    this.dropdown(form, 'core', t('shopCore'), CORE_IDS.map((id) => [id, t(`core_${id}`)]));
+    this.dropdown(form, 'handle', t('shopHandle'), HANDLE_IDS.map((id) => [id, t(`handle_${id}`)]));
+    this.dropdown(form, 'flex', t('shopFlex'), FLEX_IDS.map((id) => [id, t(`flex_${id}`)]));
+    const length = new Setting(form).setName(t('shopLength'));
+    this.lengthLabel = length.nameEl.createSpan({ cls: 'hp-shop-length' });
+    length.addSlider((s) => {
+      this.slider = s;
+      s.setLimits(LENGTH_MIN, LENGTH_MAX, LENGTH_STEP)
+        .setValue(this.wand.length)
+        .onChange((value) => this.update({ length: value }));
+    });
+    new Setting(form).addButton((b) => b
+      .setButtonText(t('shopRandom'))
+      .onClick(() => this.set(randomWand())));
+
+    this.refresh();
+  }
+
+  onClose(): void {
+    this.contentEl.empty();
+    this.cards.clear();
+    this.dropdowns = [];
+    this.options.onClosed?.();
+  }
+
+  private setCursor(on: boolean): void {
+    if (on === this.cursorOn) return;
+    this.cursorOn = on;
+    this.cursorToggle?.setValue(on);
+    this.options.onCursor(on);
+  }
+
+  private dropdown(container: HTMLElement, key: 'wood' | 'core' | 'handle' | 'flex', name: string, options: [string, string][]): void {
+    new Setting(container).setName(name).addDropdown((d) => {
+      for (const [value, text] of options) d.addOption(value, text);
+      d.setValue(this.wand[key]).onChange((value) => this.update({ [key]: value } as Partial<WandSpec>));
+      this.dropdowns.push({ key, control: d });
+    });
+  }
+
+  /** Выбрана целая палочка (знаменитая или случайная): обновить и поля конструктора. */
+  private set(wand: WandSpec): void {
+    this.wand = { ...wand };
+    for (const { key, control } of this.dropdowns) control.setValue(this.wand[key]);
+    this.slider?.setValue(this.wand.length);
+    this.refresh();
+    this.options.onChange({ ...this.wand });
+    // Выбрали палочку — значит, хотят её видеть
+    this.setCursor(true);
+  }
+
+  private update(patch: Partial<WandSpec>): void {
+    this.wand = { ...this.wand, ...patch };
+    this.refresh();
+    this.options.onChange({ ...this.wand });
+    // Выбрали палочку — значит, хотят её видеть
+    this.setCursor(true);
+  }
+
+  private refresh(): void {
+    const { t, wand, stage } = this;
+    stage.preview.empty();
+    stage.preview.appendChild(svgElement(wandSideSvg(wand, 480, 'hp-shop-main')));
+    stage.name.setText(wandName(t, wand));
+    stage.desc.setText(describeWand(t, wand));
+    const preset = presetOf(wand);
+    for (const [id, card] of this.cards) {
+      card.toggleClass('is-selected', id === preset);
+      card.setAttribute('aria-pressed', String(id === preset));
+    }
+    this.lengthLabel?.setText(` · ${formatLength(wand.length)}″`);
+  }
+}
+
 /** «Взмахнуть палочкой…»: поле для заклинания. */
 export class WandModal extends Modal {
-  constructor(app: App, private readonly t: Translate, private readonly onCast: (phrase: string) => void) {
+  constructor(
+    app: App,
+    private readonly t: Translate,
+    private readonly gestures: boolean,
+    private readonly onCast: (phrase: string) => void
+  ) {
     super(app);
   }
 
@@ -67,7 +224,7 @@ export class WandModal extends Modal {
       cls: 'hp-wand-input',
       attr: { type: 'text', placeholder: this.t('wandPlaceholder'), 'aria-label': this.t('wandPlaceholder') }
     });
-    this.contentEl.createEl('p', { cls: 'hp-wand-hint', text: this.t('wandHint') });
+    this.contentEl.createEl('p', { cls: 'hp-wand-hint', text: this.t(this.gestures ? 'wandHintGestures' : 'wandHint') });
     input.addEventListener('keydown', (e) => {
       if (e.key !== 'Enter' || e.isComposing) return;
       e.preventDefault();

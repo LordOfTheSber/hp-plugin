@@ -531,20 +531,31 @@ body.hp-theme.hp-ornaments :is(.nav-file-title, .tree-item-self).is-active {
 
 /* ---------- Курсор — волшебная палочка ---------- */
 
+/* Сама палочка (древесина, рукоять, свечение сердцевины) рисуется в src/wands.ts,
+   плагин кладёт её в --hp-wand-cursor. Кнопки, файлы, вкладки и пункты меню Obsidian
+   берут курсор из --cursor, поэтому палочка подставляется и туда. Ссылки (--cursor-link)
+   остаются «рукой». */
 body.hp-theme.hp-wand {
-  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Cpath d='M4 4l20 20' stroke='%23fff' stroke-width='5' stroke-linecap='round' opacity='.55'/%3E%3Cpath d='M4 4l20 20' stroke='%233b2414' stroke-width='3' stroke-linecap='round'/%3E%3Cpath d='M18 18l6 6' stroke='%235c3a1e' stroke-width='3.6' stroke-linecap='round'/%3E%3Ccircle cx='4' cy='4' r='2.6' fill='%23ffe9a8'/%3E%3C/svg%3E") 3 3, auto;
+  --cursor: var(--hp-wand-cursor, default);
+  cursor: var(--hp-wand-cursor, auto);
 }
 
-/* В тексте и полях ввода — обычный курсор */
-body.hp-theme.hp-wand :is(.markdown-source-view, .markdown-reading-view, .cm-editor, .inline-title,
-  input, textarea, [contenteditable="true"], .canvas-node-content) {
+/* Палочка и в режиме чтения: там иначе текстовый курсор над текстом.
+   Выделять текст палочкой удобно — точка курсора на её кончике. */
+body.hp-theme.hp-wand :is(.markdown-reading-view, .markdown-preview-view) {
+  cursor: var(--hp-wand-cursor, auto);
+}
+
+/* В редакторе и полях ввода (поиск, настройки, модалки) — обычный текстовый курсор */
+body.hp-theme.hp-wand :is(.markdown-source-view, .cm-editor, .inline-title, .canvas-node-content, [contenteditable="true"],
+  input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="button"], [type="submit"]), textarea) {
   cursor: auto;
 }
 
 /* ---------- Статус-бар, настройки, модалки ---------- */
 
 .hp-status {
-  cursor: pointer;
+  cursor: var(--cursor, pointer);
   color: var(--hp-primary, var(--text-accent));
 }
 
@@ -557,7 +568,7 @@ body.hp-theme.hp-wand :is(.markdown-source-view, .markdown-reading-view, .cm-edi
 
 .hp-settings-header .hp-crest {
   line-height: 0;
-  cursor: pointer;
+  cursor: var(--cursor, pointer);
   user-select: none;
 }
 
@@ -606,7 +617,7 @@ body.hp-theme.hp-wand :is(.markdown-source-view, .markdown-reading-view, .cm-edi
   color: var(--text-normal);
   font-size: var(--font-ui-small);
   white-space: normal;
-  cursor: pointer;
+  cursor: var(--cursor, pointer);
 }
 
 .hp-house-card:hover {
@@ -691,6 +702,144 @@ body.hp-theme.hp-wand :is(.markdown-source-view, .markdown-reading-view, .cm-edi
   font-size: var(--font-ui-small);
 }
 
+/* Палочка в настройках */
+.hp-wand-current {
+  margin-top: 6px;
+  line-height: 0;
+}
+
+.hp-wand-current svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Тёмные палочки (эбен, орех) на тёмном фоне — с лёгким ореолом */
+body.theme-dark :is(.hp-wand-current, .hp-shop-preview, .hp-shop-preset) svg {
+  filter: drop-shadow(0 0 1.5px rgba(255, 240, 210, 0.35));
+}
+
+/* Учебник заклинаний */
+.hp-spellbook {
+  padding: 0.75em 0;
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+.hp-spellbook > summary {
+  cursor: var(--cursor, pointer);
+  color: var(--text-muted);
+}
+
+.hp-spellbook-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 10px 16px;
+  margin-top: 10px;
+}
+
+.hp-spellbook-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.hp-spellbook-figure {
+  flex: none;
+  line-height: 0;
+  color: var(--text-normal);
+  border-radius: 8px;
+  background: var(--background-secondary);
+}
+
+.hp-spellbook-name {
+  font-family: 'HP Literata', Georgia, serif;
+  font-style: italic;
+}
+
+/* Лавка Олливандера */
+.modal.hp-shop-modal {
+  width: min(720px, calc(100vw - 32px));
+}
+
+.hp-shop-quote {
+  margin: -4px 0 12px;
+  color: var(--text-muted);
+  font-family: 'HP Literata', Georgia, serif;
+  font-style: italic;
+}
+
+.hp-shop-stage {
+  padding: 14px 16px 12px;
+  border-radius: 10px;
+  text-align: center;
+  background: radial-gradient(ellipse at 50% 40%, rgba(var(--hp-accent-rgb, 201, 162, 39), 0.14), transparent 70%),
+    var(--background-secondary);
+  box-shadow: inset 0 0 0 1px var(--background-modifier-border);
+}
+
+.hp-shop-preview {
+  line-height: 0;
+}
+
+.hp-shop-preview svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.hp-shop-name {
+  margin-top: 6px;
+  font-family: 'HP Forum', Georgia, serif;
+  font-size: 1.35em;
+  color: var(--text-accent);
+}
+
+.hp-shop-desc {
+  color: var(--text-muted);
+  font-family: 'HP Literata', Georgia, serif;
+  font-style: italic;
+}
+
+.hp-shop-heading {
+  margin: 16px 0 8px;
+  font-family: 'HP Forum', Georgia, serif;
+  font-size: 1.15em;
+}
+
+.hp-shop-presets {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+}
+
+.hp-shop-preset {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  height: auto;
+  padding: 8px 6px;
+  border-radius: 8px;
+  white-space: normal;
+  font-size: var(--font-ui-small);
+  cursor: var(--cursor, pointer);
+}
+
+.hp-shop-preset svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.hp-shop-preset.is-selected {
+  box-shadow: 0 0 0 2px var(--hp-accent, var(--interactive-accent));
+}
+
+.hp-shop-form .setting-item:last-child {
+  justify-content: flex-end;
+}
+
+.hp-shop-length {
+  color: var(--text-muted);
+}
+
 /* ---------- Эффекты пасхалок ---------- */
 
 .hp-overlay {
@@ -753,28 +902,72 @@ body.theme-dark .hp-footprint {
   line-height: 1.25;
 }
 
-.hp-snitch {
+/* Снитч — кнопка, а у кнопок Obsidian фон, рамка и тень заданы сильным селектором
+   (button:not(.clickable-icon)); перебиваем его, иначе вокруг снитча видна прямоугольная рамка. */
+.hp-overlay > button.hp-snitch,
+.hp-overlay > button.hp-snitch:is(:hover, :active, :focus, :focus-visible) {
   left: 0;
   top: 0;
+  display: block;
   width: 64px;
   height: 34px;
+  min-width: 0;
   padding: 0;
   margin: 0;
   border: 0;
+  border-radius: 0;
+  outline: none;
   background: none;
   box-shadow: none;
-  cursor: pointer;
+  appearance: none;
+  cursor: var(--cursor, pointer);
   pointer-events: auto;
   filter: drop-shadow(0 0 5px rgba(255, 200, 60, 0.9)) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
 }
 
-.hp-snitch:hover {
-  background: none;
-  box-shadow: none;
-}
-
 .hp-snitch .hp-wing-l { transform-origin: 26px 16px; }
 .hp-snitch .hp-wing-r { transform-origin: 38px 16px; }
+
+.hp-overlay > .hp-trail {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.hp-trail polyline {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.hp-trail-glow {
+  stroke: var(--hp-trail-glow);
+  stroke-width: 9;
+  opacity: 0.35;
+  filter: blur(3px);
+}
+
+.hp-trail-core {
+  stroke: #fffbe8;
+  stroke-width: 2.5;
+  filter: drop-shadow(0 0 3px var(--hp-trail-glow));
+}
+
+body.theme-light .hp-trail-glow {
+  stroke: var(--hp-trail-ink);
+  opacity: 0.25;
+}
+
+body.theme-light .hp-trail-core {
+  stroke: var(--hp-trail-ink);
+  filter: drop-shadow(0 0 2px var(--hp-trail-glow));
+}
+
+.hp-trail.is-fizzled polyline {
+  stroke: var(--text-faint, #888);
+  filter: blur(1.5px);
+}
 
 .hp-spark {
   width: 6px;

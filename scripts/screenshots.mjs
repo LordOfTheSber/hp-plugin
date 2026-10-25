@@ -66,8 +66,27 @@ await shot('wand');
 await page.press('.hp-wand-input', 'Enter');
 await page.waitForTimeout(1300);
 
+// Лавка Олливандера и след палочки
+await page.evaluate(() => harness.runCommand('wand-shop'));
+await page.click('.hp-shop-preset[data-preset="dumbledore"]');
+await page.waitForTimeout(100);
+await shot('wand-shop');
+await page.click('.hp-shop-preset[data-preset="harry"]');
+await page.evaluate(() => document.querySelector('.modal-bg').click());
+await setMode('common');
+await page.mouse.move(560, 300);
+await page.mouse.down({ button: 'right' });
+for (let i = 1; i <= 28; i++) {
+  const a = -Math.PI / 2 + (i / 32) * Math.PI * 2;
+  await page.mouse.move(560 + Math.cos(a) * 110, 410 + Math.sin(a) * 110, { steps: 2 });
+}
+await shot('gesture');
+// Круг — «Акцио снитч»: снитч из этого жеста снимается ниже
+await page.mouse.up({ button: 'right' });
+await setMode('parchment');
+
 await page.click('.nav-header');
-await page.keyboard.type('accio snitch');
+await page.keyboard.type('accio snitch'); // снитч уже летит после жеста — заклинание его не удвоит
 await page.mouse.move(0, 0);
 await page.waitForFunction(() => {
   const r = document.querySelector('[data-hp-snitch]')?.getBoundingClientRect();

@@ -14,7 +14,12 @@ import type { Translate } from './i18n.ts';
 import { createSpellbook, parseIncantation } from './spells.ts';
 import type { SpellId } from './spells.ts';
 import { Effects } from './effects.ts';
-import { HouseSuggestModal, SortingHatModal, WandModal } from './modals.ts';
+import { isEditable } from './dom.ts';
+import { GestureInput } from './gesture-input.ts';
+import type { Point } from './gestures.ts';
+import { HouseSuggestModal, SortingHatModal, WandModal, WandShopModal } from './modals.ts';
+import { CORES, wandCursorCss } from './wands.ts';
+import type { WandSpec } from './wands.ts';
 import { DEFAULT_SETTINGS, HpSettingTab, migrateSettings } from './settings.ts';
 import type { HpSettings } from './settings.ts';
 
@@ -35,6 +40,8 @@ export default class HpThemePlugin extends Plugin {
   paused = false;
 
   private effects!: Effects;
+  private gestures!: GestureInput;
+  private saveTimer = 0;
   private statusEl: HTMLElement | null = null;
   private bodies = new Set<HTMLElement>();
   private spellbook = createSpellbook();
@@ -44,6 +51,11 @@ export default class HpThemePlugin extends Plugin {
     this.t = createTranslator(detectLanguage());
     await this.loadSettings();
     this.effects = new Effects(() => this.reducedMotionQuery.matches);
+    this.gestures = new GestureInput({
+      enabled: () => this.settings.easterEggs && this.settings.gestures,
+      colors: () => CORES[this.settings.wand.core],
+      cast: (spell, at) => this.cast(spell, at)
+    }, this.effects);
 
     this.bodies.add(document.body);
     this.registerEvent(this.app.workspace.on('window-open', (win: WorkspaceWindow) => {
@@ -67,6 +79,7 @@ export default class HpThemePlugin extends Plugin {
     });
     this.addCommand({ id: 'sorting-hat', name: this.t('commandSortingHat'), callback: () => this.openSortingHat() });
     this.addCommand({ id: 'wave-wand', name: this.t('commandWand'), callback: () => this.openWand() });
+    this.addCommand({ id: 'wand-shop', name: this.t('commandWandShop'), callback: () => this.openWandShop() });
     this.addCommand({
       id: 'toggle-theme',
       name: this.t('commandToggle'),
@@ -77,15 +90,30 @@ export default class HpThemePlugin extends Plugin {
     });
 
     this.registerDomEvent(window, 'keydown', (e) => this.onKeydown(e), true);
-    this.registerDomEvent(window, 'pointermove', (e) => this.effects.trackPointer(e), { passive: true });
+    this.registerDomEvent(window, 'pointermove', (e) => {
+      this.effects.trackPointer(e);
+      this.gestures.pointerMove(e);
+    }, { passive: true });
+    this.registerDomEvent(window, 'pointerdown', (e) => this.gestures.pointerDown(e), true);
+    this.registerDomEvent(window, 'pointerup', (e) => this.gestures.pointerUp(e), true);
+    this.registerDomEvent(window, 'pointercancel', () => this.gestures.cancel(), true);
+    this.registerDomEvent(window, 'contextmenu', (e) => this.gestures.contextMenu(e), true);
 
     this.applyTheme();
     this.app.workspace.onLayoutReady(() => void this.birthday());
   }
 
   onunload(): void {
+    if (this.saveTimer) {
+      window.clearTimeout(this.saveTimer);
+      void this.saveData(this.settings);
+    }
+    this.gestures?.cancel();
     this.effects?.destroy();
-    for (const body of this.bodies) this.setBodyClasses(body, false);
+    for (const body of this.bodies) {
+      this.setBodyClasses(body, false);
+      body.style.removeProperty('--hp-wand-cursor');
+    }
   }
 
   // ---------- Настройки ----------
@@ -99,6 +127,17 @@ export default class HpThemePlugin extends Plugin {
     this.applyTheme();
   }
 
+  /** Палочка меняется сразу, а сохраняется с задержкой: в лавке её крутят ползунком. */
+  setWand(wand: WandSpec): void {
+    this.settings.wand = wand;
+    this.applyTheme();
+    window.clearTimeout(this.saveTimer);
+    this.saveTimer = window.setTimeout(() => {
+      this.saveTimer = 0;
+      void this.saveData(this.settings);
+    }, 400);
+  }
+
   async setHouse(house: HouseId): Promise<void> {
     this.settings.house = house;
     await this.saveSettings();
@@ -107,7 +146,12 @@ export default class HpThemePlugin extends Plugin {
   // ---------- Тема ----------
 
   applyTheme(): void {
-    for (const body of this.bodies) this.setBodyClasses(body, !this.paused);
+    const cursor = wandCursorCss(this.settings.wand);
+    for (const body of this.bodies) {
+      this.setBodyClasses(body, !this.paused);
+      if (this.settings.wandCursor && !this.paused) body.style.setProperty('--hp-wand-cursor', cursor);
+      else body.style.removeProperty('--hp-wand-cursor');
+    }
     this.updateStatus();
   }
 
@@ -174,6 +218,7 @@ export default class HpThemePlugin extends Plugin {
       });
     }
     menu.addSeparator();
+    menu.addItem((item) => item.setTitle(this.t('shopTitle')).setIcon('wand').onClick(() => this.openWandShop()));
     menu.addItem((item) => item.setTitle(this.t('commandSortingHat')).setIcon('graduation-cap').onClick(() => this.openSortingHat()));
     menu.addItem((item) => item.setTitle(this.t('menuSettings')).setIcon('settings').onClick(() => this.openSettings()));
     menu.showAtMouseEvent(evt);
@@ -185,8 +230,21 @@ export default class HpThemePlugin extends Plugin {
     }).open();
   }
 
+  openWandShop(after?: () => void): void {
+    new WandShopModal(this.app, this.t, {
+      wand: this.settings.wand,
+      cursor: this.settings.wandCursor,
+      onChange: (wand) => this.setWand(wand),
+      onCursor: (enabled) => {
+        this.settings.wandCursor = enabled;
+        void this.saveSettings();
+      },
+      onClosed: after
+    }).open();
+  }
+
   openWand(): void {
-    new WandModal(this.app, this.t, (phrase) => {
+    new WandModal(this.app, this.t, this.settings.gestures, (phrase) => {
       if (!this.settings.easterEggs) {
         new Notice(this.t('wandOff'));
         return;
@@ -213,9 +271,16 @@ export default class HpThemePlugin extends Plugin {
     if (spell) this.cast(spell);
   }
 
-  cast(spell: SpellId): void {
+  /** at — где начат жест палочкой (для «Вингардиум Левиосы»), иначе — где курсор. */
+  cast(spell: SpellId, at?: Point): void {
     if (this.paused && spell !== 'solemnlySwear') return;
     switch (spell) {
+      case 'wingardiumLeviosa': {
+        const p = at ?? this.effects.pointerPosition;
+        this.effects.levitate(p.x, p.y);
+        new Notice(this.t('eggLeviosa'));
+        break;
+      }
       case 'lumos':
         this.effects.lumos();
         this.setBaseTheme(LIGHT_THEME);
@@ -264,13 +329,4 @@ export default class HpThemePlugin extends Plugin {
     await this.saveData(this.settings);
     new Notice(this.t('eggBirthday'), 10000);
   }
-}
-
-function isEditable(el: HTMLElement | null): boolean {
-  if (!el || el.nodeType !== 1) return false;
-  if (el.isContentEditable) return true;
-  const tag = el.tagName;
-  if (tag === 'TEXTAREA' || tag === 'SELECT') return true;
-  if (tag === 'INPUT') return !/^(button|checkbox|radio|range|color|submit|reset|file|image)$/i.test((el as HTMLInputElement).type);
-  return !!el.closest('.cm-editor, [contenteditable="true"]');
 }

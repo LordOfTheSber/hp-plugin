@@ -26,6 +26,10 @@ test('настройки: значения по умолчанию и защит
   assert.equal(s.ornaments, false);
   assert.deepEqual(s.points, { gryffindor: 0, slytherin: 300, ravenclaw: 0, hufflepuff: 0 });
   assert.notEqual(migrateSettings({}).points, DEFAULT_SETTINGS.points, 'очки не должны делить объект с умолчаниями');
+  assert.notEqual(migrateSettings({}).wand, DEFAULT_SETTINGS.wand, 'палочка не должна делить объект с умолчаниями');
+  assert.equal(migrateSettings({ wand: { wood: 'ebony', handle: 'laser' } }).wand.wood, 'ebony');
+  assert.equal(migrateSettings({ wand: { wood: 'ebony', handle: 'laser' } }).wand.handle, DEFAULT_SETTINGS.wand.handle);
+  assert.equal(migrateSettings({}).gestures, true, 'жесты включены по умолчанию');
 });
 
 test('манифест плагина корректен', () => {

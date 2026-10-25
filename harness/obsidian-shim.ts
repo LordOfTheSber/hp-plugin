@@ -87,15 +87,20 @@ export class PluginSettingTab {
 
 export class Setting {
   settingEl: HTMLElement;
-  private info: HTMLElement;
-  private control: HTMLElement;
+  infoEl: HTMLElement;
+  nameEl: HTMLElement;
+  descEl: HTMLElement;
+  controlEl: HTMLElement;
   constructor(container: HTMLElement) {
     this.settingEl = (container as any).createDiv({ cls: 'setting-item' });
-    this.info = (this.settingEl as any).createDiv({ cls: 'setting-item-info' });
-    this.control = (this.settingEl as any).createDiv({ cls: 'setting-item-control' });
+    this.infoEl = (this.settingEl as any).createDiv({ cls: 'setting-item-info' });
+    this.nameEl = (this.infoEl as any).createDiv({ cls: 'setting-item-name' });
+    this.descEl = (this.infoEl as any).createDiv({ cls: 'setting-item-description' });
+    this.controlEl = (this.settingEl as any).createDiv({ cls: 'setting-item-control' });
   }
-  setName(name: string) { (this.info as any).createDiv({ cls: 'setting-item-name', text: name }); return this; }
-  setDesc(desc: string) { (this.info as any).createDiv({ cls: 'setting-item-description', text: desc }); return this; }
+  private get control() { return this.controlEl; }
+  setName(name: string) { this.nameEl.prepend(name); return this; }
+  setDesc(desc: string) { this.descEl.textContent = desc; return this; }
   addToggle(cb: (t: any) => void) {
     const el = (this.control as any).createDiv({ cls: 'checkbox-container' });
     let handler: (v: boolean) => void = () => {};
@@ -104,6 +109,35 @@ export class Setting {
       onChange(h: (v: boolean) => void) { handler = h; return api; }
     };
     el.addEventListener('click', () => { const v = !el.classList.contains('is-enabled'); api.setValue(v); handler(v); });
+    cb(api);
+    return this;
+  }
+  addDropdown(cb: (d: any) => void) {
+    const el = (this.control as any).createEl('select', { cls: 'dropdown' }) as HTMLSelectElement;
+    let handler: (v: string) => void = () => {};
+    const api = {
+      selectEl: el,
+      addOption(value: string, text: string) { el.createEl('option', { text, attr: { value } }); return api; },
+      setValue(v: string) { el.value = v; return api; },
+      getValue() { return el.value; },
+      onChange(h: (v: string) => void) { handler = h; return api; }
+    };
+    el.addEventListener('change', () => handler(el.value));
+    cb(api);
+    return this;
+  }
+  addSlider(cb: (s: any) => void) {
+    const el = (this.control as any).createEl('input', { cls: 'slider', attr: { type: 'range' } }) as HTMLInputElement;
+    let handler: (v: number) => void = () => {};
+    const api = {
+      sliderEl: el,
+      setLimits(min: number, max: number, step: number) { el.min = String(min); el.max = String(max); el.step = String(step); return api; },
+      setValue(v: number) { el.value = String(v); return api; },
+      getValue() { return Number(el.value); },
+      setDynamicTooltip() { return api; },
+      onChange(h: (v: number) => void) { handler = h; return api; }
+    };
+    el.addEventListener('input', () => handler(Number(el.value)));
     cb(api);
     return this;
   }

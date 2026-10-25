@@ -2,6 +2,9 @@ import { PluginSettingTab, Setting } from 'obsidian';
 import type { App } from 'obsidian';
 import { HOUSE_IDS } from './houses.ts';
 import { crestSvg, svgElement } from './crest.ts';
+import { GESTURES, gestureSvg } from './gestures.ts';
+import { describeWand, wandName } from './modals.ts';
+import { wandSideSvg } from './wands.ts';
 import type HpThemePlugin from './main.ts';
 
 export { DEFAULT_SETTINGS, migrateSettings } from './settings-data.ts';
@@ -55,9 +58,30 @@ export class HpSettingTab extends PluginSettingTab {
     this.toggle('readableFont', t('settingReadableFont'), t('settingReadableFontDesc'));
     this.toggle('headingFont', t('settingHeadingFont'), t('settingHeadingFontDesc'));
     this.toggle('ornaments', t('settingOrnaments'), t('settingOrnamentsDesc'));
+    const wand = new Setting(containerEl)
+      .setName(t('settingWand'))
+      .setDesc(`${wandName(t, settings.wand)}: ${describeWand(t, settings.wand).toLowerCase()}`)
+      .addButton((b) => b
+        .setButtonText(t('buttonWandShop'))
+        .onClick(() => this.plugin.openWandShop(() => this.display())));
+    wand.settingEl.addClass('hp-wand-setting');
+    wand.infoEl.createDiv({ cls: 'hp-wand-current' }).appendChild(svgElement(wandSideSvg(settings.wand, 260, 'hp-settings-wand')));
     this.toggle('wandCursor', t('settingWandCursor'), t('settingWandCursorDesc'));
     this.toggle('statusBar', t('settingStatusBar'));
     this.toggle('easterEggs', t('settingEasterEggs'), t('settingEasterEggsDesc'));
+    this.toggle('gestures', t('settingGestures'), t('settingGesturesDesc'));
+
+    // Учебник заклинаний: какие фигуры рисовать палочкой (спрятан — это спойлер)
+    const book = containerEl.createEl('details', { cls: 'hp-spellbook' });
+    book.createEl('summary', { text: t('spellbookTitle') });
+    const list = book.createDiv({ cls: 'hp-spellbook-list' });
+    for (const { spell } of GESTURES) {
+      const item = list.createDiv({ cls: 'hp-spellbook-item', attr: { 'data-spell': spell } });
+      item.createDiv({ cls: 'hp-spellbook-figure' }).appendChild(svgElement(gestureSvg(spell)));
+      const text = item.createDiv();
+      text.createDiv({ cls: 'hp-spellbook-name', text: t(`spell_${spell}`) });
+      text.createDiv({ cls: 'setting-item-description', text: t(`gesture_${spell}`) });
+    }
 
     new Setting(containerEl)
       .setName(t('settingSortingHat'))
@@ -68,7 +92,7 @@ export class HpSettingTab extends PluginSettingTab {
         .onClick(() => this.plugin.openSortingHat(() => this.display())));
   }
 
-  private toggle(key: 'readableFont' | 'headingFont' | 'ornaments' | 'wandCursor' | 'statusBar' | 'easterEggs',
+  private toggle(key: 'readableFont' | 'headingFont' | 'ornaments' | 'wandCursor' | 'statusBar' | 'easterEggs' | 'gestures',
     name: string, desc?: string): void {
     const setting = new Setting(this.containerEl).setName(name);
     if (desc) setting.setDesc(desc);
