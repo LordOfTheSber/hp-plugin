@@ -1,0 +1,9 @@
+{
+  "id": "hp-theme",
+  "name": "HP Theme",
+  "version": "1.0.0",
+  "minAppVersion": "1.5.0",
+  "description": "Hogwarts house themes: Gryffindor, Slytherin, Ravenclaw and Hufflepuff in light and dark modes, readable typography and a few hidden spells.",
+  "author": "LordOfTheSber",
+  "isDesktopOnly": false
+}

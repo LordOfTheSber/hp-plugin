@@ -1,0 +1,213 @@
+/*
+ * E2E на тестовом стенде (harness/): настоящий main.js-код и styles.css плагина
+ * в Chromium поверх разметки, повторяющей DOM Obsidian, с заглушкой API obsidian.
+ * Запуск: npm run test:e2e (нужен Playwright с Chromium).
+ */
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { loadPlaywright } from '../../scripts/playwright.mjs';
+import { HOUSE_IDS, MODES, palette, hexToRgb } from '../../src/houses.ts';
+
+const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
+const playwright = await loadPlaywright();
+const rgb = (hex) => `rgb(${hexToRgb(hex).join(', ')})`;
+
+// Контраст текста элемента с его фактическим фоном (первый непрозрачный предок)
+function contrastInPage(selectors) {
+  const parse = (s) => (s.match(/[\d.]+/g) || []).map(Number);
+  const lum = ([r, g, b]) => {
+    const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; };
+    return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+  };
+  const out = {};
+  for (const sel of selectors) {
+    const el = document.querySelector(sel);
+    if (!el) { out[sel] = null; continue; }
+    const fg = parse(getComputedStyle(el).color);
+    let node = el;
+    let bg = null;
+    while (node && node.nodeType === 1) {
+      const c = parse(getComputedStyle(node).backgroundColor);
+      if (c.length >= 3 && (c[3] === undefined || c[3] > 0.95)) { bg = c; break; }
+      node = node.parentElement;
+    }
+    bg = bg || [255, 255, 255];
+    const [a, b] = [lum(fg), lum(bg)];
+    out[sel] = (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+  }
+  return out;
+}
+
+test('плагин на стенде Obsidian', { skip: !playwright && 'Playwright не установлен' }, async (t) => {
+  const browser = await playwright.chromium.launch();
+  const page = await browser.newPage({ viewport: { width: 1200, height: 760 } });
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  await page.goto('file://' + join(root, 'harness/index.html') + '?lang=ru');
+  await page.evaluate(() => harness.ready);
+
+  const style = (sel, prop) => page.$eval(sel, (el, p) => getComputedStyle(el)[p], prop);
+  const bodyHas = (cls) => page.evaluate((c) => document.body.classList.contains(c), cls);
+  const setMode = (mode) => page.evaluate((m) => harness.app.setTheme(m === 'common' ? 'obsidian' : 'moonstone'), mode);
+  const typeOutsideEditor = async (text) => {
+    await page.click('.nav-header');
+    await page.keyboard.type(text);
+  };
+
+  try {
+    await t.test('тема включается при загрузке', async () => {
+      for (const cls of ['hp-theme', 'hp-house-gryffindor', 'hp-font-text', 'hp-font-headings', 'hp-ornaments']) {
+        assert.ok(await bodyHas(cls), cls);
+      }
+      assert.ok(!(await bodyHas('hp-wand')), 'курсор-палочка по умолчанию выключен');
+    });
+
+    for (const house of HOUSE_IDS) {
+      for (const mode of MODES) {
+        await t.test(`${house} / ${mode}: цвета и контраст`, async () => {
+          await page.evaluate((h) => harness.plugin.setHouse(h), house);
+          await setMode(mode);
+          const p = palette(house, mode);
+          assert.equal(await style('#preview', 'backgroundColor'), 'rgba(0, 0, 0, 0)');
+          assert.equal(await style('.workspace-leaf-content[data-type="markdown"]', 'backgroundColor'), rgb(p.bg));
+          assert.equal(await style('.mod-left-split', 'backgroundColor'), rgb(p.sidebar));
+          assert.equal(await style('#para', 'color'), rgb(p.text));
+          assert.equal(await style('#h2', 'color'), rgb(p.primary));
+          assert.equal(await style('#inline-title', 'color'), rgb(p.primary));
+          assert.equal(await style('#link', 'color'), rgb(p.link));
+          const ratios = await page.evaluate(contrastInPage, [
+            '#para', '#link', '#h2', '#inline-title', '#tag', '#code', '#active-file', '#editor',
+            '#howler .callout-title', '[data-callout="prophecy"] .callout-title', '[data-callout="marauders"] .callout-content',
+            '.status-bar .hp-status'
+          ]);
+          for (const [sel, r] of Object.entries(ratios)) assert.ok(r >= 4.5, `${sel}: ${r?.toFixed(2)}`);
+        });
+      }
+    }
+
+    await t.test('шрифты: Literata в заметках, Forum в заголовках, интерфейс и код без изменений', async () => {
+      await page.evaluate(() => harness.plugin.setHouse('gryffindor'));
+      await setMode('parchment');
+      assert.match(await style('#para', 'fontFamily'), /HP Literata/);
+      assert.match(await style('#editor', 'fontFamily'), /HP Literata/);
+      assert.match(await style('#h2', 'fontFamily'), /HP Forum/);
+      assert.match(await style('#inline-title', 'fontFamily'), /HP Forum/);
+      assert.equal(await style('#h2', 'fontWeight'), '400');
+      assert.doesNotMatch(await style('#active-file', 'fontFamily'), /Literata|Forum/);
+      assert.doesNotMatch(await style('#code', 'fontFamily'), /Literata/);
+      const ok = await page.evaluate(async () => {
+        await document.fonts.ready;
+        return document.fonts.check('16px "HP Literata"', 'Зельеварение') && document.fonts.check('16px "HP Forum"', 'Хогвартс');
+      });
+      assert.ok(ok, 'встроенные шрифты с кириллицей загружены');
+    });
+
+    await t.test('шрифт пользователя из настроек оформления важнее шрифта темы', async () => {
+      await page.evaluate(() => document.body.style.setProperty('--font-text-override', '"My Font", serif'));
+      assert.match(await style('#para', 'fontFamily'), /^"My Font"/);
+      await page.evaluate(() => document.body.style.removeProperty('--font-text-override'));
+    });
+
+    await t.test('заклинания вне редактора: nox и lumos', async () => {
+      await typeOutsideEditor('nox');
+      await page.waitForFunction(() => document.body.classList.contains('theme-dark'));
+      await typeOutsideEditor(' lumos');
+      await page.waitForFunction(() => document.body.classList.contains('theme-light'));
+    });
+
+    await t.test('в редакторе заклинания не срабатывают', async () => {
+      await page.click('#editor');
+      await page.keyboard.type(' nox ');
+      await page.waitForTimeout(900);
+      assert.ok(await bodyHas('theme-light'));
+    });
+
+    await t.test('команда «Взмахнуть палочкой…»', async () => {
+      await page.evaluate(() => harness.runCommand('wave-wand'));
+      await page.fill('.hp-wand-input', 'Нокс!');
+      await page.press('.hp-wand-input', 'Enter');
+      await page.waitForFunction(() => document.body.classList.contains('theme-dark'));
+      await page.evaluate(() => harness.runCommand('wave-wand'));
+      await page.fill('.hp-wand-input', 'Вингардиум Левиоса');
+      await page.press('.hp-wand-input', 'Enter');
+      await page.waitForSelector('.notice:has-text("Ничего не произошло")');
+      await setMode('parchment');
+    });
+
+    await t.test('Konami → снитч → +150 очков', async () => {
+      await page.click('.nav-header');
+      for (const k of ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a']) {
+        await page.keyboard.press(k);
+      }
+      const snitch = page.locator('[data-hp-snitch]');
+      await snitch.waitFor();
+      await snitch.evaluate((el) => el.click());
+      await page.waitForFunction(() => document.querySelector('.hp-status').textContent.includes('150'));
+      const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('hp-harness-data'))['hp-theme']);
+      assert.equal(saved.points.gryffindor, 150);
+      assert.equal(saved.snitches, 1);
+    });
+
+    await t.test('mischief managed выключает тему, клятва возвращает', async () => {
+      await typeOutsideEditor('mischief managed');
+      await page.waitForFunction(() => !document.body.classList.contains('hp-theme'));
+      assert.equal(await page.isVisible('.hp-status'), false);
+      await typeOutsideEditor('I solemnly swear that I am up to no good');
+      await page.waitForFunction(() => document.body.classList.contains('hp-theme'));
+      await page.waitForSelector('.hp-map-card');
+    });
+
+    await t.test('Распределяющая шляпа', async () => {
+      await page.evaluate(() => harness.runCommand('sorting-hat'));
+      await page.waitForSelector('.hp-hat-text:not(:empty)');
+      const verdict = await page.waitForSelector('.hp-hat-text.hp-verdict', { timeout: 8000 });
+      const shout = await verdict.textContent();
+      await page.waitForSelector('.hp-hat-modal', { state: 'detached', timeout: 8000 });
+      const house = await page.evaluate(() => harness.plugin.settings.house);
+      assert.ok(await bodyHas(`hp-house-${house}`));
+      assert.equal(shout, { gryffindor: 'ГРИФФИНДОР!', slytherin: 'СЛИЗЕРИН!', ravenclaw: 'КОГТЕВРАН!', hufflepuff: 'ПУФФЕНДУЙ!' }[house]);
+    });
+
+    await t.test('вкладка настроек', async () => {
+      await page.evaluate(() => harness.openSettings());
+      assert.equal(await page.locator('.hp-house-card').count(), 4);
+      await page.click('.hp-house-card[data-house="ravenclaw"]');
+      assert.ok(await bodyHas('hp-house-ravenclaw'));
+      assert.equal(await page.getAttribute('.hp-house-card[data-house="ravenclaw"]', 'aria-checked'), 'true');
+      const ornaments = page.locator('.setting-item', { hasText: 'Орнаменты' }).locator('.checkbox-container');
+      await ornaments.click();
+      await page.waitForFunction(() => !document.body.classList.contains('hp-ornaments'));
+      await ornaments.click();
+      await page.waitForFunction(() => document.body.classList.contains('hp-ornaments'));
+      await page.click('.hp-crest', { clickCount: 3 });
+      await page.waitForSelector('.hp-motto', { state: 'visible' });
+      await page.evaluate(() => harness.closeSettings());
+    });
+
+    await t.test('меню факультетов из ленты', async () => {
+      await page.click('.side-dock-ribbon-action');
+      await page.waitForSelector('.menu');
+      assert.equal(await page.locator('.menu .menu-item').count(), 6);
+      await page.click('.menu-item:has-text("Пуффендуй")');
+      assert.ok(await bodyHas('hp-house-hufflepuff'));
+    });
+
+    await t.test('секретные коллауты и Запретная секция', async () => {
+      assert.equal(await style('#howler', 'animationName'), 'hp-howl');
+      assert.match(await style('#restricted-children', 'filter'), /blur/);
+      assert.equal(await style('#restricted', 'fontStyle'), 'italic');
+    });
+
+    await t.test('выгрузка плагина снимает все классы', async () => {
+      await page.evaluate(() => harness.plugin.onunload());
+      const left = await page.evaluate(() => [...document.body.classList].filter((c) => c.startsWith('hp-')));
+      assert.deepEqual(left, []);
+    });
+
+    assert.deepEqual(errors, []);
+  } finally {
+    await browser.close();
+  }
+});
