@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>HP Theme</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup" id="popup">
+    <header>
+      <button class="crest" id="crest" type="button" aria-label="Hogwarts"></button>
+      <div class="grow">
+        <div class="title">HP Theme</div>
+        <div class="sub" id="subtitle"></div>
+      </div>
+      <label class="switch" title="">
+        <input type="checkbox" id="enabled">
+        <span class="track" aria-hidden="true"></span>
+        <span class="sr" data-i18n="popupEnabled"></span>
+      </label>
+    </header>
+
+    <div class="motto" id="motto" hidden>
+      <div class="motto-latin" data-i18n="popupMotto"></div>
+      <div class="motto-tr" data-i18n="popupMottoTranslation"></div>
+    </div>
+
+    <section>
+      <div class="label" id="house-label" data-i18n="popupHouse"></div>
+      <div class="houses" id="houses" role="radiogroup" aria-labelledby="house-label"></div>
+    </section>
+
+    <section>
+      <div class="label" id="mode-label" data-i18n="popupMode"></div>
+      <div class="seg" role="radiogroup" aria-labelledby="mode-label" data-setting="mode">
+        <button type="button" role="radio" data-value="parchment" data-i18n="modeParchment"></button>
+        <button type="button" role="radio" data-value="common" data-i18n="modeCommon"></button>
+        <button type="button" role="radio" data-value="auto" data-i18n="modeAuto"></button>
+      </div>
+
+      <div class="label spaced" id="intensity-label" data-i18n="popupIntensity"></div>
+      <div class="seg" role="radiogroup" aria-labelledby="intensity-label" data-setting="intensity">
+        <button type="button" role="radio" data-value="accents" data-i18n="intensityAccents"></button>
+        <button type="button" role="radio" data-value="full" data-i18n="intensityFull"></button>
+      </div>
+
+      <label class="row"><input type="checkbox" id="readableFont"><span data-i18n="popupReadableFont"></span></label>
+      <label class="row"><input type="checkbox" id="wandCursor"><span data-i18n="popupWandCursor"></span></label>
+    </section>
+
+    <section class="actions">
+      <button type="button" class="btn" id="sort" data-i18n="popupSortingHat"></button>
+      <button type="button" class="btn ghost" id="site" hidden></button>
+      <p class="note" id="site-note" hidden></p>
+    </section>
+
+    <footer>
+      <span id="points"></span>
+      <span class="hint" id="hint" data-i18n="popupHint"></span>
+    </footer>
+
+    <div class="hat" id="hat" hidden aria-live="assertive">
+      <svg class="hat-img" width="120" height="110" viewBox="0 0 90 82" aria-hidden="true">
+        <path d="M44 4c6 0 9 10 12 22 3 14 10 26 20 32H12c10-8 16-20 20-34 3-12 6-20 12-20z" fill="#6b4a2b"/>
+        <path d="M8 62c10-6 64-6 74 0-2 6-72 6-74 0z" fill="#4e3520"/>
+        <path d="M34 40c3 3 8 3 11 0M50 38c2 2 5 2 7 0" stroke="#2a1a0e" stroke-width="2" fill="none"/>
+        <path class="mouth" d="M36 50c6 3 14 3 20 0" stroke="#2a1a0e" stroke-width="2.2" fill="none"/>
+      </svg>
+      <p class="hat-text" id="hat-text"></p>
+    </div>
+  </div>
+
+  <script src="../shared/houses.js"></script>
+  <script src="../shared/crest.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

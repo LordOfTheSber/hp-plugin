@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Уход за гиппогрифами</title>
+<style>
+  body { margin: 0; font-family: Arial, Helvetica, sans-serif; color: #222; background: #fff; }
+  .top { background: #333; color: #fff; padding: 12px 20px; }
+  .top a { color: #fff; }
+  main { max-width: 720px; margin: 0 auto; padding: 20px; }
+  .meta { color: #777; font-size: 13px; }
+  .box { background: #f6f6f6; border: 1px solid #ddd; border-radius: 4px; padding: 10px 12px; }
+  .cta { background: #1a73e8; color: #fff; border: 0; border-radius: 4px; padding: 6px 14px; }
+  .brand { color: #ad1457; }
+  .pale { color: #f5c400; }
+  a { color: #0645ad; }
+  .icon { font-family: 'Material Icons', monospace; }
+  pre { background: #f0f0f0; padding: 8px; }
+</style>
+</head>
+<body>
+  <div class="top" id="top">Хогвартс-Вестник · <a href="#" id="top-link">Войти</a></div>
+  <main>
+    <h1 id="title">Как ухаживать за гиппогрифом</h1>
+    <div class="meta" id="meta">12 мин чтения</div>
+    <p id="para">Гиппогрифы — гордые создания. Прежде чем подойти, <a href="#" id="link">поклонитесь</a>. <span class="brand" id="brand">Важно!</span> <span class="pale" id="pale">Бледно</span> <span class="icon" id="icon">star</span></p>
+    <hr id="hr">
+    <div class="box" id="box"><b>Совет:</b> держите при себе хорьков.</div>
+    <pre id="pre"><code>accio("snitch");</code></pre>
+    <p><input id="input" placeholder="Ваша сова"> <button class="cta" id="cta">Подписаться</button></p>
+    <div id="late-root"></div>
+  </main>
+  <script>
+    setTimeout(() => {
+      const d = document.createElement('div');
+      d.className = 'box';
+      d.id = 'late';
+      d.innerHTML = '<p id="late-p">Поздно добавленный блок</p>';
+      document.getElementById('late-root').appendChild(d);
+    }, 300);
+  </script>
+</body>
+</html>

@@ -1,0 +1,46 @@
+{
+  "manifest_version": 3,
+  "name": "__MSG_extName__",
+  "short_name": "HP Theme",
+  "description": "__MSG_extDescription__",
+  "version": "1.0.0",
+  "default_locale": "ru",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "action": {
+    "default_title": "__MSG_extName__",
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png"
+    }
+  },
+  "permissions": ["storage"],
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*", "file:///*"],
+      "js": ["shared/houses.js", "shared/colors.js", "shared/spells.js", "shared/crest.js", "content/theme.js", "content/easter-eggs.js"],
+      "css": ["content/theme.css"],
+      "run_at": "document_start"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["fonts/*.woff2"],
+      "matches": ["http://*/*", "https://*/*", "file:///*"]
+    }
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "hp-theme@lordofthesber",
+      "strict_min_version": "121.0",
+      "data_collection_permissions": {
+        "required": ["none"]
+      }
+    }
+  }
+}
