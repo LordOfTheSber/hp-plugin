@@ -1,15 +1,15 @@
 /*
- * Карта Мародёров — боковая панель навигации по ссылкам между заметками:
- * где вы, куда отсюда ведут ссылки и обратные ссылки, путь к любой заметке и ваши следы.
+ * Карта Мародёров — боковая панель навигации по ссылкам и тегам:
+ * где вы, куда отсюда ведут ссылки, обратные ссылки и общие теги, путь к любой заметке и ваши следы.
  * Граф, маршрут и раскладка — в src/map.ts, здесь — Obsidian и отрисовка.
  */
-import { FuzzySuggestModal, ItemView, Keymap, Notice, TFile } from 'obsidian';
+import { FuzzySuggestModal, ItemView, Keymap, Notice, TFile, getAllTags } from 'obsidian';
 import type { App, HoverParent, HoverPopover, WorkspaceLeaf } from 'obsidian';
 import type { Translate } from './i18n.ts';
 import {
-  FOOTPRINTS_MAX, LinkGraph, addFootprint, followRoute, footsteps, layoutMap, noteFolder, noteName
+  FOOTPRINTS_MAX, LinkGraph, addFootprint, followRoute, footsteps, isTag, layoutMap, nextNote, noteFolder, noteName, routeSteps
 } from './map.ts';
-import type { MapNode, Passage, Route, RouteStatus } from './map.ts';
+import type { MapNode, Passage, Route, RouteStatus, TagTable } from './map.ts';
 import type HpThemePlugin from './main.ts';
 
 export const MAP_VIEW = 'hp-marauders-map';
@@ -25,6 +25,8 @@ export class MaraudersMap {
   routeStatus: RouteStatus | null = null;
   footprints: string[] = [];
   private cachedGraph: LinkGraph | null = null;
+  /** С тегами ли построен граф: настройка могла поменяться. */
+  private graphTags = false;
 
   constructor(private readonly plugin: HpThemePlugin) {}
 
@@ -70,7 +72,36 @@ export class MaraudersMap {
   }
 
   get graph(): LinkGraph {
-    return (this.cachedGraph ??= new LinkGraph(this.app.metadataCache.resolvedLinks));
+    const tags = this.plugin.settings.mapTags;
+    if (!this.cachedGraph || this.graphTags !== tags) {
+      this.graphTags = tags;
+      this.cachedGraph = new LinkGraph(this.app.metadataCache.resolvedLinks, tags ? this.tags() : {});
+    }
+    return this.cachedGraph;
+  }
+
+  /** Теги всех заметок: из текста и из свойств (frontmatter). */
+  private tags(): TagTable {
+    const { vault, metadataCache } = this.app;
+    const tags: TagTable = {};
+    for (const file of vault.getMarkdownFiles()) {
+      const cache = metadataCache.getFileCache(file);
+      const list = cache ? getAllTags(cache) : null;
+      if (list?.length) tags[file.path] = list;
+    }
+    return tags;
+  }
+
+  /** Включили или выключили связи по тегам: граф заново, маршрут — тоже. */
+  settingsChanged(): void {
+    if (this.plugin.settings.mapTags === this.graphTags) return;
+    const here = this.here();
+    if (this.route && here) {
+      const steps = this.graph.route(here, this.route.target);
+      this.route = { ...this.route, steps };
+      this.routeStatus = steps ? null : 'lost';
+    }
+    this.refresh();
   }
 
   /** Открытая заметка (последняя, если сейчас в фокусе боковая панель). */
@@ -81,7 +112,7 @@ export class MaraudersMap {
 
   get nextStep(): string | null {
     const steps = this.route?.steps;
-    return steps && steps.length > 1 && steps[0] === this.here() ? steps[1] : null;
+    return steps && steps[0] === this.here() ? nextNote(steps) : null;
   }
 
   async reveal(): Promise<void> {
@@ -102,9 +133,21 @@ export class MaraudersMap {
   }
 
   open(path: string, evt?: MouseEvent | KeyboardEvent): void {
+    if (isTag(path)) {
+      this.searchTag(path);
+      return;
+    }
     const file = this.app.vault.getAbstractFileByPath(path);
     if (!(file instanceof TFile)) return;
     void this.app.workspace.getLeaf(evt ? Keymap.isModEvent(evt) : false).openFile(file);
+  }
+
+  /** Тег на карте: все заметки с ним — в поиске Obsidian. API поиска не публичное. */
+  searchTag(tag: string): void {
+    const app = this.app as unknown as {
+      internalPlugins?: { getPluginById?(id: string): { instance?: { openGlobalSearch?(query: string): void } } | null };
+    };
+    app.internalPlugins?.getPluginById?.('global-search')?.instance?.openGlobalSearch?.(`tag:${tag}`);
   }
 
   planRoute(): void {
@@ -234,6 +277,7 @@ export class MaraudersMapView extends ItemView implements HoverParent {
       const legend = contentEl.createDiv({ cls: 'hp-marauders-legend' });
       legend.createSpan({ cls: 'hp-legend-link', text: t('mapLegendLink') });
       legend.createSpan({ cls: 'hp-legend-backlink', text: t('mapLegendBacklink') });
+      if (layout.nodes.some((n) => isTag(n.path))) legend.createSpan({ cls: 'hp-legend-tag', text: t('mapLegendTag') });
     }
 
     this.renderRoute(here);
@@ -278,14 +322,16 @@ export class MaraudersMapView extends ItemView implements HoverParent {
   private renderNode(parent: SVGElement, node: MapNode, steps: string[], visited: Set<string>, target: string | null): void {
     const { t } = this.map;
     const name = noteName(node.path);
+    const tag = isTag(node.path);
     const cls = ['hp-map-node', `ring-${node.ring}`];
     if (node.ring === 0) cls.push('is-here');
-    if (steps[1] === node.path) cls.push('is-next');
+    if (tag) cls.push('is-tag');
+    if (nextNote(steps) === node.path) cls.push('is-next');
     if (steps.includes(node.path) && node.ring > 0) cls.push('is-route');
     if (node.path === target) cls.push('is-target');
     if (visited.has(node.path)) cls.push('is-visited');
     if (RESTRICTED.test(node.path)) cls.push('is-restricted');
-    const label = node.ring === 0 ? `${name} — ${t('mapHere')}` : `${name}${passageHint(t, node.passage)}`;
+    const label = node.ring === 0 ? `${name} — ${t('mapHere')}` : tag ? `${name} — ${t('mapTagHint')}` : `${name}${passageHint(t, node.passage)}`;
     const g = svgEl(parent, 'g', {
       class: cls.join(' '),
       'data-path': node.path,
@@ -296,7 +342,10 @@ export class MaraudersMapView extends ItemView implements HoverParent {
     });
     svgEl(g, 'title').textContent = noteFolder(node.path) ? `${label}\n${noteFolder(node.path)}` : label;
     svgEl(g, 'circle', { class: 'hp-map-hit', r: node.ring === 2 ? 9 : 13 });
-    svgEl(g, 'circle', { class: 'hp-map-dot', r: [9, 6.5, 4.5][node.ring] });
+    const r = [9, 6.5, 4.5][node.ring];
+    // Тег — ромбик, заметка — кружок
+    if (tag) svgEl(g, 'path', { class: 'hp-map-dot', d: `M0 ${-r - 1.5}L${r + 1.5} 0L0 ${r + 1.5}L${-r - 1.5} 0Z` });
+    else svgEl(g, 'circle', { class: 'hp-map-dot', r });
 
     const text = svgEl(g, 'text', { class: 'hp-map-label' });
     text.textContent = name.length > LABEL_MAX ? name.slice(0, LABEL_MAX - 1) + '…' : name;
@@ -312,7 +361,7 @@ export class MaraudersMapView extends ItemView implements HoverParent {
       e.preventDefault();
       go(e);
     });
-    g.addEventListener('mouseover', (event) => {
+    if (!tag) g.addEventListener('mouseover', (event) => {
       this.app.workspace.trigger('hover-link', {
         event, source: MAP_VIEW, hoverParent: this, targetEl: g, linktext: node.path, sourcePath: this.map.here() ?? ''
       });
@@ -334,14 +383,17 @@ export class MaraudersMapView extends ItemView implements HoverParent {
     if (!route.steps) {
       box.createEl('p', { cls: 'hp-marauders-note', text: t('mapLost', noteName(route.target)) });
     } else {
+      const steps = routeSteps(map.graph, route.steps);
       const note = map.routeStatus === 'rerouted' ? t('mapRerouted') : '';
-      box.createEl('p', { cls: 'hp-marauders-note', text: [t('mapRouteSteps', route.steps.length - 1), note].filter(Boolean).join(' · ') });
+      box.createEl('p', { cls: 'hp-marauders-note', text: [t('mapRouteSteps', steps.length - 1), note].filter(Boolean).join(' · ') });
       const list = box.createEl('ol', { cls: 'hp-marauders-steps' });
-      route.steps.forEach((path, i) => {
+      steps.forEach(({ path, passage, tag }, i) => {
         const li = list.createEl('li', { cls: i === 0 ? 'is-here' : i === 1 ? 'is-next' : '' });
         const btn = li.createEl('button', { cls: 'hp-map-step', attr: { type: 'button', 'data-path': path } });
         btn.createSpan({ cls: 'hp-map-step-name', text: noteName(path) });
-        const hint = i === 0 ? t('mapHere') : t(map.graph.passage(route.steps![i - 1], path) === 'backlink' ? 'mapStepBacklink' : 'mapStepLink');
+        const hint = i === 0 ? t('mapHere')
+          : tag ? t('mapStepTag', tag)
+          : t(passage === 'backlink' ? 'mapStepBacklink' : 'mapStepLink');
         btn.createSpan({ cls: 'hp-map-step-hint', text: hint });
         if (i > 0) btn.addEventListener('click', (e) => map.open(path, e));
         else btn.disabled = true;
@@ -349,7 +401,7 @@ export class MaraudersMapView extends ItemView implements HoverParent {
     }
 
     const actions = box.createDiv({ cls: 'hp-marauders-actions' });
-    if (route.steps && route.steps[0] === here && route.steps.length > 1) {
+    if (route.steps && route.steps[0] === here && nextNote(route.steps)) {
       actions.createEl('button', { cls: 'mod-cta hp-map-next', text: t('mapNext') }).addEventListener('click', () => map.goNext());
     }
     actions.createEl('button', { cls: 'hp-map-plan', text: t('mapRouteButton') }).addEventListener('click', () => map.planRoute());

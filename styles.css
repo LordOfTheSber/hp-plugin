@@ -1048,6 +1048,12 @@ body.theme-light .hp-trail-core {
   stroke-width: 1.8;
 }
 
+/* Через общий тег — точками, как тропинка */
+.hp-map-edge.is-tag {
+  stroke-dasharray: 0.5 4;
+  stroke-width: 2;
+}
+
 .hp-map-edge.is-route {
   stroke: var(--hp-map-red);
   opacity: 0.35;
@@ -1078,6 +1084,10 @@ body.theme-light .hp-trail-core {
   stroke: var(--hp-map-ink);
   stroke-width: 1.5;
   transition: r 0.15s;
+}
+
+.hp-map-node.is-tag .hp-map-dot {
+  fill: #e6c97a;
 }
 
 .hp-map-node.is-visited .hp-map-dot {
@@ -1157,8 +1167,9 @@ body.theme-light .hp-trail-core {
 
 .hp-marauders-legend {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
-  gap: 16px;
+  gap: 4px 16px;
   color: var(--text-muted);
 }
 
@@ -1173,6 +1184,10 @@ body.theme-light .hp-trail-core {
 
 .hp-marauders-legend > .hp-legend-backlink::before {
   border-top-style: dashed;
+}
+
+.hp-marauders-legend > .hp-legend-tag::before {
+  border-top-style: dotted;
 }
 
 .hp-marauders-empty,

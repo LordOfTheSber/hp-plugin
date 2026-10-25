@@ -129,6 +129,7 @@ export default class HpThemePlugin extends Plugin {
   async saveSettings(): Promise<void> {
     await this.saveData(this.settings);
     this.applyTheme();
+    this.map?.settingsChanged();
   }
 
   /** Палочка меняется сразу, а сохраняется с задержкой: в лавке её крутят ползунком. */

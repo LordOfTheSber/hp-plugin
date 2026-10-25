@@ -67,6 +67,7 @@ export class HpSettingTab extends PluginSettingTab {
     wand.settingEl.addClass('hp-wand-setting');
     wand.infoEl.createDiv({ cls: 'hp-wand-current' }).appendChild(svgElement(wandSideSvg(settings.wand, 260, 'hp-settings-wand')));
     this.toggle('wandCursor', t('settingWandCursor'), t('settingWandCursorDesc'));
+    this.toggle('mapTags', t('settingMapTags'), t('settingMapTagsDesc'));
     this.toggle('statusBar', t('settingStatusBar'));
     this.toggle('easterEggs', t('settingEasterEggs'), t('settingEasterEggsDesc'));
     this.toggle('gestures', t('settingGestures'), t('settingGesturesDesc'));
@@ -92,7 +93,7 @@ export class HpSettingTab extends PluginSettingTab {
         .onClick(() => this.plugin.openSortingHat(() => this.display())));
   }
 
-  private toggle(key: 'readableFont' | 'headingFont' | 'ornaments' | 'wandCursor' | 'statusBar' | 'easterEggs' | 'gestures',
+  private toggle(key: 'readableFont' | 'headingFont' | 'ornaments' | 'wandCursor' | 'mapTags' | 'statusBar' | 'easterEggs' | 'gestures',
     name: string, desc?: string): void {
     const setting = new Setting(this.containerEl).setName(name);
     if (desc) setting.setDesc(desc);

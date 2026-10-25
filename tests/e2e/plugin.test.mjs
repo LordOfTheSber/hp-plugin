@@ -256,7 +256,10 @@ test('плагин на стенде Obsidian', { skip: !playwright && 'Playwrig
       await page.evaluate(() => harness.runCommand('marauders-map'));
       await page.waitForSelector('.hp-marauders .hp-marauders-svg');
       assert.equal(await here(), 'Хогвартс/Зельеварение.md');
-      assert.deepEqual(await ring1(), ['Ингредиенты/Безоар.md', 'Люди/Северус Снегг.md', 'Хогвартс/Расписание.md']);
+      assert.deepEqual(await ring1(), ['#домашка', '#зелья', 'Ингредиенты/Безоар.md', 'Люди/Северус Снегг.md', 'Хогвартс/Расписание.md']);
+      assert.ok(await page.isVisible('.hp-map-node.is-tag[data-path="#зелья"] path.hp-map-dot'), 'тег — ромбик');
+      assert.ok(await page.locator('.hp-map-edge.is-tag').count(), 'тропинки через теги');
+      assert.ok(await page.isVisible('.hp-legend-tag'));
       assert.ok(await page.locator('.hp-map-edge.is-both').count(), 'Расписание ссылается в ответ');
       assert.ok(await page.locator('.hp-map-edge.is-backlink').count(), 'на Безоар ссылается Гермиона — обратная ссылка');
       assert.equal(await page.textContent('.hp-map-node.is-here .hp-map-here'), 'вы здесь');
@@ -309,6 +312,38 @@ test('плагин на стенде Obsidian', { skip: !playwright && 'Playwrig
       assert.equal(await page.locator('.hp-marauders-steps').count(), 0);
       assert.ok(await page.isVisible('.hp-marauders-route .hp-map-plan'));
       assert.match(await style('.hp-map-node.is-here', 'filter'), /none/, 'на центре Запретная секция не размыта');
+    });
+
+    await t.test('Карта Мародёров: путь через общий тег, поиск по тегу, выключение тегов', async () => {
+      await clearNotices();
+      const steps = () => page.$$eval('.hp-marauders-steps .hp-map-step-name', (els) => els.map((el) => el.textContent));
+      await page.evaluate(() => harness.app.workspace.setActiveFile(harness.app.vault.getAbstractFileByPath('Хогвартс/Зельеварение.md')));
+      await page.evaluate(() => harness.runCommand('marauders-route'));
+      await page.click('.suggestion-item:has-text("Дневник/Сны")');
+      await page.waitForSelector('.hp-marauders-steps');
+      assert.deepEqual(await steps(), ['Зельеварение', 'Сны'], 'тег — не шаг, а способ пройти');
+      assert.equal(await page.textContent('.hp-marauders-steps li:nth-child(2) .hp-map-step-hint'), 'общий тег #домашка');
+      assert.ok(await page.locator('.hp-map-node.is-tag.is-route[data-path="#домашка"]').count());
+      assert.equal(await page.getAttribute('.hp-map-node.is-next', 'data-path'), 'Дневник/Сны.md');
+
+      await page.click('.hp-map-node[data-path="#домашка"]');
+      assert.equal(await page.evaluate(() => harness.app.lastSearch), 'tag:#домашка');
+      assert.equal(await page.evaluate(() => harness.app.workspace.getActiveFile().path), 'Хогвартс/Зельеварение.md');
+
+      // Без тегов к «Снам» хода нет
+      await page.evaluate(() => harness.openSettings());
+      await page.locator('.setting-item', { hasText: 'Теги на Карте Мародёров' }).locator('.checkbox-container').click();
+      await page.evaluate(() => harness.closeSettings());
+      await page.waitForSelector('.hp-marauders-note:has-text("тайного хода нет")');
+      assert.equal(await page.locator('.hp-map-node.is-tag').count(), 0);
+      await page.evaluate(() => harness.openSettings());
+      await page.locator('.setting-item', { hasText: 'Теги на Карте Мародёров' }).locator('.checkbox-container').click();
+      await page.evaluate(() => harness.closeSettings());
+      await page.waitForSelector('.hp-marauders-steps');
+      await clearNotices();
+      await page.click('.hp-map-next');
+      await page.waitForSelector('.notice:has-text("Вы на месте: «Сны»")');
+      await page.evaluate(() => harness.app.workspace.setActiveFile(harness.app.vault.getAbstractFileByPath('Хогвартс/Зельеварение.md')));
     });
 
     await t.test('Карта Мародёров: туда, куда ходов нет', async () => {

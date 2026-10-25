@@ -12,6 +12,8 @@ export interface HpSettings {
   wandCursor: boolean;
   wand: WandSpec;
   gestures: boolean;
+  /** Карта Мародёров связывает заметки и через общие теги. */
+  mapTags: boolean;
   statusBar: boolean;
   easterEggs: boolean;
   points: Record<HouseId, number>;
@@ -27,6 +29,7 @@ export const DEFAULT_SETTINGS: HpSettings = {
   wandCursor: true,
   wand: { ...DEFAULT_WAND },
   gestures: true,
+  mapTags: true,
   statusBar: true,
   easterEggs: true,
   points: { gryffindor: 0, slytherin: 0, ravenclaw: 0, hufflepuff: 0 },

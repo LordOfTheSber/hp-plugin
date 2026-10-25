@@ -294,6 +294,7 @@ export class Menu {
 }
 
 export function setIcon(_el: HTMLElement, _icon: string) {}
+export function getAllTags(cache: { tags?: { tag: string }[] }) { return cache.tags?.map((t) => t.tag) ?? null; }
 export function getLanguage() { return new URLSearchParams(location.search).get('lang') || 'en'; }
 
 // ---------- app ----------
@@ -313,7 +314,16 @@ const VAULT: Record<string, string[]> = {
   'Ингредиенты/Безоар.md': [],
   'Запретная секция/Тайны крестражей.md': [],
   'Дневник/31 июля.md': ['Люди/Гарри Поттер.md'],
-  'Дневник/Заметки на полях.md': []
+  'Дневник/Заметки на полях.md': [],
+  'Дневник/Сны.md': []
+};
+
+/** Теги заметок стенда (как getAllTags). */
+const TAGS: Record<string, string[]> = {
+  'Хогвартс/Зельеварение.md': ['#домашка', '#зелья'],
+  'Хогвартс/Трансфигурация.md': ['#домашка'],
+  'Ингредиенты/Безоар.md': ['#Зелья'],
+  'Дневник/Сны.md': ['#домашка']
 };
 
 export function createApp() {
@@ -344,6 +354,7 @@ export function createApp() {
     getAbstractFileByPath: (p: string) => files.get(p) ?? null
   });
   const metadataCache = new Events() as any;
+  metadataCache.getFileCache = (file: TFile) => ({ tags: (TAGS[file.path] ?? []).map((tag) => ({ tag })) });
   metadataCache.resolvedLinks = Object.fromEntries(Object.entries(VAULT).map(([from, to]) => [from, Object.fromEntries(to.map((p) => [p, 1]))]));
   const app = {
     workspace,
@@ -354,7 +365,12 @@ export function createApp() {
       document.body.classList.toggle('theme-light', theme === 'moonstone');
       workspace.trigger('css-change');
     },
-    setting: { open() { (window as any).harness.openSettings(); }, openTabById() {} }
+    setting: { open() { (window as any).harness.openSettings(); }, openTabById() {} },
+    /** Поиск Obsidian: стенд только запоминает запрос. */
+    lastSearch: '',
+    internalPlugins: {
+      getPluginById: (id: string) => id === 'global-search' ? { instance: { openGlobalSearch: (q: string) => { app.lastSearch = q; } } } : null
+    }
   };
   return app;
 }

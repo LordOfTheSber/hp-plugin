@@ -236,6 +236,8 @@ var en = {
   gesture_accioSnitch: "A circle \u2014 the Snitch is round",
   gesture_solemnlySwear: "The letter M, for Moony and friends. Opens the map",
   gesture_mischiefManaged: "Wipe the map clean: back and forth",
+  settingMapTags: "Tags on the Marauder's Map",
+  settingMapTagsDesc: "Notes with a common tag are connected through it: on the map and in routes.",
   settingStatusBar: "House and points in the status bar",
   settingEasterEggs: "Magic",
   settingEasterEggsDesc: "Words have power\u2026",
@@ -352,6 +354,8 @@ var en = {
   mapHidden: "and {0} more",
   mapLegendLink: "link",
   mapLegendBacklink: "backlink",
+  mapLegendTag: "common tag",
+  mapTagHint: "tag, click to find all its notes",
   mapRouteButton: "Find the way\u2026",
   mapRoutePlaceholder: "Where to?",
   mapRouteTitle: "The way to \u201C{0}\u201D",
@@ -359,6 +363,7 @@ var en = {
   mapRerouted: "you left the path, here is a new one",
   mapStepLink: "link in the text",
   mapStepBacklink: "backlink: not in the text",
+  mapStepTag: "common tag {0}",
   mapNext: "Next step",
   mapClear: "Clear",
   mapLost: "No secret passage leads from here to \u201C{0}\u201D.",
@@ -403,6 +408,8 @@ var ru = {
   gesture_accioSnitch: "\u041A\u0440\u0443\u0433 \u2014 \u0441\u043D\u0438\u0442\u0447 \u0432\u0435\u0434\u044C \u043A\u0440\u0443\u0433\u043B\u044B\u0439",
   gesture_solemnlySwear: "\u0411\u0443\u043A\u0432\u0430 M \u2014 \u041C\u0430\u0440\u043E\u0434\u0451\u0440\u044B. \u041E\u0442\u043A\u0440\u044B\u0432\u0430\u0435\u0442 \u043A\u0430\u0440\u0442\u0443",
   gesture_mischiefManaged: "\u0421\u0442\u0435\u0440\u0435\u0442\u044C \u043A\u0430\u0440\u0442\u0443: \u0442\u0443\u0434\u0430-\u043E\u0431\u0440\u0430\u0442\u043D\u043E",
+  settingMapTags: "\u0422\u0435\u0433\u0438 \u043D\u0430 \u041A\u0430\u0440\u0442\u0435 \u041C\u0430\u0440\u043E\u0434\u0451\u0440\u043E\u0432",
+  settingMapTagsDesc: "\u0417\u0430\u043C\u0435\u0442\u043A\u0438 \u0441 \u043E\u0431\u0449\u0438\u043C \u0442\u0435\u0433\u043E\u043C \u0441\u0432\u044F\u0437\u0430\u043D\u044B \u0447\u0435\u0440\u0435\u0437 \u043D\u0435\u0433\u043E: \u043D\u0430 \u043A\u0430\u0440\u0442\u0435 \u0438 \u0432 \u043C\u0430\u0440\u0448\u0440\u0443\u0442\u0430\u0445.",
   settingStatusBar: "\u0424\u0430\u043A\u0443\u043B\u044C\u0442\u0435\u0442 \u0438 \u043E\u0447\u043A\u0438 \u0432 \u0441\u0442\u0430\u0442\u0443\u0441-\u0431\u0430\u0440\u0435",
   settingEasterEggs: "\u041C\u0430\u0433\u0438\u044F",
   settingEasterEggsDesc: "\u0421\u043B\u043E\u0432\u0430 \u0438\u043C\u0435\u044E\u0442 \u0441\u0438\u043B\u0443\u2026",
@@ -519,6 +526,8 @@ var ru = {
   mapHidden: "\u0438 \u0435\u0449\u0451 {0}",
   mapLegendLink: "\u0441\u0441\u044B\u043B\u043A\u0430",
   mapLegendBacklink: "\u043E\u0431\u0440\u0430\u0442\u043D\u0430\u044F \u0441\u0441\u044B\u043B\u043A\u0430",
+  mapLegendTag: "\u043E\u0431\u0449\u0438\u0439 \u0442\u0435\u0433",
+  mapTagHint: "\u0442\u0435\u0433, \u043A\u043B\u0438\u043A \u2014 \u0432\u0441\u0435 \u0437\u0430\u043C\u0435\u0442\u043A\u0438 \u0441 \u043D\u0438\u043C",
   mapRouteButton: "\u041F\u0440\u043E\u043B\u043E\u0436\u0438\u0442\u044C \u043F\u0443\u0442\u044C\u2026",
   mapRoutePlaceholder: "\u041A\u0443\u0434\u0430 \u0438\u0434\u0451\u043C?",
   mapRouteTitle: "\u041F\u0443\u0442\u044C \u043A \xAB{0}\xBB",
@@ -526,6 +535,7 @@ var ru = {
   mapRerouted: "\u0432\u044B \u0441\u0432\u0435\u0440\u043D\u0443\u043B\u0438 \u0441 \u043F\u0443\u0442\u0438, \u0432\u043E\u0442 \u043D\u043E\u0432\u044B\u0439",
   mapStepLink: "\u0441\u0441\u044B\u043B\u043A\u0430 \u0432 \u0442\u0435\u043A\u0441\u0442\u0435",
   mapStepBacklink: "\u043E\u0431\u0440\u0430\u0442\u043D\u0430\u044F \u0441\u0441\u044B\u043B\u043A\u0430: \u0432 \u0442\u0435\u043A\u0441\u0442\u0435 \u0435\u0451 \u043D\u0435\u0442",
+  mapStepTag: "\u043E\u0431\u0449\u0438\u0439 \u0442\u0435\u0433 {0}",
   mapNext: "\u0421\u043B\u0435\u0434\u0443\u044E\u0449\u0438\u0439 \u0448\u0430\u0433",
   mapClear: "\u0421\u0431\u0440\u043E\u0441\u0438\u0442\u044C",
   mapLost: "\u041E\u0442\u0441\u044E\u0434\u0430 \u043A \xAB{0}\xBB \u0442\u0430\u0439\u043D\u043E\u0433\u043E \u0445\u043E\u0434\u0430 \u043D\u0435\u0442.",
@@ -1116,20 +1126,30 @@ var import_obsidian = require("obsidian");
 
 // src/map.ts
 var isNote = (path) => path.endsWith(".md");
+function isTag(id) {
+  return id.startsWith("#") && !isNote(id);
+}
 function noteName(path) {
+  if (isTag(path)) return path;
   return path.slice(path.lastIndexOf("/") + 1).replace(/\.md$/, "");
 }
 function noteFolder(path) {
+  if (isTag(path)) return "";
   const i = path.lastIndexOf("/");
   return i < 0 ? "" : path.slice(0, i);
 }
 var collator = new Intl.Collator();
 var byName = (a, b) => collator.compare(noteName(a), noteName(b)) || collator.compare(a, b);
 var LinkGraph = class {
-  /** Вложения (картинки, PDF) в граф не попадают: через общую картинку заметки не связаны. */
-  constructor(links) {
+  /**
+   * Вложения (картинки, PDF) в граф не попадают: через общую картинку заметки не связаны.
+   * Теги сравниваются без учёта регистра, как в Obsidian; на карте — написание из первой заметки.
+   */
+  constructor(links, tags = {}) {
     this.out = /* @__PURE__ */ new Map();
     this.in = /* @__PURE__ */ new Map();
+    /** Заметка → её теги и тег → его заметки. */
+    this.tagged = /* @__PURE__ */ new Map();
     for (const [from, targets] of Object.entries(links)) {
       if (!isNote(from)) continue;
       for (const to of Object.keys(targets ?? {})) {
@@ -1138,28 +1158,45 @@ var LinkGraph = class {
         link(this.in, to, from);
       }
     }
+    const ids = /* @__PURE__ */ new Map();
+    for (const [path, list] of Object.entries(tags)) {
+      if (!isNote(path)) continue;
+      for (const raw of list ?? []) {
+        const tag = raw.startsWith("#") ? raw : `#${raw}`;
+        if (tag.length < 2) continue;
+        const key = tag.toLowerCase();
+        if (!ids.has(key)) ids.set(key, tag);
+        link(this.tagged, path, ids.get(key));
+        link(this.tagged, ids.get(key), path);
+      }
+    }
   }
   passage(from, to) {
+    if (this.tagged.get(from)?.has(to)) return "tag";
     const forward = this.out.get(from)?.has(to) ?? false;
     const back = this.in.get(from)?.has(to) ?? false;
     return forward && back ? "both" : forward ? "link" : back ? "backlink" : null;
   }
-  /** Соседи: сначала куда ведут ссылки из текста, потом откуда ссылаются сюда; внутри — по имени. */
+  /**
+   * Соседи: сначала куда ведут ссылки из текста, потом откуда ссылаются сюда, потом теги;
+   * внутри — по имени. У тега соседи — заметки с этим тегом.
+   */
   neighbors(path) {
     const out = [...this.out.get(path) ?? []].sort(byName);
     const back = [...this.in.get(path) ?? []].filter((p) => !this.out.get(path)?.has(p)).sort(byName);
-    return [...out, ...back].map((p) => ({ path: p, passage: this.passage(path, p) }));
+    const tags = [...this.tagged.get(path) ?? []].sort(byName);
+    return [...out, ...back, ...tags].map((p) => ({ path: p, passage: this.passage(path, p) }));
   }
   degree(path) {
     const out = this.out.get(path);
-    let n = out?.size ?? 0;
+    let n = (out?.size ?? 0) + (this.tagged.get(path)?.size ?? 0);
     for (const p of this.in.get(path) ?? []) if (!out?.has(p)) n++;
     return n;
   }
   /**
-   * Кратчайший путь по ссылкам в обе стороны: обратная ссылка — тоже тайный ход.
+   * Кратчайший путь по ссылкам в обе стороны и через теги: обратная ссылка и общий тег — тоже тайные ходы.
    * При равной длине предпочитаются ссылки из текста — по ним проще идти.
-   * Возвращает заметки от from до to включительно или null, если хода нет.
+   * Возвращает узлы от from до to включительно (теги — как промежуточные) или null, если хода нет.
    */
   route(from, to) {
     if (from === to) return [from];
@@ -1189,6 +1226,20 @@ function link(map, from, to) {
   if (!set) map.set(from, set = /* @__PURE__ */ new Set());
   set.add(to);
 }
+function nextNote(steps) {
+  return steps.slice(1).find((p) => !isTag(p)) ?? null;
+}
+function routeSteps(graph, steps) {
+  const out = [];
+  steps.forEach((path, i) => {
+    if (isTag(path)) return;
+    const prev = steps[i - 1];
+    if (prev === void 0) out.push({ path, passage: null, tag: null });
+    else if (isTag(prev)) out.push({ path, passage: "tag", tag: prev });
+    else out.push({ path, passage: graph.passage(prev, path), tag: null });
+  });
+  return out;
+}
 function followRoute(graph, route, current) {
   if (current === route.target) return { route: null, status: "arrived" };
   const i = route.steps?.indexOf(current) ?? -1;
@@ -1207,7 +1258,8 @@ function layoutMap(graph, center, route = [], limits = MAP_LIMITS) {
   const all = graph.neighbors(center);
   const first = route[0] === center ? route[1] : void 0;
   const isFirst = (n) => Number(n.path === first);
-  const ordered = all.map((n, i) => ({ ...n, i, degree: graph.degree(n.path) })).sort((a, b) => isFirst(b) - isFirst(a) || b.degree - a.degree || a.i - b.i).slice(0, limits.ring1).sort((a, b) => isFirst(b) - isFirst(a) || a.i - b.i);
+  const tagFirst = (n) => Number(isTag(n.path));
+  const ordered = all.map((n, i) => ({ ...n, i, degree: graph.degree(n.path) })).sort((a, b) => isFirst(b) - isFirst(a) || tagFirst(b) - tagFirst(a) || b.degree - a.degree || a.i - b.i).slice(0, limits.ring1).sort((a, b) => isFirst(b) - isFirst(a) || a.i - b.i);
   const taken = /* @__PURE__ */ new Set([center, ...ordered.map((n) => n.path)]);
   const step = Math.PI * 2 / Math.max(ordered.length, 1);
   const children = /* @__PURE__ */ new Map();
@@ -1270,6 +1322,8 @@ var MaraudersMap = class {
     this.routeStatus = null;
     this.footprints = [];
     this.cachedGraph = null;
+    /** С тегами ли построен граф: настройка могла поменяться. */
+    this.graphTags = false;
   }
   get app() {
     return this.plugin.app;
@@ -1308,7 +1362,34 @@ var MaraudersMap = class {
     });
   }
   get graph() {
-    return this.cachedGraph ?? (this.cachedGraph = new LinkGraph(this.app.metadataCache.resolvedLinks));
+    const tags = this.plugin.settings.mapTags;
+    if (!this.cachedGraph || this.graphTags !== tags) {
+      this.graphTags = tags;
+      this.cachedGraph = new LinkGraph(this.app.metadataCache.resolvedLinks, tags ? this.tags() : {});
+    }
+    return this.cachedGraph;
+  }
+  /** Теги всех заметок: из текста и из свойств (frontmatter). */
+  tags() {
+    const { vault, metadataCache } = this.app;
+    const tags = {};
+    for (const file of vault.getMarkdownFiles()) {
+      const cache = metadataCache.getFileCache(file);
+      const list = cache ? (0, import_obsidian.getAllTags)(cache) : null;
+      if (list?.length) tags[file.path] = list;
+    }
+    return tags;
+  }
+  /** Включили или выключили связи по тегам: граф заново, маршрут — тоже. */
+  settingsChanged() {
+    if (this.plugin.settings.mapTags === this.graphTags) return;
+    const here = this.here();
+    if (this.route && here) {
+      const steps = this.graph.route(here, this.route.target);
+      this.route = { ...this.route, steps };
+      this.routeStatus = steps ? null : "lost";
+    }
+    this.refresh();
   }
   /** Открытая заметка (последняя, если сейчас в фокусе боковая панель). */
   here() {
@@ -1317,7 +1398,7 @@ var MaraudersMap = class {
   }
   get nextStep() {
     const steps = this.route?.steps;
-    return steps && steps.length > 1 && steps[0] === this.here() ? steps[1] : null;
+    return steps && steps[0] === this.here() ? nextNote(steps) : null;
   }
   async reveal() {
     const { workspace } = this.app;
@@ -1335,9 +1416,18 @@ var MaraudersMap = class {
     this.app.workspace.detachLeavesOfType(MAP_VIEW);
   }
   open(path, evt) {
+    if (isTag(path)) {
+      this.searchTag(path);
+      return;
+    }
     const file = this.app.vault.getAbstractFileByPath(path);
     if (!(file instanceof import_obsidian.TFile)) return;
     void this.app.workspace.getLeaf(evt ? import_obsidian.Keymap.isModEvent(evt) : false).openFile(file);
+  }
+  /** Тег на карте: все заметки с ним — в поиске Obsidian. API поиска не публичное. */
+  searchTag(tag) {
+    const app = this.app;
+    app.internalPlugins?.getPluginById?.("global-search")?.instance?.openGlobalSearch?.(`tag:${tag}`);
   }
   planRoute() {
     const here = this.here();
@@ -1448,6 +1538,7 @@ var MaraudersMapView = class extends import_obsidian.ItemView {
       const legend = contentEl.createDiv({ cls: "hp-marauders-legend" });
       legend.createSpan({ cls: "hp-legend-link", text: t("mapLegendLink") });
       legend.createSpan({ cls: "hp-legend-backlink", text: t("mapLegendBacklink") });
+      if (layout.nodes.some((n) => isTag(n.path))) legend.createSpan({ cls: "hp-legend-tag", text: t("mapLegendTag") });
     }
     this.renderRoute(here);
     this.renderFootprints(footprints);
@@ -1484,14 +1575,16 @@ var MaraudersMapView = class extends import_obsidian.ItemView {
   renderNode(parent, node, steps, visited, target) {
     const { t } = this.map;
     const name = noteName(node.path);
+    const tag = isTag(node.path);
     const cls = ["hp-map-node", `ring-${node.ring}`];
     if (node.ring === 0) cls.push("is-here");
-    if (steps[1] === node.path) cls.push("is-next");
+    if (tag) cls.push("is-tag");
+    if (nextNote(steps) === node.path) cls.push("is-next");
     if (steps.includes(node.path) && node.ring > 0) cls.push("is-route");
     if (node.path === target) cls.push("is-target");
     if (visited.has(node.path)) cls.push("is-visited");
     if (RESTRICTED.test(node.path)) cls.push("is-restricted");
-    const label = node.ring === 0 ? `${name} \u2014 ${t("mapHere")}` : `${name}${passageHint(t, node.passage)}`;
+    const label = node.ring === 0 ? `${name} \u2014 ${t("mapHere")}` : tag ? `${name} \u2014 ${t("mapTagHint")}` : `${name}${passageHint(t, node.passage)}`;
     const g = svgEl(parent, "g", {
       class: cls.join(" "),
       "data-path": node.path,
@@ -1503,7 +1596,9 @@ var MaraudersMapView = class extends import_obsidian.ItemView {
     svgEl(g, "title").textContent = noteFolder(node.path) ? `${label}
 ${noteFolder(node.path)}` : label;
     svgEl(g, "circle", { class: "hp-map-hit", r: node.ring === 2 ? 9 : 13 });
-    svgEl(g, "circle", { class: "hp-map-dot", r: [9, 6.5, 4.5][node.ring] });
+    const r = [9, 6.5, 4.5][node.ring];
+    if (tag) svgEl(g, "path", { class: "hp-map-dot", d: `M0 ${-r - 1.5}L${r + 1.5} 0L0 ${r + 1.5}L${-r - 1.5} 0Z` });
+    else svgEl(g, "circle", { class: "hp-map-dot", r });
     const text = svgEl(g, "text", { class: "hp-map-label" });
     text.textContent = name.length > LABEL_MAX ? name.slice(0, LABEL_MAX - 1) + "\u2026" : name;
     placeLabel(text, node);
@@ -1517,7 +1612,7 @@ ${noteFolder(node.path)}` : label;
       e.preventDefault();
       go(e);
     });
-    g.addEventListener("mouseover", (event) => {
+    if (!tag) g.addEventListener("mouseover", (event) => {
       this.app.workspace.trigger("hover-link", {
         event,
         source: MAP_VIEW,
@@ -1541,21 +1636,22 @@ ${noteFolder(node.path)}` : label;
     if (!route.steps) {
       box.createEl("p", { cls: "hp-marauders-note", text: t("mapLost", noteName(route.target)) });
     } else {
+      const steps = routeSteps(map.graph, route.steps);
       const note = map.routeStatus === "rerouted" ? t("mapRerouted") : "";
-      box.createEl("p", { cls: "hp-marauders-note", text: [t("mapRouteSteps", route.steps.length - 1), note].filter(Boolean).join(" \xB7 ") });
+      box.createEl("p", { cls: "hp-marauders-note", text: [t("mapRouteSteps", steps.length - 1), note].filter(Boolean).join(" \xB7 ") });
       const list = box.createEl("ol", { cls: "hp-marauders-steps" });
-      route.steps.forEach((path, i) => {
+      steps.forEach(({ path, passage, tag }, i) => {
         const li = list.createEl("li", { cls: i === 0 ? "is-here" : i === 1 ? "is-next" : "" });
         const btn = li.createEl("button", { cls: "hp-map-step", attr: { type: "button", "data-path": path } });
         btn.createSpan({ cls: "hp-map-step-name", text: noteName(path) });
-        const hint = i === 0 ? t("mapHere") : t(map.graph.passage(route.steps[i - 1], path) === "backlink" ? "mapStepBacklink" : "mapStepLink");
+        const hint = i === 0 ? t("mapHere") : tag ? t("mapStepTag", tag) : t(passage === "backlink" ? "mapStepBacklink" : "mapStepLink");
         btn.createSpan({ cls: "hp-map-step-hint", text: hint });
         if (i > 0) btn.addEventListener("click", (e) => map.open(path, e));
         else btn.disabled = true;
       });
     }
     const actions = box.createDiv({ cls: "hp-marauders-actions" });
-    if (route.steps && route.steps[0] === here && route.steps.length > 1) {
+    if (route.steps && route.steps[0] === here && nextNote(route.steps)) {
       actions.createEl("button", { cls: "mod-cta hp-map-next", text: t("mapNext") }).addEventListener("click", () => map.goNext());
     }
     actions.createEl("button", { cls: "hp-map-plan", text: t("mapRouteButton") }).addEventListener("click", () => map.planRoute());
@@ -2088,6 +2184,7 @@ var DEFAULT_SETTINGS = {
   wandCursor: true,
   wand: { ...DEFAULT_WAND },
   gestures: true,
+  mapTags: true,
   statusBar: true,
   easterEggs: true,
   points: { gryffindor: 0, slytherin: 0, ravenclaw: 0, hufflepuff: 0 },
@@ -2149,6 +2246,7 @@ var HpSettingTab = class extends import_obsidian3.PluginSettingTab {
     wand.settingEl.addClass("hp-wand-setting");
     wand.infoEl.createDiv({ cls: "hp-wand-current" }).appendChild(svgElement(wandSideSvg(settings.wand, 260, "hp-settings-wand")));
     this.toggle("wandCursor", t("settingWandCursor"), t("settingWandCursorDesc"));
+    this.toggle("mapTags", t("settingMapTags"), t("settingMapTagsDesc"));
     this.toggle("statusBar", t("settingStatusBar"));
     this.toggle("easterEggs", t("settingEasterEggs"), t("settingEasterEggsDesc"));
     this.toggle("gestures", t("settingGestures"), t("settingGesturesDesc"));
@@ -2267,6 +2365,7 @@ var HpThemePlugin = class extends import_obsidian4.Plugin {
   async saveSettings() {
     await this.saveData(this.settings);
     this.applyTheme();
+    this.map?.settingsChanged();
   }
   /** Палочка меняется сразу, а сохраняется с задержкой: в лавке её крутят ползунком. */
   setWand(wand) {
