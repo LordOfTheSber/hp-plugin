@@ -3,284 +3,342 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>HP Theme — макеты</title>
+<title>HP Theme для Obsidian — макеты</title>
 <style>
-  @font-face { font-family: 'HP Literata'; src: url('../../extension/fonts/literata-latin-400-normal.woff2') format('woff2'); font-weight: 400; unicode-range: U+0000-00FF, U+2000-206F; }
-  @font-face { font-family: 'HP Literata'; src: url('../../extension/fonts/literata-cyrillic-400-normal.woff2') format('woff2'); font-weight: 400; unicode-range: U+0400-045F, U+0490-0491; }
-  @font-face { font-family: 'HP Literata'; src: url('../../extension/fonts/literata-latin-700-normal.woff2') format('woff2'); font-weight: 700; unicode-range: U+0000-00FF, U+2000-206F; }
-  @font-face { font-family: 'HP Literata'; src: url('../../extension/fonts/literata-cyrillic-700-normal.woff2') format('woff2'); font-weight: 700; unicode-range: U+0400-045F, U+0490-0491; }
-  @font-face { font-family: 'HP Literata'; src: url('../../extension/fonts/literata-latin-400-italic.woff2') format('woff2'); font-style: italic; unicode-range: U+0000-00FF, U+2000-206F; }
-  @font-face { font-family: 'HP Literata'; src: url('../../extension/fonts/literata-cyrillic-400-italic.woff2') format('woff2'); font-style: italic; unicode-range: U+0400-045F, U+0490-0491; }
-  @font-face { font-family: 'HP Forum'; src: url('../../extension/fonts/forum-latin-400-normal.woff2') format('woff2'); unicode-range: U+0000-00FF, U+2000-206F; }
-  @font-face { font-family: 'HP Forum'; src: url('../../extension/fonts/forum-cyrillic-400-normal.woff2') format('woff2'); unicode-range: U+0400-045F, U+0490-0491; }
+  @font-face { font-family: 'HP Literata'; src: url('../../fonts/literata-latin-400-normal.woff2') format('woff2'); font-weight: 400; unicode-range: U+0000-00FF, U+2000-206F; }
+  @font-face { font-family: 'HP Literata'; src: url('../../fonts/literata-cyrillic-400-normal.woff2') format('woff2'); font-weight: 400; unicode-range: U+0400-045F, U+0490-0491; }
+  @font-face { font-family: 'HP Literata'; src: url('../../fonts/literata-latin-700-normal.woff2') format('woff2'); font-weight: 700; unicode-range: U+0000-00FF, U+2000-206F; }
+  @font-face { font-family: 'HP Literata'; src: url('../../fonts/literata-cyrillic-700-normal.woff2') format('woff2'); font-weight: 700; unicode-range: U+0400-045F, U+0490-0491; }
+  @font-face { font-family: 'HP Literata'; src: url('../../fonts/literata-latin-400-italic.woff2') format('woff2'); font-style: italic; unicode-range: U+0000-00FF, U+2000-206F; }
+  @font-face { font-family: 'HP Literata'; src: url('../../fonts/literata-cyrillic-400-italic.woff2') format('woff2'); font-style: italic; unicode-range: U+0400-045F, U+0490-0491; }
+  @font-face { font-family: 'HP Forum'; src: url('../../fonts/forum-latin-400-normal.woff2') format('woff2'); unicode-range: U+0000-00FF, U+2000-206F; }
+  @font-face { font-family: 'HP Forum'; src: url('../../fonts/forum-cyrillic-400-normal.woff2') format('woff2'); unicode-range: U+0400-045F, U+0490-0491; }
 
   :root {
     --page-bg: #f4efe4; --page-text: #26201a; --page-muted: #6a5d4d; --page-line: #ddd2bd; --page-card: #fffdf8;
-    --body: 'HP Literata', Georgia, 'Times New Roman', serif;
+    --serif: 'HP Literata', Georgia, serif;
     --display: 'HP Forum', 'HP Literata', Georgia, serif;
+    --ui: -apple-system, 'Segoe UI', Inter, Roboto, 'Helvetica Neue', Arial, sans-serif;
   }
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--page-bg); color: var(--page-text); font: 16px/1.6 var(--body); }
-  main { max-width: 1180px; margin: 0 auto; padding: 32px 16px 80px; }
+  body { margin: 0; background: var(--page-bg); color: var(--page-text); font: 16px/1.6 var(--serif); }
+  main { max-width: 1240px; margin: 0 auto; padding: 32px 16px 80px; }
   h1, h2, h3 { font-family: var(--display); font-weight: 400; letter-spacing: .02em; line-height: 1.2; }
   h1 { font-size: 44px; margin: 0 0 4px; }
   h2 { font-size: 30px; margin: 56px 0 8px; border-bottom: 1px solid var(--page-line); padding-bottom: 6px; }
   h3 { font-size: 21px; margin: 0 0 8px; }
-  .lead { color: var(--page-muted); max-width: 70ch; margin-top: 0; }
+  .lead { color: var(--page-muted); max-width: 75ch; margin-top: 0; }
   .grid { display: grid; gap: 20px; }
-  .g2 { grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); }
-  .g4 { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
-  .popups { grid-template-columns: repeat(auto-fill, 340px); justify-content: center; }
+  .g2 { grid-template-columns: repeat(auto-fit, minmax(480px, 1fr)); }
+  .g4 { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
   .card { background: var(--page-card); border: 1px solid var(--page-line); border-radius: 12px; padding: 18px; }
-  .note { font-size: 14px; color: var(--page-muted); }
-  ul.principles li { margin-bottom: 6px; }
-  code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .9em; }
+  .caption { font-size: 14px; color: var(--page-muted); margin: 6px 0 0; }
+  code, .kbd { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .88em; }
+  .kbd { display: inline-block; padding: 1px 6px; border: 1px solid var(--page-line); border-bottom-width: 2px; border-radius: 5px; background: #fff; }
+  ul li { margin-bottom: 5px; }
 
   /* ---------- Палитры ---------- */
-  .swatches { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin: 10px 0; }
-  .sw { border-radius: 6px; height: 44px; border: 1px solid rgba(0,0,0,.12); position: relative; }
-  .sw span { position: absolute; bottom: -18px; left: 0; font-size: 10px; color: var(--page-muted); }
-  .pal { padding: 12px 14px 14px; border-radius: 10px; margin-top: 26px; }
-  .pal .ratio { font-size: 13px; }
-  .pal .ratio b { font-family: ui-monospace, Menlo, monospace; font-weight: 600; }
+  .swatches { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; margin: 8px 0 20px; }
+  .sw { height: 36px; border-radius: 5px; border: 1px solid rgba(0,0,0,.12); position: relative; }
+  .sw span { position: absolute; bottom: -17px; left: 0; font: 10px/1 var(--ui); color: var(--page-muted); }
+  .pal { padding: 10px 12px 12px; border-radius: 10px; margin-top: 12px; font: 13px/1.4 var(--ui); }
+  .pal b { font-family: ui-monospace, Menlo, monospace; }
 
-  /* ---------- Тема (то же, что будет в extension/content/theme.css) ---------- */
-  .hp { background: var(--hp-bg); color: var(--hp-text); font-family: var(--body); }
-  .hp h1, .hp h2, .hp h3 { font-family: var(--display); color: var(--hp-primary); }
-  .hp h1::after { content: ''; display: block; height: 2px; margin-top: 6px; width: 120px;
-    background: linear-gradient(90deg, var(--hp-accent), transparent); }
-  .hp a { color: var(--hp-link); text-decoration-thickness: 1px; text-underline-offset: 3px; }
-  .hp .muted { color: var(--hp-muted); }
-  .hp blockquote { margin: 12px 0; padding: 4px 14px; border-left: 3px solid var(--hp-accent); font-style: italic; color: var(--hp-muted); }
-  .hp hr { border: 0; height: 18px; position: relative; margin: 14px 0; }
-  .hp hr::before { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 1px;
-    background: linear-gradient(90deg, transparent, var(--hp-accent), transparent); }
-  .hp hr::after { content: '✦'; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -52%);
-    background: var(--hp-bg); color: var(--hp-accent); padding: 0 8px; font-size: 13px; line-height: 1; }
-  .hp .btn { font: inherit; padding: 6px 14px; border-radius: 8px; border: 1px solid var(--hp-primary);
-    background: var(--hp-primary); color: var(--hp-on-primary); }
-  .hp .btn.ghost { background: var(--hp-surface); color: var(--hp-primary); }
-  .hp input { font: inherit; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--hp-border); background: var(--hp-surface); color: var(--hp-text); width: 100%; }
-  .hp .box { background: var(--hp-surface); border: 1px solid var(--hp-border); border-radius: 10px; padding: 10px 12px; }
-  .hp ::selection { background: var(--hp-primary); color: var(--hp-on-primary); }
-  .hp .sel { background: var(--hp-primary); color: var(--hp-on-primary); }
+  /* =====================================================================
+     Окно Obsidian. Переменные называются так же, как в Obsidian,
+     чтобы макет напрямую переносился в styles.css плагина.
+     ===================================================================== */
+  .obs {
+    --font-ui: var(--ui);
+    font: 13px/1.45 var(--font-ui); color: var(--text-normal); background: var(--background-primary);
+    border-radius: 10px; overflow: hidden; border: 1px solid var(--background-modifier-border);
+    box-shadow: 0 10px 30px rgba(0,0,0,.18);
+    display: grid; grid-template-columns: 38px 178px 1fr; grid-template-rows: 34px 1fr 24px; height: 470px;
+  }
+  .obs.compact { height: 360px; grid-template-columns: 34px 150px 1fr; font-size: 12px; }
+  .obs .titlebar { grid-column: 1 / -1; display: flex; align-items: flex-end; gap: 4px; padding: 0 10px 0 48px; background: var(--titlebar-background); border-bottom: 1px solid var(--background-modifier-border); }
+  .obs .dots { position: absolute; margin-left: -40px; margin-bottom: 11px; display: flex; gap: 5px; }
+  .obs .dots i { width: 9px; height: 9px; border-radius: 50%; background: var(--text-faint); opacity: .5; }
+  .obs .tab { padding: 6px 12px; border-radius: 7px 7px 0 0; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 170px; }
+  .obs .tab.on { background: var(--background-primary); color: var(--text-normal); box-shadow: inset 0 2px 0 var(--hp-accent); }
+  .obs .ribbon { background: var(--ribbon-background); border-right: 1px solid var(--background-modifier-border); display: flex; flex-direction: column; align-items: center; gap: 12px; padding-top: 10px; }
+  .obs .ribbon svg { width: 18px; height: 18px; stroke: var(--text-muted); fill: none; stroke-width: 1.8; }
+  .obs .ribbon .wand svg { stroke: var(--interactive-accent); }
+  .obs .side { background: var(--background-secondary); border-right: 1px solid var(--background-modifier-border); padding: 10px 6px; overflow: hidden; }
+  .obs .side .head { font-size: 11px; color: var(--text-faint); text-transform: uppercase; letter-spacing: .06em; margin: 0 6px 6px; }
+  .obs .nav { padding: 2px 8px; border-radius: 5px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .obs .nav.folder { color: var(--text-normal); }
+  .obs .nav.folder::before { content: '▾ '; color: var(--text-faint); }
+  .obs .nav.file { padding-left: 22px; }
+  .obs .nav.on { background: var(--nav-item-background-active); color: var(--text-normal); box-shadow: inset 2px 0 0 var(--hp-accent); }
+  .obs .nav.restricted { font-style: italic; color: var(--text-faint); }
+  .obs .nav.restricted::after { content: ' 🔒'; font-style: normal; }
+  .obs .nav.blur { filter: blur(2.5px); opacity: .7; }
+  .obs .view { overflow: hidden; padding: 18px 26px; background: var(--background-primary); }
+  .obs.compact .view { padding: 12px 18px; }
+  .obs .status { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 14px; align-items: center; padding: 0 12px; font-size: 11.5px; color: var(--text-muted); background: var(--status-bar-background); border-top: 1px solid var(--background-modifier-border); }
+  .obs .status .house { color: var(--interactive-accent); }
 
-  /* ---------- Попап ---------- */
-  .popup { width: 340px; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,.18); border: 1px solid var(--hp-border); font-size: 14px; line-height: 1.45; }
-  .popup header { display: flex; align-items: center; gap: 10px; padding: 14px 14px 12px; background: var(--hp-primary); color: var(--hp-on-primary); }
-  .popup header .title { font-family: var(--display); font-size: 20px; line-height: 1.1; }
-  .popup header .sub { font-size: 12px; opacity: .9; }
-  .popup header .grow { flex: 1; }
-  .switch { width: 40px; height: 22px; border-radius: 11px; background: var(--hp-on-primary); position: relative; flex: none; }
-  .switch::after { content: ''; position: absolute; top: 3px; right: 3px; width: 16px; height: 16px; border-radius: 50%; background: var(--hp-primary); }
-  .popup section { padding: 10px 14px; border-bottom: 1px solid var(--hp-border); }
-  .popup .label { font-size: 12px; color: var(--hp-muted); margin-bottom: 6px; letter-spacing: .02em; }
-  .houses { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-  .house { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--hp-border); background: var(--hp-surface); }
-  .house.on { outline: 2px solid var(--hp-primary); outline-offset: -1px; font-weight: 700; }
-  .seg { display: flex; border: 1px solid var(--hp-border); border-radius: 8px; overflow: hidden; background: var(--hp-surface); }
-  .seg span { flex: 1; text-align: center; padding: 5px 4px; }
-  .seg span.on { background: var(--hp-primary); color: var(--hp-on-primary); }
-  .row { display: flex; gap: 8px; align-items: center; margin-top: 6px; }
-  .check { width: 16px; height: 16px; border-radius: 4px; border: 1.5px solid var(--hp-primary); display: inline-grid; place-items: center; font-size: 11px; color: var(--hp-on-primary); background: var(--hp-primary); flex: none; }
-  .popup .actions { display: grid; gap: 6px; }
-  .popup .actions .btn { width: 100%; text-align: center; }
-  .popup footer { display: flex; justify-content: space-between; padding: 8px 14px 10px; font-size: 12px; color: var(--hp-muted); }
+  /* Заметка */
+  .note { font-family: var(--font-text); font-size: 15px; line-height: 1.6; color: var(--text-normal); max-width: 640px; }
+  .obs.compact .note { font-size: 13px; }
+  .note .inline-title { font-family: var(--h-font); font-size: 30px; line-height: 1.15; color: var(--inline-title-color); margin: 0 0 4px; letter-spacing: .02em; }
+  .obs.compact .note .inline-title { font-size: 24px; }
+  .note .inline-title::after { content: ''; display: block; height: 2px; width: 140px; margin-top: 6px; background: linear-gradient(90deg, var(--hp-accent), transparent); }
+  .note h2 { font-family: var(--h-font); font-size: 21px; margin: 14px 0 4px; color: var(--h2-color); }
+  .obs.compact .note h2 { font-size: 18px; margin-top: 10px; }
+  .note p { margin: 6px 0; }
+  .note .internal-link { color: var(--link-color); text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--link-color) 45%, transparent); text-underline-offset: 3px; }
+  .note .tag { color: var(--tag-color); background: var(--tag-background); border-radius: 999px; padding: 0 8px; font-size: .88em; }
+  .note mark { background: var(--text-highlight-bg); color: var(--text-normal); padding: 0 2px; border-radius: 3px; }
+  .note .sel { background: var(--text-selection); }
+  .note blockquote { margin: 8px 0; padding: 2px 14px; border-left: 3px solid var(--blockquote-border-color); color: var(--text-muted); font-style: italic; }
+  .note code { background: var(--code-background); border: 1px solid var(--background-modifier-border); border-radius: 4px; padding: 0 4px; font-size: .85em; }
+  .note .task { display: flex; gap: 7px; align-items: center; }
+  .note .cb { width: 14px; height: 14px; border-radius: 4px; border: 1.5px solid var(--checkbox-border-color); display: inline-grid; place-items: center; flex: none; }
+  .note .cb.on { background: var(--checkbox-color); border-color: var(--checkbox-color); color: var(--text-on-accent); font-size: 10px; }
+  .note .task.done span { color: var(--text-faint); text-decoration: line-through; }
+  .note hr { border: 0; height: 18px; position: relative; margin: 10px 0; }
+  .note hr::before { content: ''; position: absolute; inset: 50% 0 auto; height: 1px; background: linear-gradient(90deg, transparent, var(--hr-color), transparent); }
+  .note hr::after { content: '✦'; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -55%); padding: 0 8px; font-size: 12px; line-height: 1; color: var(--hr-color); background: var(--background-primary); }
+  .callout { border-radius: 8px; padding: 8px 12px; margin: 8px 0; background: rgba(var(--callout-color), .1); border-left: 3px solid rgb(var(--callout-color)); }
+  .callout .ct { font-weight: 700; color: rgb(var(--callout-color)); display: flex; gap: 6px; align-items: center; font-family: var(--font-ui); font-size: .92em; }
+  .callout.note-c { --callout-color: var(--hp-primary-rgb); }
 
-  /* ---------- Браузер ---------- */
-  .browser { border-radius: 10px; overflow: hidden; border: 1px solid #c8bfae; box-shadow: 0 6px 20px rgba(0,0,0,.1); background: #fff; }
-  .chrome { background: #e9e5de; padding: 7px 10px; display: flex; gap: 6px; align-items: center; font: 12px/1 system-ui, sans-serif; color: #555; }
-  .chrome i { width: 10px; height: 10px; border-radius: 50%; background: #c9c2b5; display: inline-block; }
-  .chrome .url { margin-left: 8px; background: #fff; border-radius: 6px; padding: 5px 10px; flex: 1; }
-  .site { padding: 18px 22px 22px; min-height: 340px; }
-  .site.plain { font-family: Arial, Helvetica, sans-serif; color: #222; background: #fff; }
-  .site.plain h1 { font-size: 26px; margin: 0 0 6px; }
-  .site.plain a { color: #0645ad; }
-  .site.plain .box { background: #f6f6f6; border: 1px solid #ddd; border-radius: 4px; padding: 10px 12px; }
-  .site.plain .btn { font: inherit; background: #1a73e8; color: #fff; border: 0; border-radius: 4px; padding: 6px 14px; }
-  .site.plain blockquote { border-left: 3px solid #ccc; margin: 12px 0; padding: 4px 14px; color: #555; }
-  .site h1 { font-size: 30px; margin: 0 0 8px; font-weight: 400; }
-  .site p { margin: 8px 0; }
-  .site .meta { font-size: 13px; }
-  .site .form { display: flex; gap: 8px; margin-top: 12px; }
-  .wand { cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Cpath d='M3 3l20 20' stroke='%233b2414' stroke-width='3.2' stroke-linecap='round'/%3E%3Cpath d='M3 3l3.5 3.5' stroke='%23f6e7b0' stroke-width='3.2' stroke-linecap='round'/%3E%3C/svg%3E") 2 2, auto; }
+  /* Секретные коллауты */
+  .callout.howler { --callout-color: 178, 34, 34; background: linear-gradient(135deg, rgba(178,34,34,.16), rgba(178,34,34,.05)); animation: howl .5s ease-in-out 0s 3; }
+  .callout.howler .ct { text-transform: uppercase; letter-spacing: .06em; }
+  @keyframes howl { 0%,100% { transform: translateX(0) rotate(0); } 25% { transform: translateX(-3px) rotate(-.6deg); } 75% { transform: translateX(3px) rotate(.6deg); } }
+  .callout.prophecy { --callout-color: 120, 132, 170; background: radial-gradient(ellipse at 20% 30%, rgba(200,210,240,.45), rgba(120,132,170,.08) 70%); border-left-color: rgba(120,132,170,.6); font-style: italic; }
+  .callout.marauders { --callout-color: 90, 58, 30; background: radial-gradient(circle at 30% 20%, #f7ecd0, #e9d6a9); color: #4a2e14; border-left: 0; box-shadow: inset 0 0 30px rgba(120,80,30,.25); font-style: italic; }
+  .callout.marauders .ct { color: #4a2e14; font-family: 'HP Forum', serif; font-weight: 400; font-size: 1.05em; }
 
-  /* ---------- Пасхалки ---------- */
-  .egg { display: grid; grid-template-columns: 120px 1fr; gap: 14px; align-items: center; }
-  .egg .art { height: 110px; border-radius: 10px; display: grid; place-items: center; overflow: hidden; position: relative; }
-  .kbd { display: inline-block; font: 12px/1 ui-monospace, Menlo, monospace; padding: 3px 6px; border: 1px solid var(--page-line); border-bottom-width: 2px; border-radius: 5px; background: #fff; }
-  .typo .sample-h { font-family: var(--display); font-size: 34px; line-height: 1.15; margin: 0; }
-  .typo .sample-b { font-family: var(--body); font-size: 17px; line-height: 1.65; max-width: 62ch; }
-  .typo table { border-collapse: collapse; width: 100%; font-size: 14px; }
-  .typo td, .typo th { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--page-line); vertical-align: top; }
-  .bad { font-family: cursive; font-size: 18px; opacity: .8; }
+  /* Настройки, модалки, меню */
+  .modal-wrap { background: color-mix(in srgb, var(--background-primary) 40%, #000); padding: 22px; border-radius: 10px; display: grid; place-items: center; }
+  .modal { width: 100%; max-width: 520px; background: var(--background-primary); color: var(--text-normal); border: 1px solid var(--background-modifier-border); border-radius: 12px; box-shadow: 0 16px 40px rgba(0,0,0,.35); padding: 18px 20px; font: 13.5px/1.45 var(--ui); }
+  .modal .mt { font-family: var(--h-font); font-size: 22px; color: var(--h1-color); margin-bottom: 10px; }
+  .setting { display: flex; justify-content: space-between; gap: 16px; align-items: center; padding: 10px 0; border-top: 1px solid var(--background-modifier-border); }
+  .setting .nm { color: var(--text-normal); }
+  .setting .ds { color: var(--text-muted); font-size: 12px; }
+  .toggle { width: 34px; height: 19px; border-radius: 10px; background: var(--interactive-accent); position: relative; flex: none; }
+  .toggle::after { content: ''; position: absolute; top: 2.5px; right: 2.5px; width: 14px; height: 14px; border-radius: 50%; background: var(--text-on-accent); }
+  .toggle.off { background: var(--background-modifier-border); }
+  .toggle.off::after { right: auto; left: 2.5px; background: var(--background-primary); }
+  .houses { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 4px 0 10px; }
+  .hcard { border: 1px solid var(--background-modifier-border); border-radius: 10px; padding: 10px 6px 8px; text-align: center; background: var(--background-secondary); font-size: 12px; }
+  .hcard.on { outline: 2px solid var(--interactive-accent); outline-offset: -1px; font-weight: 600; }
+  .hcard svg { display: block; margin: 0 auto 4px; }
+  .btn { display: inline-block; padding: 6px 14px; border-radius: 7px; background: var(--interactive-accent); color: var(--text-on-accent); font: 13px var(--ui); }
+  .btn.ghost { background: var(--interactive-normal); color: var(--text-normal); border: 1px solid var(--background-modifier-border); }
+  .prompt-in { width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--background-modifier-border-focus); background: var(--background-modifier-form-field); color: var(--text-normal); font: 15px var(--serif); }
+  .menu { width: 230px; background: var(--background-secondary); border: 1px solid var(--background-modifier-border); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.25); padding: 4px; font: 13px var(--ui); color: var(--text-normal); }
+  .menu .mi { display: flex; gap: 8px; align-items: center; padding: 5px 8px; border-radius: 5px; }
+  .menu .mi.on { background: var(--background-modifier-hover); }
+  .menu .sep { height: 1px; background: var(--background-modifier-border); margin: 4px 2px; }
+  .hat { text-align: center; }
+  .hat .say { font-family: var(--serif); font-style: italic; font-size: 16px; margin-top: 6px; }
+  .hat .verdict { font-family: var(--h-font); font-size: 34px; letter-spacing: .05em; color: var(--h1-color); }
 </style>
 </head>
 <body>
 <main>
-  <h1>HP Theme — макеты</h1>
-  <p class="lead">Браузерное расширение, которое перекрашивает любые сайты в стиле Хогвартса: четыре факультета, светлый «пергамент» и тёмная «гостиная», читаемая типографика и несколько спрятанных пасхалок. Этот документ — макеты до начала реализации; цвета берутся из <code>extension/shared/houses.js</code>, единого источника токенов.</p>
+  <h1>HP Theme для Obsidian — макеты</h1>
+  <p class="lead">Плагин Obsidian, который превращает хранилище в гостиную одного из факультетов Хогвартса. Палитры и шрифты — тема, плагин добавляет переключение факультетов, Распределяющую шляпу и пасхалки. Цвета на этой странице берутся из <code>src/houses.ts</code> (через сгенерированный <code>tokens.js</code>), поэтому макеты и реализация используют одни и те же значения.</p>
 
   <h2>1. Принципы</h2>
   <div class="grid g2">
     <div class="card">
-      <h3>Что делаем</h3>
-      <ul class="principles">
-        <li><b>4 факультета</b> × <b>2 режима</b> (пергамент / гостиная) + «авто» по системной теме.</li>
-        <li><b>Два уровня</b>: «акценты» (ссылки, заголовки, выделение, скроллбар) и «полностью» (фон, текст, кнопки, поля, таблицы).</li>
-        <li>Попап с выбором факультета, Распределяющей шляпой и выключением на отдельном сайте.</li>
-        <li>Пасхалки, которые не мешают работе: срабатывают только на «заклинания», набранные вне полей ввода.</li>
+      <h3>Что меняется</h3>
+      <ul>
+        <li><b>Четыре факультета.</b> Светлая тема Obsidian → «Пергамент», тёмная → «Гостиная». Переключение светлой/тёмной — штатное, плюс заклинания.</li>
+        <li><b>Только переменные Obsidian</b> (<code>--background-primary</code>, <code>--text-normal</code>, <code>--interactive-accent</code>…): работает в редакторе, просмотре, канвасе, графе, настройках и с другими плагинами.</li>
+        <li><b>Орнаменты</b> (отключаемые): золотая нить под заголовком заметки, разделитель ✦, акцент активной вкладки и файла.</li>
+        <li><b>Статус-бар</b>: факультет и очки. Лента: меню факультетов, Шляпа.</li>
       </ul>
     </div>
     <div class="card">
       <h3>Читаемость — главное ограничение</h3>
-      <ul class="principles">
-        <li>Основной текст — <b>Literata</b> (шрифт для чтения с экрана, есть кириллица). Декоративные «волшебные» шрифты в тексте запрещены.</li>
-        <li>Заголовки — <b>Forum</b>: классическая антиква в духе гравюр, но без завитушек; поддерживает кириллицу.</li>
-        <li>Контраст текста ≥ 7:1, ссылок и второстепенного текста ≥ 4.5:1 (WCAG AA). Проверяется автотестом.</li>
-        <li>Акцентный цвет (золото, бронза, серебро) — только для линий и орнаментов, никогда для текста.</li>
-        <li>Код (<code>pre</code>, <code>code</code>) и иконочные шрифты не трогаем. Анимации отключаются при <code>prefers-reduced-motion</code>.</li>
+      <ul>
+        <li>Текст заметок — <b>Literata</b> (создан для чтения с экрана, есть кириллица). Заголовки — <b>Forum</b>, классическая антиква без завитушек.</li>
+        <li>Интерфейс (меню, настройки, боковые панели) остаётся на системном шрифте: на мелких размерах он читается лучше антиквы.</li>
+        <li>Свой шрифт из «Настройки → Оформление» имеет приоритет над шрифтом темы.</li>
+        <li>Контраст текста ≥ 7:1 на всех фонах (заметка, панели, выделение, маркер), ссылок и второстепенного ≥ 4.5:1 — проверяется тестом.</li>
+        <li>Золото, серебро, бронза — только линии и орнаменты, не текст. Анимации отключаются при «уменьшении движения».</li>
       </ul>
     </div>
   </div>
 
-  <h2>2. Палитры факультетов</h2>
-  <p class="lead">Фон, поверхность, текст, основной и акцентный цвета. Ниже — реальные коэффициенты контраста, посчитанные из токенов.</p>
+  <h2>2. Палитры</h2>
+  <p class="lead">Основные токены и производные цвета боковых панелей. Ниже — коэффициенты контраста, посчитанные из токенов.</p>
   <div class="grid g4" id="palettes"></div>
 
-  <h2>3. Типографика</h2>
-  <div class="card typo">
-    <div class="grid g2">
-      <div>
-        <p class="sample-h">Хогвартс: школа чародейства и волшебства</p>
-        <p class="sample-b">Гарри стоял на платформе девять и три четверти и смотрел на алый паровоз. Текст набран Literata 17/1.65 — крупная x-высота и открытые формы букв делают его удобным даже на длинных страницах. <i>Курсив тоже остаётся читаемым.</i></p>
-        <p class="sample-b" style="font-size:15px">English sample: “It does not do to dwell on dreams and forget to live.” — Albus Dumbledore</p>
-      </div>
-      <div>
-        <table>
-          <tr><th>Роль</th><th>Шрифт</th><th>Правило</th></tr>
-          <tr><td>H1–H3</td><td>Forum 400</td><td>letter-spacing .02em, line-height 1.2; размер сайта сохраняется</td></tr>
-          <tr><td>Текст</td><td>Literata 400/700, italic</td><td>line-height ≥ 1.55, размер сайта сохраняется</td></tr>
-          <tr><td>Код</td><td>не меняется</td><td><code>pre, code, kbd, samp</code></td></tr>
-          <tr><td>Иконки</td><td>не меняется</td><td>классы <code>*icon*</code>, <code>fa-*</code>, <code>material-*</code></td></tr>
-          <tr><td>Отключение</td><td>шрифт сайта</td><td>галочка «Читаемый шрифт» в попапе</td></tr>
-        </table>
-        <p class="note">Отвергнуто: рукописные и «готические» шрифты (стилизация под Harry P, Lumos и т.п.) — эффектно, но читать абзацы невозможно, и почти у всех нет кириллицы. Пример, как <span class="bad">не надо делать основной текст</span>.</p>
-      </div>
-    </div>
-  </div>
+  <h2>3. Рабочее пространство</h2>
+  <p class="lead">Лента, файловый менеджер, вкладки, заметка в режиме просмотра, статус-бар. Крупно — Гриффиндор (пергамент) и Слизерин (гостиная).</p>
+  <div class="grid g2" id="big"></div>
+  <h3 style="margin-top:28px">Все факультеты в обоих режимах</h3>
+  <div class="grid g2" id="small"></div>
 
-  <h2>4. Попап расширения</h2>
-  <p class="lead">Шапка в основном цвете факультета, сетка 2×2 гербов, переключатели режима и уровня, кнопки Шляпы и отключения на сайте, внизу — очки факультета (их приносят пасхалки).</p>
-  <div class="grid popups" id="popups"></div>
+  <h2>4. Настройки, Шляпа, меню</h2>
+  <div class="grid g2" id="ui"></div>
 
-  <h2>5. Сайт: до и после</h2>
-  <p class="lead">Режим «полностью»: светлые нейтральные фоны заменяются на пергамент/поверхность, тёмный нейтральный текст — на цвет текста темы. Брендовые цветные блоки и картинки остаются как были.</p>
-  <div class="grid g2" id="sites"></div>
-
-  <h2>6. Пасхалки</h2>
-  <p class="lead">Ни одна не описана в интерфейсе — только загадочная подсказка в попапе «Слова имеют силу». Заклинания набираются на клавиатуре в любом месте страницы, кроме полей ввода.</p>
-  <div class="grid g2">
-    <div class="card egg">
-      <div class="art" style="background:#0b1026">
-        <svg width="90" height="90" viewBox="0 0 90 90"><defs><radialGradient id="lg"><stop offset="0" stop-color="#fff8d8"/><stop offset=".35" stop-color="#ffe58a" stop-opacity=".7"/><stop offset="1" stop-color="#ffe58a" stop-opacity="0"/></radialGradient></defs><circle cx="60" cy="30" r="30" fill="url(#lg)"/><path d="M14 80L58 34" stroke="#5a3a1e" stroke-width="5" stroke-linecap="round"/></svg>
-      </div>
-      <div><h3><span class="kbd">lumos</span> / <span class="kbd">nox</span></h3>Вспышка света от кончика палочки и переключение в «пергамент»; <i>nox</i> гасит свет и включает «гостиную».</div>
-    </div>
-    <div class="card egg">
-      <div class="art" style="background:#efe2c0">
-        <svg width="110" height="90" viewBox="0 0 110 90" fill="#5a3a1e"><g opacity=".9"><ellipse cx="18" cy="76" rx="5" ry="8" transform="rotate(-20 18 76)"/><ellipse cx="32" cy="62" rx="5" ry="8" transform="rotate(-20 32 62)" opacity=".8"/><ellipse cx="44" cy="52" rx="5" ry="8" transform="rotate(-30 44 52)" opacity=".65"/><ellipse cx="60" cy="40" rx="5" ry="8" transform="rotate(-30 60 40)" opacity=".5"/><ellipse cx="72" cy="28" rx="5" ry="8" transform="rotate(-40 72 28)" opacity=".35"/></g><text x="55" y="88" font-size="8" text-anchor="middle" font-family="serif" font-style="italic">Messrs Moony, Wormtail…</text></svg>
-      </div>
-      <div><h3><span class="kbd">I solemnly swear…</span></h3>«Клянусь, что замышляю только шалость» — по странице бегут следы с Карты Мародёров и появляется чернильная надпись. <span class="kbd">mischief managed</span> — «Шалость удалась»: тема гаснет на этой вкладке до перезагрузки.</div>
-    </div>
-    <div class="card egg">
-      <div class="art" style="background:#1f0d0d">
-        <svg width="100" height="60" viewBox="0 0 100 60"><path d="M42 30C25 10 6 12 2 18c10 0 22 6 36 14z" fill="#f3ead2" opacity=".9"/><path d="M58 30C75 10 94 12 98 18c-10 0-22 6-36 14z" fill="#f3ead2" opacity=".9"/><circle cx="50" cy="32" r="11" fill="#e0b44a"/><path d="M42 28c5 4 11 4 16 0" stroke="#9a7420" fill="none"/></svg>
-      </div>
-      <div><h3><span class="kbd">accio snitch</span> или код Konami</h3><span class="kbd">↑↑↓↓←→←→BA</span> — по странице начинает метаться Золотой снитч. Поймал (кликнул) — +150 очков своему факультету, счёт виден в попапе.</div>
-    </div>
-    <div class="card egg">
-      <div class="art" style="background:#fbf3d9">
-        <svg width="90" height="90" viewBox="0 0 90 90"><path d="M44 8c6 0 9 10 12 22 3 14 10 26 20 32H12c10-8 16-20 20-34 3-12 6-20 12-20z" fill="#6b4a2b"/><path d="M8 66c10-6 64-6 74 0-2 6-72 6-74 0z" fill="#4e3520"/><path d="M34 42c3 3 8 3 11 0M50 40c2 2 5 2 7 0" stroke="#2a1a0e" stroke-width="2" fill="none"/></svg>
-      </div>
-      <div><h3>Распределяющая шляпа</h3>Кнопка в попапе: Шляпа «думает» вслух («Хм… непросто… очень непросто…») и громко объявляет факультет. Отдельные пасхалки: <span class="kbd">31 июля</span> — поздравление с днём рождения Гарри; тройной клик по гербу в попапе показывает девиз школы <i>Draco dormiens nunquam titillandus</i>.</div>
-    </div>
-  </div>
+  <h2>5. Пасхалки</h2>
+  <p class="lead">Нигде не перечислены — в настройках только подсказка «Слова имеют силу…».</p>
+  <div class="grid g2" id="eggs"></div>
 </main>
 
-<script src="../../extension/shared/houses.js"></script>
+<script src="tokens.js"></script>
 <script>
-  const { HOUSES, contrastRatio } = window.HP;
+  const { HOUSES, HOUSE_IDS, palette, contrastRatio, hexToRgb } = HP_TOKENS;
   const NAMES = { gryffindor: 'Гриффиндор', slytherin: 'Слизерин', ravenclaw: 'Когтевран', hufflepuff: 'Пуффендуй' };
   const MODES = { parchment: 'Пергамент', common: 'Гостиная' };
 
-  function vars(p) {
-    return `--hp-bg:${p.bg};--hp-surface:${p.surface};--hp-text:${p.text};--hp-muted:${p.muted};--hp-primary:${p.primary};--hp-on-primary:${p.onPrimary};--hp-accent:${p.accent};--hp-link:${p.link};--hp-border:${p.border}`;
+  // Отображение токенов на переменные Obsidian — то же, что будет в styles.css
+  function obsVars(p) {
+    const v = {
+      '--background-primary': p.bg, '--background-primary-alt': p.surface,
+      '--background-secondary': p.sidebar, '--background-secondary-alt': p.sidebarAlt,
+      '--background-modifier-border': p.border, '--background-modifier-border-focus': p.primary,
+      '--background-modifier-hover': p.hover, '--background-modifier-form-field': p.surface,
+      '--text-normal': p.text, '--text-muted': p.muted, '--text-faint': p.faint,
+      '--text-on-accent': p.onPrimary, '--text-selection': p.selection, '--text-highlight-bg': p.highlight,
+      '--interactive-accent': p.primary, '--interactive-normal': p.surface,
+      '--link-color': p.link, '--tag-color': p.link, '--tag-background': p.active,
+      '--inline-title-color': p.primary, '--h1-color': p.primary, '--h2-color': p.primary,
+      '--blockquote-border-color': p.accent, '--hr-color': p.accent, '--code-background': p.surface,
+      '--checkbox-color': p.primary, '--checkbox-border-color': p.muted,
+      '--titlebar-background': p.sidebar, '--ribbon-background': p.sidebarAlt, '--status-bar-background': p.sidebar,
+      '--nav-item-background-active': p.active,
+      '--hp-accent': p.accent, '--hp-primary-rgb': hexToRgb(p.primary).join(', '),
+      '--font-text': "'HP Literata', Georgia, serif", '--h-font': "'HP Forum', Georgia, serif"
+    };
+    return Object.entries(v).map(([k, x]) => `${k}:${x}`).join(';');
   }
 
-  // Герб: щит с перевязью в акцентном цвете и инициалом факультета
-  function crest(id, size = 40) {
-    const p = HOUSES[id].palettes.parchment;
-    const letter = { gryffindor: 'G', slytherin: 'S', ravenclaw: 'R', hufflepuff: 'H' }[id];
-    const band = id === 'hufflepuff' ? p.accent : p.accent;
-    const field = id === 'hufflepuff' ? '#372e29' : p.primary;
-    return `<svg width="${size}" height="${size * 1.04}" viewBox="0 0 100 104" aria-hidden="true">
-      <path d="M50 4L92 16V52C92 78 72 94 50 100C28 94 8 78 8 52V16Z" fill="${field}" stroke="${band}" stroke-width="5"/>
-      <path d="M14 22L86 82" stroke="${band}" stroke-width="9" opacity=".55"/>
-      <text x="50" y="66" text-anchor="middle" font-family="HP Forum, serif" font-size="46" fill="${id === 'hufflepuff' ? p.accent : p.onPrimary}">${letter}</text></svg>`;
+  function crest(id, size) {
+    const c = HOUSES[id].crest;
+    const shield = 'M50 4L92 16V52C92 78 72 94 50 100C28 94 8 78 8 52V16Z';
+    return `<svg width="${size}" height="${Math.round(size * 1.04)}" viewBox="0 0 100 104"><defs><clipPath id="c${id}${size}"><path d="${shield}"/></clipPath></defs>
+      <path d="${shield}" fill="${c.field}"/><path d="M8 22L92 92" stroke="${c.metal}" stroke-width="12" opacity=".45" clip-path="url(#c${id}${size})"/>
+      <path d="${shield}" fill="none" stroke="${c.metal}" stroke-width="6"/>
+      <text x="50" y="67" text-anchor="middle" font-family="HP Forum, serif" font-size="48" fill="${c.ink}">${c.letter}</text></svg>`;
   }
 
-  // 2. Палитры
-  document.getElementById('palettes').innerHTML = Object.values(HOUSES).map((h) => `
+  const ICONS = {
+    files: '<svg viewBox="0 0 24 24"><path d="M4 4h6l2 2h8v12H4z"/></svg>',
+    search: '<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg>',
+    graph: '<svg viewBox="0 0 24 24"><circle cx="6" cy="7" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="12" cy="18" r="2.5"/><path d="M8 8l3 8M16 8l-3 8M8.5 7h7"/></svg>',
+    wand: '<svg viewBox="0 0 24 24"><path d="M4 20L16 8M15 3v3M18 6h3M19.5 3.5l-2 2M13 4.5l1 1"/></svg>'
+  };
+
+  // ---------- Палитры ----------
+  document.getElementById('palettes').innerHTML = HOUSE_IDS.map((id) => `
     <div class="card">
-      <div style="display:flex;gap:10px;align-items:center">${crest(h.id, 34)}<h3 style="margin:0">${NAMES[h.id]}</h3></div>
-      ${Object.entries(h.palettes).map(([mode, p]) => `
-        <div class="pal hp" style="${vars(p)}">
-          <div style="font-family:var(--display);color:var(--hp-primary);font-size:17px">${MODES[mode]}</div>
-          <div class="swatches">${['bg', 'surface', 'text', 'primary', 'accent'].map((k) => `<div class="sw" style="background:${p[k]}"><span>${k}</span></div>`).join('')}</div>
-          <div class="ratio" style="margin-top:22px">текст <b>${contrastRatio(p.text, p.bg).toFixed(1)}</b> · ссылки <b>${contrastRatio(p.link, p.bg).toFixed(1)}</b> · вторичный <b>${contrastRatio(p.muted, p.bg).toFixed(1)}</b></div>
-        </div>`).join('')}
+      <div style="display:flex;gap:10px;align-items:center">${crest(id, 32)}<h3 style="margin:0">${NAMES[id]}</h3></div>
+      ${['parchment', 'common'].map((m) => {
+        const p = palette(id, m);
+        const r = (a, b) => contrastRatio(p[a], p[b]).toFixed(1);
+        return `<div class="pal" style="background:${p.bg};color:${p.text}">
+          <div style="font-family:var(--display);font-size:16px;color:${p.primary}">${MODES[m]}</div>
+          <div class="swatches">${['bg', 'sidebar', 'text', 'primary', 'accent', 'link'].map((k) => `<div class="sw" style="background:${p[k]}"><span style="color:${p.muted}">${k}</span></div>`).join('')}</div>
+          текст <b>${r('text', 'bg')}</b> · на панели <b>${r('text', 'sidebar')}</b> · ссылки <b>${r('link', 'bg')}</b> · вторичный <b>${r('muted', 'sidebar')}</b>
+        </div>`;
+      }).join('')}
     </div>`).join('');
 
-  // 4. Попапы
-  function popup(id, mode) {
-    const p = HOUSES[id].palettes[mode];
-    return `<div><div class="popup hp" style="${vars(p)}">
-      <header>${crest(id, 38)}<div class="grow"><div class="title">HP Theme</div><div class="sub">${NAMES[id]} · ${MODES[mode]}</div></div><div class="switch"></div></header>
-      <section><div class="label">Факультет</div><div class="houses">
-        ${Object.keys(HOUSES).map((hid) => `<div class="house ${hid === id ? 'on' : ''}">${crest(hid, 22)}${NAMES[hid]}</div>`).join('')}
-      </div></section>
-      <section><div class="label">Режим</div><div class="seg"><span class="${mode === 'parchment' ? 'on' : ''}">Пергамент</span><span class="${mode === 'common' ? 'on' : ''}">Гостиная</span><span>Авто</span></div>
-        <div class="label" style="margin-top:10px">Оформление</div><div class="seg"><span>Акценты</span><span class="on">Полностью</span></div>
-        <div class="row"><span class="check">✓</span>Читаемый шрифт для текста</div>
-        <div class="row"><span class="check">✓</span>Курсор — волшебная палочка</div></section>
-      <section class="actions"><button class="btn">Распредели меня, Шляпа!</button><button class="btn ghost">Не колдовать на example.com</button></section>
-      <footer><span>⚡ Очки: 150</span><span><i>Слова имеют силу…</i></span></footer>
-    </div><p class="note">${NAMES[id]}, ${MODES[mode].toLowerCase()}</p></div>`;
+  // ---------- Окно Obsidian ----------
+  function obsidian(id, mode, compact) {
+    const p = palette(id, mode);
+    return `<div><div class="obs ${compact ? 'compact' : ''}" style="${obsVars(p)}">
+      <div class="titlebar"><span class="dots"><i></i><i></i><i></i></span>
+        <div class="tab on">Зельеварение</div><div class="tab">Расписание</div></div>
+      <div class="ribbon">${ICONS.files}${ICONS.search}${ICONS.graph}<span class="wand">${ICONS.wand}</span></div>
+      <div class="side">
+        <div class="head">Хранилище</div>
+        <div class="nav folder">Хогвартс</div>
+        <div class="nav file">Расписание</div>
+        <div class="nav file on">Зельеварение</div>
+        <div class="nav file">Квиддич</div>
+        <div class="nav folder restricted">Запретная секция</div>
+        <div class="nav file blur">Тайны крестражей</div>
+        <div class="nav folder">Дневник</div>
+      </div>
+      <div class="view"><div class="note">
+        <div class="inline-title">Зельеварение</div>
+        <p>Профессор <a class="internal-link">Снегг</a> задал эссе о <span class="sel">безоаре</span>. Сдать <mark>до пятницы</mark> <span class="tag">#домашка</span></p>
+        <h2>Напиток живой смерти</h2>
+        <div class="task done"><span class="cb on">✓</span><span>Корень асфоделя</span></div>
+        <div class="task"><span class="cb"></span><span>Настой полыни, <code>7 капель</code></span></div>
+        ${compact ? '' : `<blockquote>«Ещё раз: безоар — камень из желудка козы»</blockquote>
+        <hr>
+        <div class="callout note-c"><div class="ct">✎ Заметка</div>Помешивать по часовой стрелке — семь раз.</div>`}
+      </div></div>
+      <div class="status"><span>238 слов</span><span class="house">⚡ ${NAMES[id]} · 150</span></div>
+    </div><p class="caption">${NAMES[id]} — ${MODES[mode].toLowerCase()}</p></div>`;
   }
-  document.getElementById('popups').innerHTML =
-    ['gryffindor', 'slytherin', 'ravenclaw', 'hufflepuff'].map((id) => popup(id, 'parchment')).join('') +
-    ['gryffindor', 'slytherin', 'ravenclaw', 'hufflepuff'].map((id) => popup(id, 'common')).join('');
+  document.getElementById('big').innerHTML = obsidian('gryffindor', 'parchment') + obsidian('slytherin', 'common');
+  document.getElementById('small').innerHTML = HOUSE_IDS.flatMap((id) => [obsidian(id, 'parchment', true), obsidian(id, 'common', true)]).join('');
 
-  // 5. Сайт до/после
-  const article = (cls, style = '') => `
-    <div class="site ${cls}" style="${style}">
-      <h1>Как ухаживать за гиппогрифом</h1>
-      <div class="meta muted">12 мин чтения · <a href="#">Уход за магическими существами</a></div>
-      <p>Гиппогрифы — гордые создания. Прежде чем подойти, <a href="#">поклонитесь</a> и дождитесь ответного поклона. Никогда не оскорбляйте гиппогрифа: это может стать последним, что вы сделаете.</p>
-      <blockquote>«Сначала поклонитесь, потом гладьте» — Рубеус Хагрид</blockquote>
-      <hr>
-      <div class="box"><b>Совет:</b> держите при себе <span class="sel">хорьков</span> — это любимое лакомство.</div>
-      <div class="form"><input placeholder="Ваша сова для подписки"><button class="btn">Подписаться</button></div>
+  // ---------- Настройки и модалки ----------
+  const gp = palette('ravenclaw', 'parchment');
+  const gc = palette('hufflepuff', 'common');
+  const toggle = (on) => `<span class="toggle ${on ? '' : 'off'}"></span>`;
+  document.getElementById('ui').innerHTML = `
+    <div><div class="modal-wrap" style="${obsVars(gp)}"><div class="modal">
+      <div class="mt">HP Theme</div>
+      <div class="houses">${HOUSE_IDS.map((id) => `<div class="hcard ${id === 'ravenclaw' ? 'on' : ''}">${crest(id, 34)}${NAMES[id]}</div>`).join('')}</div>
+      <div class="setting"><div><div class="nm">Шрифт заметок Literata</div><div class="ds">Удобный для чтения шрифт с кириллицей</div></div>${toggle(true)}</div>
+      <div class="setting"><div><div class="nm">Заголовки Forum</div><div class="ds">Классическая антиква для заголовков</div></div>${toggle(true)}</div>
+      <div class="setting"><div><div class="nm">Орнаменты</div><div class="ds">Золотая нить, разделитель ✦, акценты вкладок</div></div>${toggle(true)}</div>
+      <div class="setting"><div><div class="nm">Курсор — волшебная палочка</div><div class="ds">Вне текста заметки</div></div>${toggle(false)}</div>
+      <div class="setting"><div><div class="nm">Факультет и очки в статус-баре</div></div>${toggle(true)}</div>
+      <div class="setting"><div><div class="nm">Распределяющая шляпа</div><div class="ds">Очки Когтеврана: 300 · <i>Слова имеют силу…</i></div></div><span class="btn">Надеть шляпу</span></div>
+    </div></div><p class="caption">Вкладка настроек плагина (Когтевран, пергамент)</p></div>
+
+    <div><div class="modal-wrap" style="${obsVars(gc)}"><div class="modal hat">
+      <svg width="110" height="100" viewBox="0 0 90 82"><path d="M44 4c6 0 9 10 12 22 3 14 10 26 20 32H12c10-8 16-20 20-34 3-12 6-20 12-20z" fill="#6b4a2b"/><path d="M8 62c10-6 64-6 74 0-2 6-72 6-74 0z" fill="#4e3520"/><path d="M34 40c3 3 8 3 11 0M50 38c2 2 5 2 7 0M36 50c6 3 14 3 20 0" stroke="#2a1a0e" stroke-width="2" fill="none"/></svg>
+      <div class="say">«Хм… непросто. Очень непросто…»</div>
+      <div class="verdict">ПУФФЕНДУЙ!</div>
+    </div></div><p class="caption">Распределяющая шляпа: три фразы «в раздумьях», затем вердикт</p></div>
+
+    <div><div class="modal-wrap" style="${obsVars(palette('slytherin', 'parchment'))}">
+      <div class="menu">
+        ${HOUSE_IDS.map((id) => `<div class="mi ${id === 'slytherin' ? 'on' : ''}">${crest(id, 16)} ${NAMES[id]}${id === 'slytherin' ? ' ✓' : ''}</div>`).join('')}
+        <div class="sep"></div><div class="mi">🎩 Распределяющая шляпа</div><div class="mi">⚙ Настройки темы</div>
+      </div></div><p class="caption">Меню по клику на палочку в ленте или на факультет в статус-баре</p></div>
+
+    <div><div class="modal-wrap" style="${obsVars(palette('gryffindor', 'common'))}"><div class="modal">
+      <div class="mt">Взмахнуть палочкой</div>
+      <div class="prompt-in">Lumos|</div>
+      <p style="color:var(--text-muted);margin:8px 0 0">Произнесите заклинание и нажмите Enter</p>
+    </div></div><p class="caption">Команда «Взмахнуть палочкой…» — способ произнести заклинание, не выходя из редактора</p></div>`;
+
+  // ---------- Пасхалки ----------
+  const ep = palette('gryffindor', 'parchment');
+  document.getElementById('eggs').innerHTML = `
+    <div class="card"><h3>Заклинания</h3>
+      Набираются в любом месте вне редактора (или через «Взмахнуть палочкой…»), по-английски и по-русски:
+      <ul>
+        <li><span class="kbd">lumos</span> — вспышка света и светлая тема; <span class="kbd">nox</span> — темнота и тёмная тема.</li>
+        <li><span class="kbd">I solemnly swear that I am up to no good</span> — по окну бегут следы Карты Мародёров с надписью Лунатика, Хвоста, Бродяги и Сохатого.</li>
+        <li><span class="kbd">mischief managed</span> — тема гаснет до новой клятвы или перезапуска.</li>
+        <li><span class="kbd">accio snitch</span> или Konami <span class="kbd">↑↑↓↓←→←→BA</span> — Золотой снитч, поймай за 150 очков.</li>
+      </ul></div>
+    <div class="card" style="${obsVars(ep)};background:var(--background-primary)"><h3 style="color:var(--h1-color)">Секретные коллауты</h3><div class="note" style="font-size:14px">
+      <div class="callout howler"><div class="ct">✉ Громовещатель</div>РОНАЛЬД УИЗЛИ! КАК ТЫ ПОСМЕЛ УГНАТЬ МАШИНУ!</div>
+      <div class="callout prophecy"><div class="ct">✧ Пророчество</div>Грядёт тот, у кого хватит могущества победить Тёмного Лорда…</div>
+      <div class="callout marauders"><div class="ct">👣 Карта Мародёров</div>Господа Лунатик, Хвост, Бродяга и Сохатый с гордостью представляют…</div>
+      <p style="font:12px var(--ui);color:var(--text-muted)"><code>&gt; [!howler]</code>, <code>&gt; [!prophecy]</code>, <code>&gt; [!marauders]</code> — громовещатель трясётся, пророчество светится, карта — пергамент с чернилами.</p>
+    </div></div>
+    <div class="card"><h3>Прочее</h3><ul>
+      <li>Папка «Restricted Section» / «Запретная секция» в файловом менеджере: курсив, замок, содержимое размыто до наведения.</li>
+      <li>Распределяющая шляпа: команда, кнопка в настройках и пункт меню.</li>
+      <li>Тройной клик по гербу в настройках — девиз <i>Draco dormiens nunquam titillandus</i>.</li>
+      <li>31 июля — поздравление с днём рождения Гарри.</li>
+    </ul></div>
+    <div class="card" style="display:grid;place-items:center;background:${ep.bg}">
+      <svg width="160" height="84" viewBox="0 0 64 34"><path d="M26 16C17 3 5 2 1 6c7 1 15 6 24 13z" fill="#fffdf5" stroke="#8a7440" stroke-width="1.1"/><path d="M38 16C47 3 59 2 63 6c-7 1-15 6-24 13z" fill="#fffdf5" stroke="#8a7440" stroke-width="1.1"/><defs><radialGradient id="sg" cx=".35" cy=".35"><stop offset="0" stop-color="#fff3b0"/><stop offset=".5" stop-color="#e8b923"/><stop offset="1" stop-color="#9a6f0c"/></radialGradient></defs><circle cx="32" cy="19" r="9" fill="url(#sg)"/></svg>
+      <p class="caption" style="color:${ep.muted}">Снитч мечется по окну 25 секунд и иногда замирает — шанс поймать</p>
     </div>`;
-  const frame = (label, inner) => `<div><div class="browser"><div class="chrome"><i></i><i></i><i></i><span class="url">example.com/hippogriffs</span></div>${inner}</div><p class="note">${label}</p></div>`;
-  document.getElementById('sites').innerHTML =
-    frame('До: обычный сайт', article('plain')) +
-    frame('После: Гриффиндор, пергамент', article('hp wand', vars(HOUSES.gryffindor.palettes.parchment))) +
-    frame('После: Слизерин, гостиная', article('hp wand', vars(HOUSES.slytherin.palettes.common))) +
-    frame('После: Когтевран, пергамент', article('hp wand', vars(HOUSES.ravenclaw.palettes.parchment))) +
-    frame('После: Пуффендуй, гостиная', article('hp wand', vars(HOUSES.hufflepuff.palettes.common))) +
-    frame('После: Гриффиндор, гостиная', article('hp wand', vars(HOUSES.gryffindor.palettes.common)));
 </script>
 </body>
 </html>
