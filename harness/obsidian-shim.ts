@@ -78,8 +78,12 @@ export class Plugin extends Component {
     return el;
   }
   addStatusBarItem() { return document.querySelector('.status-bar')!.createDiv({ cls: 'status-bar-item' }); }
-  addCommand(cmd: { id: string; name: string; callback?: () => void; checkCallback?: (checking: boolean) => boolean | void }) {
-    const run = cmd.callback ?? (() => cmd.checkCallback?.(false));
+  addCommand(cmd: {
+    id: string; name: string; callback?: () => void; checkCallback?: (checking: boolean) => boolean | void;
+    editorCallback?: (editor: unknown) => void;
+  }) {
+    const run = cmd.callback
+      ?? (cmd.editorCallback ? () => cmd.editorCallback!(this.app.workspace.activeEditor.editor) : () => cmd.checkCallback?.(false));
     this.commands[cmd.id] = { ...cmd, callback: run };
     return cmd;
   }
@@ -91,6 +95,7 @@ export class TFile {
   basename: string;
   extension: string;
   name: string;
+  stat = { ctime: Date.now() - 400 * DAY, mtime: Date.now(), size: 0 };
   constructor(public path: string) {
     this.name = path.slice(path.lastIndexOf('/') + 1);
     this.extension = this.name.slice(this.name.lastIndexOf('.') + 1);
@@ -166,6 +171,25 @@ export class Setting {
   private get control() { return this.controlEl; }
   setName(name: string) { this.nameEl.prepend(name); return this; }
   setDesc(desc: string) { this.descEl.textContent = desc; return this; }
+  setHeading() { this.settingEl.classList.add('setting-item-heading'); return this; }
+  setDisabled(disabled: boolean) {
+    for (const el of this.controlEl.querySelectorAll('.checkbox-container, input, select, button')) el.toggleAttribute('disabled', disabled);
+    return this;
+  }
+  private textInput(tag: 'input' | 'textarea', cb: (c: any) => void) {
+    const el = (this.control as any).createEl(tag, tag === 'input' ? { attr: { type: 'text' } } : {}) as HTMLInputElement;
+    const api = {
+      inputEl: el,
+      setPlaceholder(p: string) { el.placeholder = p; return api; },
+      setValue(v: string) { el.value = v; return api; },
+      getValue() { return el.value; },
+      onChange(h: (v: string) => void) { el.addEventListener('input', () => h(el.value)); return api; }
+    };
+    cb(api);
+    return this;
+  }
+  addText(cb: (c: any) => void) { return this.textInput('input', cb); }
+  addTextArea(cb: (c: any) => void) { return this.textInput('textarea', cb); }
   addToggle(cb: (t: any) => void) {
     const el = (this.control as any).createDiv({ cls: 'checkbox-container' });
     let handler: (v: boolean) => void = () => {};
@@ -173,7 +197,12 @@ export class Setting {
       setValue(v: boolean) { el.classList.toggle('is-enabled', v); return api; },
       onChange(h: (v: boolean) => void) { handler = h; return api; }
     };
-    el.addEventListener('click', () => { const v = !el.classList.contains('is-enabled'); api.setValue(v); handler(v); });
+    el.addEventListener('click', () => {
+      if (el.hasAttribute('disabled')) return;
+      const v = !el.classList.contains('is-enabled');
+      api.setValue(v);
+      handler(v);
+    });
     cb(api);
     return this;
   }
@@ -211,6 +240,7 @@ export class Setting {
     const api = {
       setButtonText(t: string) { el.textContent = t; return api; },
       setCta() { el.classList.add('mod-cta'); return api; },
+      setWarning() { el.classList.add('mod-warning'); return api; },
       onClick(h: () => void) { el.addEventListener('click', h); return api; }
     };
     cb(api);
@@ -294,6 +324,20 @@ export class Menu {
 }
 
 export function setIcon(_el: HTMLElement, _icon: string) {}
+
+const DAY = 24 * 60 * 60 * 1000;
+const pad = (n: number) => String(n).padStart(2, '0');
+
+/** Крошечный moment: только format с YYYY, MM и DD — больше плагину не нужно. */
+export function moment(date: Date | number = new Date()) {
+  const d = new Date(date);
+  return {
+    format: (fmt = 'YYYY-MM-DDTHH:mm:ss') => fmt
+      .replace(/YYYY/g, String(d.getFullYear()))
+      .replace(/MM/g, pad(d.getMonth() + 1))
+      .replace(/DD/g, pad(d.getDate()))
+  };
+}
 export function getAllTags(cache: { tags?: { tag: string }[] }) { return cache.tags?.map((t) => t.tag) ?? null; }
 export function getLanguage() { return new URLSearchParams(location.search).get('lang') || 'en'; }
 
@@ -326,14 +370,41 @@ const TAGS: Record<string, string[]> = {
   'Дневник/Сны.md': ['#домашка']
 };
 
+/** Задачи заметок стенда: сколько закрыто (как listItems с task: 'x'). */
+const DONE: Record<string, number> = { 'Хогвартс/Зельеварение.md': 1 };
+
 export function createApp() {
   const files = new Map(Object.keys(VAULT).map((p) => [p, new TFile(p)]));
+  // Омут памяти: «Сны» давно не открывали. Маховик времени: «Заметки на полях» написаны ровно год назад.
+  files.get('Дневник/Сны.md')!.stat.mtime = Date.now() - 200 * DAY;
+  const now = new Date();
+  const yearAgo = new Date(now.getFullYear() - 1, now.getMonth(), Math.min(now.getDate(), 28), 12);
+  files.get('Дневник/Заметки на полях.md')!.stat.ctime = yearAgo.getTime();
   const workspace = new Events() as any;
   workspace.onLayoutReady = (cb: () => void) => setTimeout(cb, 0);
   workspace.viewCreators = new Map();
   workspace.leaves = [] as WorkspaceLeaf[];
   workspace.activeFile = files.get('Хогвартс/Зельеварение.md');
   workspace.getActiveFile = () => workspace.activeFile;
+  /** Редактор стенда для команд редактора: выделенный текст и что в него вставили. */
+  workspace.activeEditor = {
+    editor: {
+      selection: '',
+      inserted: '',
+      getSelection() { return this.selection; },
+      replaceSelection(text: string) { this.inserted = text; this.selection = ''; }
+    }
+  };
+  /** Клик по неразрешённой ссылке: Obsidian создаёт заметку и открывает её. */
+  workspace.openLinkText = async (linktext: string) => {
+    const path = `${linktext}.md`;
+    if (!files.has(path)) {
+      files.set(path, new TFile(path));
+      for (const links of Object.values(metadataCache.unresolvedLinks) as Record<string, number>[]) delete links[linktext];
+      vault.trigger('create', files.get(path));
+    }
+    workspace.setActiveFile(files.get(path));
+  };
   workspace.setActiveFile = (file: TFile) => {
     workspace.activeFile = file;
     for (const el of document.querySelectorAll('#inline-title, .mod-root .workspace-tabs:first-child .workspace-tab-header.is-active .workspace-tab-header-inner')) {
@@ -354,8 +425,30 @@ export function createApp() {
     getAbstractFileByPath: (p: string) => files.get(p) ?? null
   });
   const metadataCache = new Events() as any;
-  metadataCache.getFileCache = (file: TFile) => ({ tags: (TAGS[file.path] ?? []).map((tag) => ({ tag })) });
+  metadataCache.getFileCache = (file: TFile) => ({
+    tags: (TAGS[file.path] ?? []).map((tag) => ({ tag })),
+    listItems: Array.from({ length: DONE[file.path] ?? 0 }, () => ({ task: 'x' }))
+  });
   metadataCache.resolvedLinks = Object.fromEntries(Object.entries(VAULT).map(([from, to]) => [from, Object.fromEntries(to.map((p) => [p, 1]))]));
+  metadataCache.unresolvedLinks = { 'Хогвартс/Квиддич.md': { 'Метла Нимбус': 1 } } as Record<string, Record<string, number>>;
+  /** Правка заметки: новые ссылки и закрытые задачи, события — как у Obsidian. */
+  metadataCache.edit = (path: string, change: { links?: string[]; done?: number }) => {
+    if (change.links) metadataCache.resolvedLinks[path] = Object.fromEntries(change.links.map((p) => [p, 1]));
+    if (change.done !== undefined) DONE[path] = change.done;
+    const file = files.get(path)!;
+    metadataCache.trigger('changed', file, '', metadataCache.getFileCache(file));
+    metadataCache.trigger('resolve', file);
+    metadataCache.trigger('resolved');
+  };
+  /** Удаление заметки: ссылки на неё перестают разрешаться. */
+  vault.remove = (path: string) => {
+    const file = files.get(path)!;
+    files.delete(path);
+    delete metadataCache.resolvedLinks[path];
+    for (const links of Object.values(metadataCache.resolvedLinks) as Record<string, number>[]) delete links[path];
+    vault.trigger('delete', file);
+    metadataCache.trigger('resolved');
+  };
   const app = {
     workspace,
     vault,

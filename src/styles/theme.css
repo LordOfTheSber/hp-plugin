@@ -268,6 +268,52 @@ body.hp-theme.hp-wand :is(.markdown-source-view, .cm-editor, .inline-title, .can
   line-height: 0;
 }
 
+.setting-item.is-disabled {
+  opacity: 0.6;
+}
+
+/* Кубок школы: очки факультетов полосками */
+.hp-cup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 0 4px;
+}
+
+.hp-cup-row {
+  display: grid;
+  grid-template-columns: 20px minmax(90px, auto) 1fr auto;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-normal);
+}
+
+.hp-cup-row.is-current .hp-cup-name {
+  font-weight: var(--font-semibold, 600);
+}
+
+.hp-cup-bar {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--background-modifier-border);
+  overflow: hidden;
+}
+
+.hp-cup-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.4s ease-out;
+}
+
+.hp-cup-points {
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.hp-cup-actions .setting-item-control {
+  flex-wrap: wrap;
+}
+
 /* Распределяющая шляпа */
 .hp-hat-modal .modal-content {
   display: flex;
@@ -320,6 +366,40 @@ body.hp-theme.hp-wand :is(.markdown-source-view, .cm-editor, .inline-title, .can
 @keyframes hp-shout {
   from { transform: scale(0.6); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
+}
+
+/* Испытание шляпы: вопрос и четыре ответа */
+.hp-hat-progress {
+  min-height: 1.2em;
+  color: var(--text-muted);
+  font-size: var(--font-ui-small);
+}
+
+.hp-hat-choices {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  max-width: 400px;
+}
+
+.hp-hat-choices.is-quiz {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  width: 100%;
+}
+
+.hp-hat-choices button {
+  height: auto;
+  min-height: var(--input-height, 30px);
+  padding: 6px 14px;
+  white-space: normal;
+  cursor: var(--cursor, pointer);
+}
+
+.hp-hat-answer {
+  text-align: left;
 }
 
 /* Палочка */
@@ -610,6 +690,16 @@ body.theme-light .hp-trail-core {
   box-shadow: 0 0 8px #ffd54a;
 }
 
+/* «+10» над очками в статус-баре */
+.hp-float-points {
+  font-family: 'HP Forum', Georgia, serif;
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
+  color: var(--hp-primary, var(--text-accent));
+  text-shadow: 0 0 6px var(--background-primary, #fff);
+}
+
 /* ---------- Карта Мародёров (боковая панель) ----------
    Сама карта — всегда пергамент с чернилами, в любой теме: так выглядит настоящая.
    Списки под ней — в цветах факультета. */
@@ -723,6 +813,21 @@ body.theme-light .hp-trail-core {
   fill: #e6c97a;
 }
 
+/* Неизведанная комната: заметки ещё нет — пунктирный кружок и подпись курсивом */
+.hp-map-node.is-ghost .hp-map-dot {
+  fill: transparent;
+  stroke-dasharray: 2 2.5;
+}
+
+.hp-map-node.is-ghost .hp-map-label {
+  font-style: italic;
+}
+
+.hp-map-edge.is-ghost {
+  stroke-dasharray: 1 3;
+  opacity: 0.4;
+}
+
 .hp-map-node.is-visited .hp-map-dot {
   fill: var(--hp-map-ink-soft);
 }
@@ -821,6 +926,17 @@ body.theme-light .hp-trail-core {
 
 .hp-marauders-legend > .hp-legend-tag::before {
   border-top-style: dotted;
+}
+
+.hp-marauders-legend > .hp-legend-ghost {
+  font-style: italic;
+}
+
+.hp-marauders-legend > .hp-legend-ghost::before {
+  width: 10px;
+  height: 10px;
+  border: 1.5px dashed currentColor;
+  border-radius: 50%;
 }
 
 .hp-marauders-empty,
@@ -1001,6 +1117,62 @@ body.hp-theme.theme-dark .callout:is([data-callout="prophecy"], [data-callout="�
   0%, 100% { transform: translateX(0) rotate(0); }
   25% { transform: translateX(-3px) rotate(-0.6deg); }
   75% { transform: translateX(3px) rotate(0.6deg); }
+}
+
+/* Заклинание, зелье и сова-напоминание */
+body.hp-theme .callout:is([data-callout="spell"], [data-callout="заклинание"]) {
+  --callout-color: var(--hp-primary-rgb);
+  --callout-icon: lucide-wand;
+}
+
+body.hp-theme .callout:is([data-callout="spell"], [data-callout="заклинание"]) .callout-title-inner {
+  font-family: 'HP Forum', Georgia, serif;
+  letter-spacing: 0.03em;
+}
+
+body.hp-theme .callout:is([data-callout="potion"], [data-callout="зелье"]) {
+  --callout-color: 38, 110, 52;
+  --callout-icon: lucide-flask-conical;
+  background: linear-gradient(160deg, rgba(56, 142, 60, 0.16), rgba(56, 142, 60, 0.04) 70%);
+}
+
+body.hp-theme.theme-dark .callout:is([data-callout="potion"], [data-callout="зелье"]) {
+  --callout-color: 130, 205, 135;
+}
+
+body.hp-theme .callout:is([data-callout="owl"], [data-callout="сова"]) {
+  --callout-color: 120, 82, 30;
+  --callout-icon: lucide-bird;
+  border-left: 3px solid rgba(var(--callout-color), 0.6);
+}
+
+body.hp-theme.theme-dark .callout:is([data-callout="owl"], [data-callout="сова"]) {
+  --callout-color: 222, 184, 120;
+}
+
+/* ---------- Мантия-невидимка ---------- */
+
+/* Коллаут-мантия: заголовок виден, содержимое — нет, пока не наведёшь курсор */
+body.hp-theme .callout:is([data-callout="cloak"], [data-callout="мантия"]) {
+  --callout-color: 84, 84, 104;
+  --callout-icon: lucide-eye-off;
+}
+
+body.hp-theme.theme-dark .callout:is([data-callout="cloak"], [data-callout="мантия"]) {
+  --callout-color: 170, 170, 195;
+}
+
+body.hp-theme .callout:is([data-callout="cloak"], [data-callout="мантия"]) > .callout-content,
+body.hp-theme .hp-cloak {
+  filter: blur(5px);
+  transition: filter 0.3s;
+  user-select: none;
+}
+
+body.hp-theme .callout:is([data-callout="cloak"], [data-callout="мантия"]):is(:hover, :focus-within) > .callout-content,
+body.hp-theme .hp-cloak:is(:hover, :focus) {
+  filter: none;
+  user-select: auto;
 }
 
 /* ---------- Запретная секция ---------- */

@@ -67,6 +67,8 @@ const mainOptions = {
   platform: 'browser',
   target: 'es2020',
   external: ['obsidian', 'electron', '@codemirror/*', '@lezer/*'],
+  // Кириллица в строках как есть, а не \uXXXX: main.js вдвое меньше
+  charset: 'utf8',
   outfile: join(root, 'main.js'),
   banner: { js: '/* HP Theme для Obsidian. Сгенерировано из src/ — см. репозиторий. */' },
   logLevel: 'info'

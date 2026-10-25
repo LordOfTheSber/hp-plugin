@@ -3,9 +3,10 @@
  * Контекстное меню при этом не должно мешать: на Windows оно приходит после отпускания кнопки
  * (его гасим, если был жест), на macOS и Linux — сразу при нажатии (его откладываем и показываем
  * при отпускании, если жеста не было). В полях ввода и редакторе на macOS и Linux меню не трогаем:
- * там оно нужно сразу, с проверкой орфографии.
+ * там оно нужно сразу, с проверкой орфографии. Но если при нажатии зажат Alt, жест можно начать и там:
+ * меню с орфографией в таком случае никто не ждёт.
  */
-import { isEditable } from './dom.ts';
+import { eventDocument, isEditable } from './dom.ts';
 import { recognize } from './gestures.ts';
 import type { Point } from './gestures.ts';
 import type { Effects, Trail, TrailColors } from './effects.ts';
@@ -18,7 +19,7 @@ const MAX_POINTS = 2000;
 export interface GestureHost {
   enabled(): boolean;
   colors(): TrailColors;
-  cast(spell: SpellId, at: Point): void;
+  cast(spell: SpellId, at: Point, doc: Document): void;
 }
 
 interface Stroke {
@@ -26,6 +27,10 @@ interface Stroke {
   moved: boolean;
   trail: Trail | null;
   pointerId: number;
+  /** Окно, где рисуют: след и заклинание — там же. */
+  doc: Document;
+  /** Alt при нажатии: жест и в редакторе на macOS и Linux. */
+  alt: boolean;
   /** Отложенное контекстное меню (macOS, Linux). */
   menu: { target: EventTarget; init: MouseEventInit } | null;
 }
@@ -42,7 +47,10 @@ export class GestureInput {
     this.suppressMenuUntil = 0;
     if (!this.host.enabled()) return;
     this.cancel();
-    this.stroke = { points: [{ x: e.clientX, y: e.clientY }], moved: false, trail: null, pointerId: e.pointerId, menu: null };
+    this.stroke = {
+      points: [{ x: e.clientX, y: e.clientY }], moved: false, trail: null, pointerId: e.pointerId,
+      doc: eventDocument(e), alt: e.altKey, menu: null
+    };
   }
 
   pointerMove(e: PointerEvent): void {
@@ -60,7 +68,7 @@ export class GestureInput {
     const start = s.points[0];
     if (!s.moved && Math.hypot(e.clientX - start.x, e.clientY - start.y) > MOVE_THRESHOLD) {
       s.moved = true;
-      s.trail = this.effects.trail(this.host.colors(), start.x, start.y);
+      s.trail = this.effects.trail(s.doc, this.host.colors(), start.x, start.y);
       for (const p of s.points.slice(1)) s.trail.add(p.x, p.y);
       try {
         (e.target as Element).setPointerCapture?.(e.pointerId);
@@ -82,7 +90,7 @@ export class GestureInput {
     const s = this.stroke;
     if (s) {
       // Кнопка ещё зажата — значит, это macOS или Linux
-      if (isEditable(e.target as Element)) {
+      if (isEditable(e.target as Element) && !s.alt) {
         this.cancel();
         return;
       }
@@ -118,7 +126,7 @@ export class GestureInput {
       this.suppressMenuUntil = Date.now() + 500;
       const result = released ? recognize(s.points) : null;
       s.trail?.finish(!!result);
-      if (result) this.host.cast(result.spell, s.points[0]);
+      if (result) this.host.cast(result.spell, s.points[0], s.doc);
       return;
     }
     if (released && s.menu) {
