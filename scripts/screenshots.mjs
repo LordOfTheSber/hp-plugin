@@ -97,5 +97,14 @@ await page.keyboard.type(' I solemnly swear that I am up to no good');
 await page.waitForTimeout(2600);
 await shot('egg-map');
 
+// Клятва открыла Карту Мародёров: путь к заметке в Запретной секции
+await page.waitForTimeout(2800);
+await page.evaluate(() => document.querySelectorAll('.notice, .hp-footprint, [data-hp-snitch]').forEach((n) => n.remove()));
+await page.evaluate(() => document.activeElement?.blur());
+await page.evaluate(() => harness.plugin.map.setRoute('Хогвартс/Зельеварение.md', 'Запретная секция/Тайны крестражей.md'));
+await page.hover('.hp-map-node[data-path="Хогвартс/Расписание.md"]');
+await page.waitForTimeout(300);
+await shot('marauders-map');
+
 await browser.close();
 console.log('saved to', out);

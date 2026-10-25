@@ -246,13 +246,91 @@ test('плагин на стенде Obsidian', { skip: !playwright && 'Playwrig
       assert.equal(saved.snitches, 1);
     });
 
+    // Уведомления справа сверху закрывают боковую панель
+    const clearNotices = () => page.evaluate(() => document.querySelectorAll('.notice').forEach((n) => n.remove()));
+
+    await t.test('Карта Мародёров: где я, переходы, следы', async () => {
+      await clearNotices();
+      const here = () => page.getAttribute('.hp-map-node.is-here', 'data-path');
+      const ring1 = () => page.$$eval('.hp-map-node.ring-1', (els) => els.map((el) => el.dataset.path).sort());
+      await page.evaluate(() => harness.runCommand('marauders-map'));
+      await page.waitForSelector('.hp-marauders .hp-marauders-svg');
+      assert.equal(await here(), 'Хогвартс/Зельеварение.md');
+      assert.deepEqual(await ring1(), ['Ингредиенты/Безоар.md', 'Люди/Северус Снегг.md', 'Хогвартс/Расписание.md']);
+      assert.ok(await page.locator('.hp-map-edge.is-both').count(), 'Расписание ссылается в ответ');
+      assert.ok(await page.locator('.hp-map-edge.is-backlink').count(), 'на Безоар ссылается Гермиона — обратная ссылка');
+      assert.equal(await page.textContent('.hp-map-node.is-here .hp-map-here'), 'вы здесь');
+      // Дальний круг подписан при наведении
+      const far = page.locator('.hp-map-node.ring-2[data-path="Хогвартс/Квиддич.md"] .hp-map-label');
+      assert.equal(await far.evaluate((el) => getComputedStyle(el).opacity), '0');
+
+      await page.click('.hp-map-node[data-path="Хогвартс/Расписание.md"]');
+      await page.waitForFunction(() => harness.app.workspace.getActiveFile().path === 'Хогвартс/Расписание.md');
+      assert.equal(await here(), 'Хогвартс/Расписание.md');
+      assert.equal(await page.textContent('#inline-title'), 'Расписание');
+      assert.deepEqual(await page.$$eval('.hp-map-footprint', (els) => els.map((el) => el.textContent)), ['Зельеварение']);
+
+      // С клавиатуры: Tab до заметки на карте и Enter
+      await page.focus('.hp-map-node[data-path="Хогвартс/Квиддич.md"]');
+      await page.keyboard.press('Enter');
+      await page.waitForFunction(() => harness.app.workspace.getActiveFile().path === 'Хогвартс/Квиддич.md');
+      await page.click('.hp-map-footprint:has-text("Расписание")');
+      await page.waitForFunction(() => harness.app.workspace.getActiveFile().path === 'Хогвартс/Расписание.md');
+    });
+
+    await t.test('Карта Мародёров: путь к заметке, следующий шаг, навигатор', async () => {
+      await clearNotices();
+      const steps = () => page.$$eval('.hp-marauders-steps .hp-map-step-name', (els) => els.map((el) => el.textContent));
+      await page.evaluate(() => harness.runCommand('marauders-route'));
+      await page.click('.suggestion-item:has-text("Тайны крестражей")');
+      await page.waitForSelector('.hp-marauders-steps');
+      assert.deepEqual(await steps(), ['Расписание', 'Зельеварение', 'Безоар', 'Гермиона Грейнджер', 'Библиотека', 'Тайны крестражей']);
+      assert.match(await page.textContent('.hp-marauders-note'), /Шагов: 5/);
+      assert.match(await page.textContent('.hp-marauders-steps li:nth-child(4) .hp-map-step-hint'), /обратная ссылка/);
+      assert.ok(await page.locator('.hp-map-steps ellipse').count() >= 4, 'следы по маршруту на карте');
+      assert.equal(await page.getAttribute('.hp-map-node.is-next', 'data-path'), 'Хогвартс/Зельеварение.md');
+
+      await page.click('.hp-map-next');
+      await page.waitForFunction(() => harness.app.workspace.getActiveFile().path === 'Хогвартс/Зельеварение.md');
+      assert.equal((await steps())[0], 'Зельеварение');
+      assert.equal(await page.getAttribute('.hp-map-node.is-next', 'data-path'), 'Ингредиенты/Безоар.md');
+
+      // Свернули с пути — путь перестраивается
+      await page.click('.hp-map-node[data-path="Люди/Северус Снегг.md"]');
+      await page.waitForSelector('.hp-marauders-note:has-text("свернули")');
+      assert.equal((await steps())[0], 'Северус Снегг');
+
+      // Командой «Следующий шаг» — до цели
+      for (let i = 0; i < 8 && await page.evaluate(() => !!harness.plugin.map.route); i++) {
+        await page.evaluate(() => harness.runCommand('marauders-next'));
+      }
+      await page.waitForSelector('.notice:has-text("Вы на месте: «Тайны крестражей»")');
+      assert.equal(await page.evaluate(() => harness.app.workspace.getActiveFile().path), 'Запретная секция/Тайны крестражей.md');
+      assert.equal(await page.locator('.hp-marauders-steps').count(), 0);
+      assert.ok(await page.isVisible('.hp-marauders-route .hp-map-plan'));
+      assert.match(await style('.hp-map-node.is-here', 'filter'), /none/, 'на центре Запретная секция не размыта');
+    });
+
+    await t.test('Карта Мародёров: туда, куда ходов нет', async () => {
+      await page.evaluate(() => harness.plugin.map.setRoute('Запретная секция/Тайны крестражей.md', 'Дневник/Заметки на полях.md'));
+      await page.waitForSelector('.notice:has-text("тайного хода нет")');
+      assert.equal(await page.locator('.hp-marauders-steps').count(), 0);
+      const open = (p) => page.evaluate((path) => harness.app.workspace.setActiveFile(harness.app.vault.getAbstractFileByPath(path)), p);
+      await open('Дневник/Заметки на полях.md');
+      await page.waitForSelector('.hp-marauders-empty:has-text("ни ссылок, ни обратных ссылок")');
+      await open('Хогвартс/Зельеварение.md');
+      await page.waitForSelector('.hp-map-node.is-here[data-path="Хогвартс/Зельеварение.md"]');
+    });
+
     await t.test('mischief managed выключает тему, клятва возвращает', async () => {
       await typeOutsideEditor('mischief managed');
       await page.waitForFunction(() => !document.body.classList.contains('hp-theme'));
       assert.equal(await page.isVisible('.hp-status'), false);
+      assert.equal(await page.locator('.hp-marauders').count(), 0, 'карта стёрта');
       await typeOutsideEditor('I solemnly swear that I am up to no good');
       await page.waitForFunction(() => document.body.classList.contains('hp-theme'));
       await page.waitForSelector('.hp-map-card');
+      await page.waitForSelector('.hp-marauders .hp-marauders-svg', { timeout: 4000 });
     });
 
     await t.test('Распределяющая шляпа', async () => {
@@ -288,7 +366,7 @@ test('плагин на стенде Obsidian', { skip: !playwright && 'Playwrig
     await t.test('меню факультетов из ленты', async () => {
       await page.click('.side-dock-ribbon-action');
       await page.waitForSelector('.menu');
-      assert.equal(await page.locator('.menu .menu-item').count(), 7);
+      assert.equal(await page.locator('.menu .menu-item').count(), 8);
       await page.click('.menu-item:has-text("Пуффендуй")');
       assert.ok(await bodyHas('hp-house-hufflepuff'));
     });

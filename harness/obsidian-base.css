@@ -100,6 +100,9 @@ body {
 .workspace-tab-header.is-active { background: var(--background-primary); color: var(--text-normal); }
 .workspace-leaf-content { flex: 1; overflow: auto; background: var(--background-primary); }
 .mod-left-split .workspace-leaf-content { background: transparent; }
+.mod-right-split { width: 300px; flex: none; display: flex; flex-direction: column; background: var(--background-secondary); border-left: 1px solid var(--background-modifier-border); }
+.mod-right-split .workspace-leaf-content { background: var(--background-secondary); }
+.view-content { padding: 8px 12px; }
 .markdown-preview-view, .markdown-source-view { padding: 24px 36px; }
 .markdown-rendered, .cm-content { font-family: var(--font-text); font-size: 16px; line-height: var(--line-height-normal); color: var(--text-normal); max-width: 700px; }
 .inline-title { font-family: var(--inline-title-font); font-weight: var(--inline-title-weight); font-size: 2em; line-height: 1.2; color: var(--inline-title-color); margin-bottom: .5em; outline: none; }

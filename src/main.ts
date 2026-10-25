@@ -17,6 +17,7 @@ import { Effects } from './effects.ts';
 import { isEditable } from './dom.ts';
 import { GestureInput } from './gesture-input.ts';
 import type { Point } from './gestures.ts';
+import { MaraudersMap } from './marauders.ts';
 import { HouseSuggestModal, SortingHatModal, WandModal, WandShopModal } from './modals.ts';
 import { CORES, wandCursorCss } from './wands.ts';
 import type { WandSpec } from './wands.ts';
@@ -39,6 +40,7 @@ export default class HpThemePlugin extends Plugin {
   /** «Шалость удалась»: тема выключена до клятвы или перезапуска. */
   paused = false;
 
+  map!: MaraudersMap;
   private effects!: Effects;
   private gestures!: GestureInput;
   private saveTimer = 0;
@@ -68,6 +70,8 @@ export default class HpThemePlugin extends Plugin {
 
     this.addSettingTab(new HpSettingTab(this.app, this));
     this.addRibbonIcon('wand', this.t('ribbonTitle'), (evt) => this.openHouseMenu(evt));
+    this.map = new MaraudersMap(this);
+    this.map.load();
     this.statusEl = this.addStatusBarItem();
     this.statusEl.addClass('hp-status', 'mod-clickable');
     this.registerDomEvent(this.statusEl, 'click', (evt) => this.openHouseMenu(evt));
@@ -219,6 +223,7 @@ export default class HpThemePlugin extends Plugin {
     }
     menu.addSeparator();
     menu.addItem((item) => item.setTitle(this.t('shopTitle')).setIcon('wand').onClick(() => this.openWandShop()));
+    menu.addItem((item) => item.setTitle(this.t('mapTitle')).setIcon('footprints').onClick(() => void this.map.reveal()));
     menu.addItem((item) => item.setTitle(this.t('commandSortingHat')).setIcon('graduation-cap').onClick(() => this.openSortingHat()));
     menu.addItem((item) => item.setTitle(this.t('menuSettings')).setIcon('settings').onClick(() => this.openSettings()));
     menu.showAtMouseEvent(evt);
@@ -297,9 +302,12 @@ export default class HpThemePlugin extends Plugin {
           this.applyTheme();
         }
         this.effects.marauders([this.t('eggMap1'), this.t('eggMap2'), this.t('eggMapTitle')]);
+        // Карта проявляется вслед за надписью
+        this.effects.later(() => void this.map.reveal(), 1200);
         break;
       case 'mischiefManaged':
         this.effects.inkFade();
+        this.map.close();
         new Notice(this.t('eggMischief'));
         this.effects.later(() => {
           this.paused = true;
