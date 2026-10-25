@@ -207,11 +207,11 @@ test('плагин на стенде Obsidian', { skip: !playwright && 'Playwrig
       await page.waitForFunction(() => JSON.parse(localStorage.getItem('hp-harness-data'))['hp-theme'].wand?.wood === 'ebony');
 
       const wandCursor = /^image-set\(url\("data:image\/svg\+xml/;
-      // Везде: пустое место, файлы, вкладки, кнопки (у них курсор из --cursor, как в Obsidian) и сама заметка
-      for (const sel of ['.nav-header', '.nav-file-title', '.workspace-tab-header', '.side-dock-ribbon-action', '.hp-status',
-        '#para', '#h2', '#inline-title', '#editor', '.cm-line']) {
+      // Пустое место, файлы, вкладки, кнопки (у них курсор из --cursor, как в Obsidian) и режим чтения
+      for (const sel of ['.nav-header', '.nav-file-title', '.workspace-tab-header', '.side-dock-ribbon-action', '.hp-status', '#para', '#h2']) {
         assert.match(await style(sel, 'cursor'), wandCursor, sel);
       }
+      for (const sel of ['#editor', '.cm-line']) assert.equal(await style(sel, 'cursor'), 'auto', `${sel}: в редакторе — текстовый курсор`);
       assert.ok((await style('.nav-file-title', 'cursor')).includes(encodeURIComponent('#110c0a')), 'в курсоре выбранная палочка (эбен)');
       assert.equal(await style('#link', 'cursor'), 'pointer', 'на ссылках — рука');
       await page.evaluate(() => document.body.appendChild(Object.assign(document.createElement('input'), { type: 'text', id: 'hp-test-input' })));

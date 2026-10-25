@@ -540,15 +540,15 @@ body.hp-theme.hp-wand {
   cursor: var(--hp-wand-cursor, auto);
 }
 
-/* Палочка и над заметкой: редактор, режим чтения и холст иначе показывают текстовый курсор.
+/* Палочка и в режиме чтения: там иначе текстовый курсор над текстом.
    Выделять текст палочкой удобно — точка курсора на её кончике. */
-body.hp-theme.hp-wand :is(.markdown-source-view, .markdown-reading-view, .markdown-preview-view, .cm-editor,
-  .cm-scroller, .cm-content, .cm-line, .inline-title, .canvas-node-content) {
+body.hp-theme.hp-wand :is(.markdown-reading-view, .markdown-preview-view) {
   cursor: var(--hp-wand-cursor, auto);
 }
 
-/* В полях ввода (поиск, настройки, модалки) — обычный текстовый курсор */
-body.hp-theme.hp-wand :is(input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="button"], [type="submit"]), textarea) {
+/* В редакторе и полях ввода (поиск, настройки, модалки) — обычный текстовый курсор */
+body.hp-theme.hp-wand :is(.markdown-source-view, .cm-editor, .inline-title, .canvas-node-content, [contenteditable="true"],
+  input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="button"], [type="submit"]), textarea) {
   cursor: auto;
 }
 
