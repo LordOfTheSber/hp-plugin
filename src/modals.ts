@@ -71,6 +71,15 @@ export function wandName(t: Translate, wand: WandSpec): string {
   return preset ? t(`presetWand_${preset}`) : t('shopCustomWand');
 }
 
+export interface WandShopOptions {
+  wand: WandSpec;
+  /** Включён ли курсор-палочка: переключатель есть прямо в лавке. */
+  cursor: boolean;
+  onChange(wand: WandSpec): void;
+  onCursor(enabled: boolean): void;
+  onClosed?(): void;
+}
+
 /** Лавка Олливандера: знаменитые палочки и конструктор своей. */
 export class WandShopModal extends Modal {
   private wand: WandSpec;
@@ -80,15 +89,9 @@ export class WandShopModal extends Modal {
   private slider: SliderComponent | null = null;
   private lengthLabel: HTMLElement | null = null;
 
-  constructor(
-    app: App,
-    private readonly t: Translate,
-    wand: WandSpec,
-    private readonly onChange: (wand: WandSpec) => void,
-    private readonly onClosed?: () => void
-  ) {
+  constructor(app: App, private readonly t: Translate, private readonly options: WandShopOptions) {
     super(app);
-    this.wand = { ...wand };
+    this.wand = { ...options.wand };
   }
 
   onOpen(): void {
@@ -104,6 +107,11 @@ export class WandShopModal extends Modal {
       name: stage.createDiv({ cls: 'hp-shop-name' }),
       desc: stage.createDiv({ cls: 'hp-shop-desc' })
     };
+    new Setting(contentEl)
+      .setName(t('settingWandCursor'))
+      .setDesc(t('settingWandCursorDesc'))
+      .addToggle((tg) => tg.setValue(this.options.cursor).onChange((value) => this.options.onCursor(value)))
+      .settingEl.addClass('hp-shop-cursor');
 
     contentEl.createDiv({ cls: 'hp-shop-heading', text: t('shopCanon') });
     const grid = contentEl.createDiv({ cls: 'hp-shop-presets' });
@@ -140,7 +148,7 @@ export class WandShopModal extends Modal {
     this.contentEl.empty();
     this.cards.clear();
     this.dropdowns = [];
-    this.onClosed?.();
+    this.options.onClosed?.();
   }
 
   private dropdown(container: HTMLElement, key: 'wood' | 'core' | 'handle' | 'flex', name: string, options: [string, string][]): void {
@@ -157,13 +165,13 @@ export class WandShopModal extends Modal {
     for (const { key, control } of this.dropdowns) control.setValue(this.wand[key]);
     this.slider?.setValue(this.wand.length);
     this.refresh();
-    this.onChange({ ...this.wand });
+    this.options.onChange({ ...this.wand });
   }
 
   private update(patch: Partial<WandSpec>): void {
     this.wand = { ...this.wand, ...patch };
     this.refresh();
-    this.onChange({ ...this.wand });
+    this.options.onChange({ ...this.wand });
   }
 
   private refresh(): void {

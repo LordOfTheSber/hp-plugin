@@ -83,11 +83,11 @@ body {
 .workspace { flex: 1; display: flex; min-height: 0; }
 .workspace-ribbon { width: 44px; flex: none; background: var(--ribbon-background); border-right: 1px solid var(--background-modifier-border); }
 .side-dock-actions { display: flex; flex-direction: column; align-items: center; gap: 10px; padding-top: 10px; }
-.clickable-icon { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 6px; color: var(--text-muted); cursor: pointer; font-size: 14px; }
+.clickable-icon { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 6px; color: var(--text-muted); cursor: var(--cursor); font-size: 14px; }
 .clickable-icon:hover { background: var(--background-modifier-hover); }
 .mod-left-split { width: 230px; flex: none; background: var(--background-secondary); border-right: 1px solid var(--background-modifier-border); padding: 8px 6px; overflow: hidden; }
 .nav-header { font-size: 11px; color: var(--text-faint); text-transform: uppercase; letter-spacing: .06em; padding: 4px 8px 8px; }
-.tree-item-self { display: flex; gap: 2px; padding: 3px 8px; border-radius: 5px; color: var(--text-muted); font-size: 13px; cursor: pointer; }
+.tree-item-self { display: flex; gap: 2px; padding: 3px 8px; border-radius: 5px; color: var(--text-muted); font-size: 13px; cursor: var(--cursor); }
 .tree-item-self:hover { background: var(--background-modifier-hover); }
 .nav-folder-title { color: var(--text-normal); }
 .nav-folder-title::before { content: '▾ '; color: var(--text-faint); }
@@ -96,7 +96,7 @@ body {
 .mod-root { flex: 1; display: flex; min-width: 0; }
 .workspace-tabs { flex: 1; display: flex; flex-direction: column; min-width: 0; border-right: 1px solid var(--background-modifier-border); }
 .workspace-tab-header-container { height: 36px; flex: none; display: flex; align-items: flex-end; gap: 2px; padding: 0 8px; background: var(--tab-container-background); border-bottom: 1px solid var(--background-modifier-border); }
-.workspace-tab-header { padding: 7px 14px; border-radius: 8px 8px 0 0; color: var(--text-muted); font-size: 13px; }
+.workspace-tab-header { padding: 7px 14px; border-radius: 8px 8px 0 0; color: var(--text-muted); font-size: 13px; cursor: var(--cursor); }
 .workspace-tab-header.is-active { background: var(--background-primary); color: var(--text-normal); }
 .workspace-leaf-content { flex: 1; overflow: auto; background: var(--background-primary); }
 .mod-left-split .workspace-leaf-content { background: transparent; }
@@ -124,30 +124,33 @@ body {
 .HyperMD-header-1 .cm-header { font-family: var(--h1-font); font-weight: var(--h1-weight); color: var(--h1-color); font-size: 1.8em; }
 .cm-content .cm-link { color: var(--link-color); }
 .status-bar { height: 26px; flex: none; display: flex; justify-content: flex-end; align-items: center; gap: 14px; padding: 0 12px; font-size: 12px; color: var(--text-muted); background: var(--status-bar-background); border-top: 1px solid var(--background-modifier-border); }
-.status-bar-item.mod-clickable { cursor: pointer; }
+.status-bar-item.mod-clickable { cursor: var(--cursor); }
 .modal-container { position: fixed; inset: 0; display: grid; place-items: center; z-index: 50; }
 .modal-bg { position: absolute; inset: 0; background: rgba(0, 0, 0, .45); }
 .modal { position: relative; width: min(560px, 92vw); max-height: 86vh; overflow: auto; padding: 20px 22px; border-radius: 12px; background: var(--background-primary); border: 1px solid var(--background-modifier-border); box-shadow: 0 16px 40px rgba(0,0,0,.35); }
 .modal-title { font-size: 1.4em; margin-bottom: 10px; }
 input[type="text"] { width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--background-modifier-border); background: var(--background-modifier-form-field); color: var(--text-normal); font-size: 15px; }
 input[type="text"]:focus { outline: 2px solid var(--background-modifier-border-focus, var(--interactive-accent)); }
-button { font: inherit; padding: 6px 14px; border-radius: 7px; border: 1px solid var(--background-modifier-border); background: var(--interactive-normal); color: var(--text-normal); cursor: pointer; }
+button { font: inherit; padding: 6px 14px; border-radius: 7px; border: 1px solid var(--background-modifier-border); background: var(--interactive-normal); color: var(--text-normal); cursor: var(--cursor); }
 button.mod-cta { background: var(--interactive-accent); color: var(--text-on-accent); border-color: transparent; }
 .setting-item { display: flex; justify-content: space-between; gap: 16px; align-items: center; padding: 12px 0; border-top: 1px solid var(--background-modifier-border); }
 .setting-item-description { color: var(--text-muted); font-size: 13px; }
-.checkbox-container { width: 38px; height: 21px; border-radius: 11px; background: var(--background-modifier-border); position: relative; cursor: pointer; flex: none; }
+.checkbox-container { width: 38px; height: 21px; border-radius: 11px; background: var(--background-modifier-border); position: relative; cursor: var(--cursor); flex: none; }
 .checkbox-container::after { content: ''; position: absolute; top: 3px; left: 3px; width: 15px; height: 15px; border-radius: 50%; background: var(--background-primary); transition: transform .15s; }
 .checkbox-container.is-enabled { background: var(--interactive-accent); }
 .checkbox-container.is-enabled::after { transform: translateX(17px); }
 .menu { position: fixed; z-index: 70; min-width: 220px; padding: 4px; border-radius: 8px; background: var(--background-secondary); border: 1px solid var(--background-modifier-border); box-shadow: 0 8px 24px rgba(0,0,0,.25); }
-.menu-item { display: flex; gap: 8px; align-items: center; padding: 5px 8px; border-radius: 5px; cursor: pointer; }
+.menu-item { display: flex; gap: 8px; align-items: center; padding: 5px 8px; border-radius: 5px; cursor: var(--cursor); }
 .menu-item:hover { background: var(--background-modifier-hover); }
 .menu-item.mod-checked .menu-item-title::after { content: ' ✓'; }
 .menu-separator { height: 1px; margin: 4px 2px; background: var(--background-modifier-border); }
-.suggestion-item { padding: 6px 10px; border-radius: 6px; cursor: pointer; }
+.suggestion-item { padding: 6px 10px; border-radius: 6px; cursor: var(--cursor); }
 .notice-container { position: fixed; top: 40px; right: 16px; z-index: 80; display: grid; gap: 8px; }
 .notice { max-width: 320px; padding: 10px 14px; border-radius: 8px; background: var(--background-secondary-alt, var(--background-secondary)); color: var(--text-normal); border: 1px solid var(--background-modifier-border); box-shadow: 0 6px 18px rgba(0,0,0,.2); font-size: 13px; }
 .hp-harness-settings-wrap { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; background: rgba(0,0,0,.45); }
 .hp-harness-settings { width: min(720px, 94vw); max-height: 90vh; overflow: auto; padding: 22px 28px; border-radius: 12px; background: var(--background-primary); border: 1px solid var(--background-modifier-border); }
 select.dropdown { font: inherit; padding: 5px 10px; border-radius: 7px; border: 1px solid var(--background-modifier-border); background: var(--interactive-normal); color: var(--text-normal); }
 input.slider { accent-color: var(--interactive-accent); width: 180px; }
+/* Как в Obsidian: интерактивные элементы берут курсор из --cursor (по умолчанию — стрелка) */
+body { --cursor: default; --cursor-link: pointer; }
+a { cursor: var(--cursor-link); }

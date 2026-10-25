@@ -197,14 +197,23 @@ test('плагин на стенде Obsidian', { skip: !playwright && 'Playwrig
       await page.selectOption('.hp-shop-form select >> nth=0', 'ebony');
       assert.equal(await page.textContent('.hp-shop-name'), 'Ваша собственная палочка');
       assert.equal(await page.locator('.hp-shop-preset.is-selected').count(), 0);
+      // Курсор включается прямо в лавке
+      assert.equal(await style('.nav-file-title', 'cursor'), 'default');
+      await page.click('.hp-shop-cursor .checkbox-container');
       await page.evaluate(() => document.querySelector('.modal-bg').click());
       await page.waitForFunction(() => JSON.parse(localStorage.getItem('hp-harness-data'))['hp-theme'].wand?.wood === 'ebony');
+      assert.ok(await page.evaluate(() => harness.plugin.settings.wandCursor));
 
-      await page.evaluate(() => { harness.plugin.settings.wandCursor = true; harness.plugin.applyTheme(); });
-      assert.match(await style('.nav-header', 'cursor'), /^image-set\(url\("data:image\/svg\+xml/, 'курсор-палочка применился');
+      const wandCursor = /^image-set\(url\("data:image\/svg\+xml/;
+      // Пустое место, а также файлы, вкладки, кнопки ленты и статус-бар (у них курсор из --cursor, как в Obsidian)
+      for (const sel of ['.nav-header', '.nav-file-title', '.workspace-tab-header', '.side-dock-ribbon-action', '.hp-status']) {
+        assert.match(await style(sel, 'cursor'), wandCursor, sel);
+      }
+      assert.ok((await style('.nav-file-title', 'cursor')).includes(encodeURIComponent('#110c0a')), 'в курсоре выбранная палочка (эбен)');
       assert.equal(await style('#editor', 'cursor'), 'auto', 'в тексте — обычный курсор');
+      assert.equal(await style('#link', 'cursor'), 'pointer', 'на ссылках — рука');
       await page.evaluate(() => { harness.plugin.settings.wandCursor = false; harness.plugin.applyTheme(); });
-      assert.equal(await style('.nav-header', 'cursor'), 'auto');
+      assert.equal(await style('.nav-file-title', 'cursor'), 'default');
     });
 
     await t.test('Konami → снитч → +150 очков', async () => {

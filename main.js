@@ -1369,16 +1369,15 @@ function wandName(t, wand) {
   return preset ? t(`presetWand_${preset}`) : t("shopCustomWand");
 }
 var WandShopModal = class extends import_obsidian.Modal {
-  constructor(app, t, wand, onChange, onClosed) {
+  constructor(app, t, options) {
     super(app);
     this.t = t;
-    this.onChange = onChange;
-    this.onClosed = onClosed;
+    this.options = options;
     this.cards = /* @__PURE__ */ new Map();
     this.dropdowns = [];
     this.slider = null;
     this.lengthLabel = null;
-    this.wand = { ...wand };
+    this.wand = { ...options.wand };
   }
   onOpen() {
     const { t, contentEl } = this;
@@ -1392,6 +1391,7 @@ var WandShopModal = class extends import_obsidian.Modal {
       name: stage.createDiv({ cls: "hp-shop-name" }),
       desc: stage.createDiv({ cls: "hp-shop-desc" })
     };
+    new import_obsidian.Setting(contentEl).setName(t("settingWandCursor")).setDesc(t("settingWandCursorDesc")).addToggle((tg) => tg.setValue(this.options.cursor).onChange((value) => this.options.onCursor(value))).settingEl.addClass("hp-shop-cursor");
     contentEl.createDiv({ cls: "hp-shop-heading", text: t("shopCanon") });
     const grid = contentEl.createDiv({ cls: "hp-shop-presets" });
     for (const preset of WAND_PRESETS) {
@@ -1420,7 +1420,7 @@ var WandShopModal = class extends import_obsidian.Modal {
     this.contentEl.empty();
     this.cards.clear();
     this.dropdowns = [];
-    this.onClosed?.();
+    this.options.onClosed?.();
   }
   dropdown(container, key, name, options) {
     new import_obsidian.Setting(container).setName(name).addDropdown((d) => {
@@ -1435,12 +1435,12 @@ var WandShopModal = class extends import_obsidian.Modal {
     for (const { key, control } of this.dropdowns) control.setValue(this.wand[key]);
     this.slider?.setValue(this.wand.length);
     this.refresh();
-    this.onChange({ ...this.wand });
+    this.options.onChange({ ...this.wand });
   }
   update(patch) {
     this.wand = { ...this.wand, ...patch };
     this.refresh();
-    this.onChange({ ...this.wand });
+    this.options.onChange({ ...this.wand });
   }
   refresh() {
     const { t, wand, stage } = this;
@@ -1783,7 +1783,16 @@ var HpThemePlugin = class extends import_obsidian3.Plugin {
     }).open();
   }
   openWandShop(after) {
-    new WandShopModal(this.app, this.t, this.settings.wand, (wand) => this.setWand(wand), after).open();
+    new WandShopModal(this.app, this.t, {
+      wand: this.settings.wand,
+      cursor: this.settings.wandCursor,
+      onChange: (wand) => this.setWand(wand),
+      onCursor: (enabled) => {
+        this.settings.wandCursor = enabled;
+        void this.saveSettings();
+      },
+      onClosed: after
+    }).open();
   }
   openWand() {
     new WandModal(this.app, this.t, this.settings.gestures, (phrase) => {

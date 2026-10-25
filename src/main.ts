@@ -231,7 +231,16 @@ export default class HpThemePlugin extends Plugin {
   }
 
   openWandShop(after?: () => void): void {
-    new WandShopModal(this.app, this.t, this.settings.wand, (wand) => this.setWand(wand), after).open();
+    new WandShopModal(this.app, this.t, {
+      wand: this.settings.wand,
+      cursor: this.settings.wandCursor,
+      onChange: (wand) => this.setWand(wand),
+      onCursor: (enabled) => {
+        this.settings.wandCursor = enabled;
+        void this.saveSettings();
+      },
+      onClosed: after
+    }).open();
   }
 
   openWand(): void {
