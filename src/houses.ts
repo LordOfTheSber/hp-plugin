@@ -90,7 +90,7 @@ export const HOUSES: Record<HouseId, House> = {
     palettes: {
       parchment: {
         bg: '#fbf3d9', surface: '#fffaea', text: '#241d14', muted: '#5b4b33',
-        primary: '#372e29', onPrimary: '#f5d26a', accent: '#ecb939', link: '#7a5200', border: '#e3cf8f'
+        primary: '#372e29', onPrimary: '#f5d26a', accent: '#ecb939', link: '#6e4900', border: '#e3cf8f'
       },
       common: {
         bg: '#17140f', surface: '#231e15', text: '#f4ead2', muted: '#c4b28a',

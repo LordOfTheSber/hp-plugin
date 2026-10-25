@@ -1,4 +1,5 @@
 // Сгенерировано scripts/build.mjs из src/houses.ts — не редактировать вручную.
+"use strict";
 var HP_TOKENS = (() => {
   var __defProp = Object.defineProperty;
   var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -129,7 +130,7 @@ var HP_TOKENS = (() => {
           primary: "#372e29",
           onPrimary: "#f5d26a",
           accent: "#ecb939",
-          link: "#7a5200",
+          link: "#6e4900",
           border: "#e3cf8f"
         },
         common: {

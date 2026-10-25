@@ -1,0 +1,510 @@
+/* ==========================================================================
+   HP Theme — оформление Obsidian в стиле факультетов Хогвартса.
+   Всё ограничено классом body.hp-theme, который ставит плагин.
+   Цвета факультетов (--hp-*) генерируются из src/houses.ts выше по файлу.
+   ========================================================================== */
+
+/* ---------- Переменные Obsidian ← токены факультета ---------- */
+
+body.hp-theme.theme-light,
+body.hp-theme.theme-dark {
+  --hp-font-text: 'HP Literata', Literata, Georgia, 'Times New Roman', serif;
+  --hp-font-display: 'HP Forum', 'HP Literata', Georgia, serif;
+
+  --background-primary: var(--hp-bg);
+  --background-primary-alt: var(--hp-surface);
+  --background-secondary: var(--hp-sidebar);
+  --background-secondary-alt: var(--hp-sidebar-alt);
+  --background-modifier-hover: var(--hp-hover);
+  --background-modifier-active-hover: var(--hp-active);
+  --background-modifier-border: var(--hp-border);
+  --background-modifier-border-hover: var(--hp-muted);
+  --background-modifier-border-focus: var(--hp-primary);
+  --background-modifier-form-field: var(--hp-surface);
+  --background-modifier-form-field-highlighted: var(--hp-surface);
+
+  --text-normal: var(--hp-text);
+  --text-muted: var(--hp-muted);
+  --text-faint: var(--hp-faint);
+  --text-accent: var(--hp-link);
+  --text-accent-hover: var(--hp-primary);
+  --text-on-accent: var(--hp-on-primary);
+  --text-on-accent-inverted: var(--hp-on-primary);
+  --text-selection: var(--hp-selection);
+  --text-highlight-bg: var(--hp-highlight);
+  --text-highlight-bg-active: var(--hp-highlight);
+
+  --color-accent: var(--hp-primary);
+  --color-accent-1: var(--hp-primary-hover);
+  --color-accent-2: var(--hp-primary-hover);
+  --interactive-normal: var(--hp-surface);
+  --interactive-hover: var(--hp-hover);
+  --interactive-accent: var(--hp-primary);
+  --interactive-accent-hover: var(--hp-primary-hover);
+  --interactive-accent-hsl: var(--accent-h), var(--accent-s), var(--accent-l);
+
+  --link-color: var(--hp-link);
+  --link-color-hover: var(--hp-primary);
+  --link-external-color: var(--hp-link);
+  --link-external-color-hover: var(--hp-primary);
+  --link-unresolved-color: var(--hp-muted);
+  --link-unresolved-decoration-color: var(--hp-border);
+
+  --inline-title-color: var(--hp-primary);
+  --h1-color: var(--hp-primary);
+  --h2-color: var(--hp-primary);
+  --h3-color: var(--hp-primary);
+  --h4-color: var(--hp-text);
+  --h5-color: var(--hp-text);
+  --h6-color: var(--hp-muted);
+
+  --blockquote-border-color: var(--hp-accent);
+  --hr-color: var(--hp-accent);
+  --code-background: var(--hp-surface);
+  --tag-color: var(--hp-link);
+  --tag-color-hover: var(--hp-primary);
+  --tag-background: var(--hp-active);
+  --tag-background-hover: var(--hp-selection);
+  --checkbox-color: var(--hp-primary);
+  --checkbox-color-hover: var(--hp-primary-hover);
+  --checkbox-border-color: var(--hp-muted);
+  --checkbox-marker-color: var(--hp-on-primary);
+  --table-header-background: var(--hp-sidebar);
+  --table-border-color: var(--hp-border);
+
+  --titlebar-background: var(--hp-sidebar);
+  --titlebar-background-focused: var(--hp-sidebar-alt);
+  --ribbon-background: var(--hp-sidebar-alt);
+  --ribbon-background-collapsed: var(--hp-sidebar);
+  --status-bar-background: var(--hp-sidebar);
+  --tab-container-background: var(--hp-sidebar);
+  --nav-item-background-active: var(--hp-active);
+  --nav-item-background-hover: var(--hp-hover);
+  --nav-item-color-active: var(--hp-text);
+  --scrollbar-thumb-bg: rgba(var(--hp-primary-rgb), 0.28);
+  --scrollbar-active-thumb-bg: rgba(var(--hp-primary-rgb), 0.45);
+
+  --graph-node: var(--hp-muted);
+  --graph-node-focused: var(--hp-primary);
+  --graph-node-tag: var(--hp-accent);
+  --graph-line: var(--hp-border);
+}
+
+/* ---------- Шрифты ---------- */
+
+/* Literata — только для текста заметок. Интерфейс остаётся на системном шрифте:
+   на мелких кеглях он читается лучше. Шрифт из «Настройки → Оформление»
+   (--font-text-override) по-прежнему имеет приоритет. */
+body.hp-theme.hp-font-text {
+  --font-text-theme: var(--hp-font-text);
+  --line-height-normal: 1.6;
+}
+
+body.hp-theme.hp-font-headings {
+  --inline-title-font: var(--hp-font-display);
+  --inline-title-weight: 400;
+  --h1-font: var(--hp-font-display);
+  --h2-font: var(--hp-font-display);
+  --h3-font: var(--hp-font-display);
+  --h4-font: var(--hp-font-display);
+  --h5-font: var(--hp-font-display);
+  --h6-font: var(--hp-font-display);
+  --h1-weight: 400;
+  --h2-weight: 400;
+  --h3-weight: 400;
+  --h4-weight: 400;
+  --h5-weight: 400;
+  --h6-weight: 400;
+}
+
+body.hp-theme.hp-font-headings :is(.inline-title, .markdown-rendered :is(h1, h2, h3, h4, h5, h6),
+  .markdown-source-view .HyperMD-header .cm-header, .modal-title, .hp-display) {
+  font-family: var(--hp-font-display);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+}
+
+/* ---------- Орнаменты ---------- */
+
+body.hp-theme.hp-ornaments .inline-title,
+body.hp-theme.hp-ornaments .markdown-rendered h1 {
+  padding-bottom: 0.2em;
+  border-bottom: 2px solid transparent;
+  border-image: linear-gradient(90deg, var(--hp-accent), transparent 55%) 1;
+}
+
+body.hp-theme.hp-ornaments .markdown-rendered hr {
+  position: relative;
+  overflow: visible;
+  height: 1px;
+  border: 0;
+  background: linear-gradient(90deg, transparent, var(--hp-accent), transparent);
+}
+
+body.hp-theme.hp-ornaments .markdown-rendered hr::after {
+  content: '✦';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -55%);
+  padding: 0 0.6em;
+  font-size: 0.8em;
+  line-height: 1;
+  color: var(--hp-accent);
+  background: var(--background-primary);
+}
+
+body.hp-theme.hp-ornaments .workspace-tab-header.is-active {
+  box-shadow: inset 0 2px 0 var(--hp-accent);
+}
+
+body.hp-theme.hp-ornaments :is(.nav-file-title, .tree-item-self).is-active {
+  box-shadow: inset 2px 0 0 var(--hp-accent);
+}
+
+/* ---------- Курсор — волшебная палочка ---------- */
+
+body.hp-theme.hp-wand {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Cpath d='M4 4l20 20' stroke='%23fff' stroke-width='5' stroke-linecap='round' opacity='.55'/%3E%3Cpath d='M4 4l20 20' stroke='%233b2414' stroke-width='3' stroke-linecap='round'/%3E%3Cpath d='M18 18l6 6' stroke='%235c3a1e' stroke-width='3.6' stroke-linecap='round'/%3E%3Ccircle cx='4' cy='4' r='2.6' fill='%23ffe9a8'/%3E%3C/svg%3E") 3 3, auto;
+}
+
+/* В тексте и полях ввода — обычный курсор */
+body.hp-theme.hp-wand :is(.markdown-source-view, .markdown-reading-view, .cm-editor, .inline-title,
+  input, textarea, [contenteditable="true"], .canvas-node-content) {
+  cursor: auto;
+}
+
+/* ---------- Статус-бар, настройки, модалки ---------- */
+
+.hp-status {
+  cursor: pointer;
+  color: var(--hp-primary, var(--text-accent));
+}
+
+.hp-settings-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.hp-settings-header .hp-crest {
+  line-height: 0;
+  cursor: pointer;
+  user-select: none;
+}
+
+.hp-settings-title {
+  font-family: 'HP Forum', Georgia, serif;
+  font-size: 1.7em;
+  color: var(--text-accent);
+}
+
+.hp-motto {
+  margin: 0 0 12px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  text-align: center;
+  background: var(--background-secondary);
+}
+
+.hp-motto-latin {
+  font-family: 'HP Forum', Georgia, serif;
+  font-size: 1.2em;
+  color: var(--text-accent);
+}
+
+.hp-motto-translation {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.hp-houses {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin: 8px 0 12px;
+}
+
+.hp-house-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  height: auto;
+  padding: 10px 4px 8px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 10px;
+  background: var(--background-secondary);
+  color: var(--text-normal);
+  font-size: var(--font-ui-small);
+  white-space: normal;
+  cursor: pointer;
+}
+
+.hp-house-card:hover {
+  border-color: var(--interactive-accent);
+}
+
+.hp-house-card.is-selected {
+  outline: 2px solid var(--interactive-accent);
+  outline-offset: -1px;
+  font-weight: var(--font-semibold, 600);
+}
+
+.hp-menu-crest {
+  display: inline-flex;
+  line-height: 0;
+}
+
+/* Распределяющая шляпа */
+.hp-hat-modal .modal-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 0 8px;
+  text-align: center;
+}
+
+.hp-hat-img {
+  transform-origin: 50% 90%;
+  animation: hp-hat-think 1.2s ease-in-out infinite;
+}
+
+.hp-hat-img .hp-hat-mouth {
+  transform-origin: 46px 50px;
+  animation: hp-hat-talk 0.35s ease-in-out infinite alternate;
+}
+
+.hp-hat-text {
+  min-height: 3em;
+  max-width: 340px;
+  margin: 0;
+  font-family: 'HP Literata', Georgia, serif;
+  font-size: 1.15em;
+  font-style: italic;
+  color: var(--text-normal);
+}
+
+.hp-hat-text.hp-verdict {
+  font-family: 'HP Forum', Georgia, serif;
+  font-size: 2.3em;
+  font-style: normal;
+  letter-spacing: 0.05em;
+  color: var(--hp-verdict-color, var(--text-accent));
+  animation: hp-shout 0.5s ease-out;
+}
+
+@keyframes hp-hat-think {
+  0%, 100% { transform: rotate(-4deg); }
+  50% { transform: rotate(4deg); }
+}
+
+@keyframes hp-hat-talk {
+  from { transform: scaleY(1); }
+  to { transform: scaleY(2.2); }
+}
+
+@keyframes hp-shout {
+  from { transform: scale(0.6); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* Палочка */
+.hp-wand-input {
+  width: 100%;
+  font-family: 'HP Literata', Georgia, serif;
+  font-size: 1.15em;
+}
+
+.hp-wand-hint {
+  margin: 8px 0 0;
+  color: var(--text-muted);
+  font-size: var(--font-ui-small);
+}
+
+/* ---------- Эффекты пасхалок ---------- */
+
+.hp-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--layer-notice, 60);
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.hp-overlay > * {
+  position: absolute;
+}
+
+.hp-glow {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 252, 235, 1) 0%, rgba(255, 236, 160, 0.75) 35%, rgba(255, 236, 160, 0) 70%);
+}
+
+.hp-shade {
+  inset: 0;
+}
+
+.hp-footprint {
+  width: 16px;
+  height: 26px;
+  color: #4a2e14;
+  opacity: 0;
+}
+
+body.theme-dark .hp-footprint {
+  color: #e8d3a6;
+}
+
+.hp-map-card {
+  left: 50%;
+  top: 50%;
+  max-width: min(560px, calc(100vw - 32px));
+  box-sizing: border-box;
+  padding: 22px 30px;
+  border-radius: 6px;
+  text-align: center;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle at 30% 20%, #f7ecd0, #e9d6a9);
+  color: #4a2e14;
+  box-shadow: 0 14px 50px rgba(60, 35, 10, 0.35), inset 0 0 40px rgba(120, 80, 30, 0.25);
+  font-family: 'HP Literata', Georgia, serif;
+  font-style: italic;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.hp-map-title {
+  margin-top: 6px;
+  font-family: 'HP Forum', Georgia, serif;
+  font-style: normal;
+  font-size: 30px;
+  line-height: 1.25;
+}
+
+.hp-snitch {
+  left: 0;
+  top: 0;
+  width: 64px;
+  height: 34px;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  cursor: pointer;
+  pointer-events: auto;
+  filter: drop-shadow(0 0 5px rgba(255, 200, 60, 0.9)) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
+}
+
+.hp-snitch:hover {
+  background: none;
+  box-shadow: none;
+}
+
+.hp-snitch .hp-wing-l { transform-origin: 26px 16px; }
+.hp-snitch .hp-wing-r { transform-origin: 38px 16px; }
+
+.hp-spark {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ffe27a;
+  box-shadow: 0 0 8px #ffd54a;
+}
+
+/* ---------- Секретные коллауты ---------- */
+
+body.hp-theme .callout:is([data-callout="howler"], [data-callout="громовещатель"]) {
+  --callout-color: 178, 34, 34;
+  --callout-icon: lucide-mail;
+  background: linear-gradient(135deg, rgba(178, 34, 34, 0.18), rgba(178, 34, 34, 0.05));
+  animation: hp-howl 0.5s ease-in-out 0s 3;
+}
+
+body.hp-theme.theme-dark .callout:is([data-callout="howler"], [data-callout="громовещатель"]) {
+  --callout-color: 240, 110, 100;
+}
+
+body.hp-theme .callout:is([data-callout="howler"], [data-callout="громовещатель"]) .callout-title-inner {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+body.hp-theme .callout:is([data-callout="prophecy"], [data-callout="пророчество"]) {
+  --callout-color: 72, 84, 128;
+  --callout-icon: lucide-sparkles;
+  background: radial-gradient(ellipse at 20% 30%, rgba(200, 210, 240, 0.45), rgba(120, 132, 170, 0.08) 70%);
+  box-shadow: 0 0 18px rgba(170, 185, 230, 0.35);
+  font-style: italic;
+}
+
+body.hp-theme .callout:is([data-callout="marauders"], [data-callout="мародёры"], [data-callout="мародеры"]) {
+  --callout-color: 90, 58, 30;
+  --callout-icon: lucide-footprints;
+  background-color: #efe0bc;
+  background-image: radial-gradient(circle at 30% 20%, #f7ecd0, #e9d6a9);
+  color: #4a2e14;
+  box-shadow: inset 0 0 30px rgba(120, 80, 30, 0.25);
+  font-style: italic;
+  --link-color: #6b3a10;
+  --text-normal: #4a2e14;
+}
+
+body.hp-theme .callout:is([data-callout="marauders"], [data-callout="мародёры"], [data-callout="мародеры"]) .callout-title {
+  color: #4a2e14;
+  font-family: 'HP Forum', Georgia, serif;
+  font-style: normal;
+}
+
+body.hp-theme.theme-dark .callout:is([data-callout="prophecy"], [data-callout="пророчество"]) {
+  --callout-color: 178, 190, 235;
+  background: radial-gradient(ellipse at 20% 30%, rgba(178, 190, 235, 0.22), rgba(178, 190, 235, 0.05) 70%);
+}
+
+@keyframes hp-howl {
+  0%, 100% { transform: translateX(0) rotate(0); }
+  25% { transform: translateX(-3px) rotate(-0.6deg); }
+  75% { transform: translateX(3px) rotate(0.6deg); }
+}
+
+/* ---------- Запретная секция ---------- */
+
+body.hp-theme :is(.nav-folder-title, .tree-item-self):is([data-path$="Restricted Section"], [data-path$="Запретная секция"]) {
+  font-style: italic;
+  color: var(--text-faint);
+}
+
+body.hp-theme :is(.nav-folder-title, .tree-item-self):is([data-path$="Restricted Section"], [data-path$="Запретная секция"]) .nav-folder-title-content::after,
+body.hp-theme :is(.nav-folder-title, .tree-item-self):is([data-path$="Restricted Section"], [data-path$="Запретная секция"]) .tree-item-inner::after {
+  content: ' 🔒';
+  font-style: normal;
+}
+
+body.hp-theme .nav-folder:has(> .nav-folder-title:is([data-path$="Restricted Section"], [data-path$="Запретная секция"])) > .nav-folder-children,
+body.hp-theme .tree-item:has(> .tree-item-self:is([data-path$="Restricted Section"], [data-path$="Запретная секция"])) > .tree-item-children {
+  filter: blur(2.5px);
+  opacity: 0.7;
+  transition: filter 0.3s, opacity 0.3s;
+}
+
+body.hp-theme .nav-folder:has(> .nav-folder-title:is([data-path$="Restricted Section"], [data-path$="Запретная секция"])):hover > .nav-folder-children,
+body.hp-theme .tree-item:has(> .tree-item-self:is([data-path$="Restricted Section"], [data-path$="Запретная секция"])):hover > .tree-item-children {
+  filter: none;
+  opacity: 1;
+}
+
+/* ---------- Меньше движения ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .hp-hat-img,
+  .hp-hat-img .hp-hat-mouth,
+  .hp-hat-text.hp-verdict,
+  body.hp-theme .callout[data-callout] {
+    animation: none;
+  }
+}

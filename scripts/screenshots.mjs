@@ -1,0 +1,82 @@
+// Скриншоты плагина на тестовом стенде → docs/screenshots (нужен Playwright).
+import { mkdirSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { loadPlaywright } from './playwright.mjs';
+
+const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+const out = join(root, 'docs', 'screenshots');
+mkdirSync(out, { recursive: true });
+
+const { chromium } = await loadPlaywright();
+const browser = await chromium.launch();
+const page = await browser.newPage({ viewport: { width: 1200, height: 720 } });
+const url = 'file://' + join(root, 'harness/index.html') + '?lang=ru';
+const shot = (name) => page.screenshot({ path: join(out, `${name}.png`) });
+const setMode = (mode) => page.evaluate((m) => harness.app.setTheme(m === 'common' ? 'obsidian' : 'moonstone'), mode);
+
+await page.goto(url);
+await page.evaluate(() => localStorage.clear());
+await page.goto(url);
+await page.evaluate(() => harness.ready);
+await page.evaluate(() => document.fonts.ready);
+
+// «До»: стандартная тема стенда без плагина
+// (в Obsidian элементы статус-бара плагина удаляются при выгрузке, на стенде прячем вручную)
+await page.evaluate(() => harness.plugin.onunload());
+await page.evaluate(() => document.querySelector('.hp-status').style.setProperty('visibility', 'hidden'));
+await shot('before');
+await page.evaluate(() => document.querySelector('.hp-status').style.removeProperty('visibility'));
+await page.evaluate(() => harness.plugin.applyTheme());
+
+for (const house of ['gryffindor', 'slytherin', 'ravenclaw', 'hufflepuff']) {
+  for (const mode of ['parchment', 'common']) {
+    await page.evaluate((h) => harness.plugin.setHouse(h), house);
+    await setMode(mode);
+    await page.waitForTimeout(100);
+    await shot(`${house}-${mode}`);
+  }
+}
+
+await page.evaluate(() => harness.plugin.setHouse('ravenclaw'));
+await setMode('parchment');
+await page.evaluate(() => harness.openSettings());
+await page.waitForTimeout(100);
+await shot('settings');
+await page.evaluate(() => harness.closeSettings());
+
+await page.evaluate(() => harness.plugin.setHouse('slytherin'));
+await page.click('.side-dock-ribbon-action');
+await page.waitForTimeout(100);
+await shot('menu');
+await page.keyboard.press('Escape');
+await page.click('.nav-header');
+
+await setMode('common');
+await page.evaluate(() => harness.plugin.setHouse('hufflepuff'));
+await page.evaluate(() => harness.runCommand('sorting-hat'));
+await page.waitForTimeout(1500);
+await shot('sorting-hat');
+await page.waitForSelector('.hp-hat-modal', { state: 'detached', timeout: 10000 });
+
+await page.evaluate(() => harness.plugin.setHouse('gryffindor'));
+await page.evaluate(() => harness.runCommand('wave-wand'));
+await page.fill('.hp-wand-input', 'Lumos');
+await shot('wand');
+await page.press('.hp-wand-input', 'Enter');
+await page.waitForTimeout(1300);
+
+await page.click('.nav-header');
+await page.keyboard.type('accio snitch');
+await page.mouse.move(0, 0);
+await page.waitForFunction(() => {
+  const r = document.querySelector('[data-hp-snitch]')?.getBoundingClientRect();
+  return r && r.left > 200 && r.right < innerWidth - 200 && r.top > 120 && r.bottom < innerHeight - 120;
+}, null, { timeout: 20000, polling: 50 });
+await shot('egg-snitch');
+await page.keyboard.type(' I solemnly swear that I am up to no good');
+await page.waitForTimeout(2600);
+await shot('egg-map');
+
+await browser.close();
+console.log('saved to', out);
